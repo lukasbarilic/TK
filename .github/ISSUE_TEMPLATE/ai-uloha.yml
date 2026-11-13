@@ -1,0 +1,71 @@
+# .github/ISSUE_TEMPLATE/ai-uloha.yml
+#
+# Šablóna tiketu pre AI agenta. Štítok "ai-agent" sa NEPRIDÁVA automaticky –
+# pridajte ho, až keď je tiket naozaj pripravený. Tým sa agent spustí.
+
+name: Úloha pre AI agenta
+description: Jasne vymedzená úloha, ktorú môže spracovať AI agent
+title: "[AI] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Agent je taký dobrý, aký dobrý je tiket. Píšte konkrétne.
+        Keď je tiket hotový, pridajte štítok **ai-agent** – tým sa agent spustí.
+
+  - type: dropdown
+    id: typ
+    attributes:
+      label: Typ úlohy
+      options:
+        - Oprava chyby
+        - Nová funkcia (malá)
+        - Refaktoring
+        - Testy
+        - Dokumentácia
+    validations:
+      required: true
+
+  - type: textarea
+    id: ciel
+    attributes:
+      label: Cieľ
+      description: Čo má byť po zmene inak a prečo. 1–3 vety.
+      placeholder: Endpoint /api/bookings má vracať aj meno zamestnanca, aby ho frontend vedel zobraziť.
+    validations:
+      required: true
+
+  - type: textarea
+    id: kriteria
+    attributes:
+      label: Akceptačné kritériá
+      description: Merateľné podmienky, kedy je úloha hotová. Jedna na riadok.
+      placeholder: |
+        - [ ] Odpoveď obsahuje pole employeeName
+        - [ ] Ak zamestnanec neexistuje, pole je null
+        - [ ] Existujúce testy prechádzajú, pribudol test na nové pole
+    validations:
+      required: true
+
+  - type: textarea
+    id: kontext
+    attributes:
+      label: Dotknuté súbory / moduly
+      description: Kde v kóde sa to pravdepodobne rieši (ak viete).
+      placeholder: src/bookings/controller.ts, src/bookings/dto.ts
+
+  - type: textarea
+    id: chyba
+    attributes:
+      label: Kroky na reprodukciu (len pri chybe)
+      placeholder: |
+        1. Prihlásiť sa ako ...
+        2. Otvoriť ...
+        3. Očakávané: ... / Skutočné: ...
+
+  - type: textarea
+    id: mimo
+    attributes:
+      label: Mimo rozsahu
+      description: Čoho sa agent nemá dotýkať.
+      placeholder: Nemeniť databázovú schému, neupravovať UI.
