@@ -14,9 +14,11 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.support.TransactionTemplate;
+import sk.therasuite.TestUsers;
 import sk.therasuite.TestcontainersConfig;
 
 /** Profil test: prázdny katalóg, kontrola schémy a obmedzení (bez demo dát). */
@@ -29,6 +31,7 @@ class CatalogMigrationIntegrationTest {
   @Autowired JdbcTemplate jdbc;
   @Autowired TransactionTemplate tx;
   @Autowired MockMvc mvc;
+  @Autowired PasswordEncoder encoder;
 
   @Test
   void migrationCreatesAllTables() {
@@ -55,7 +58,7 @@ class CatalogMigrationIntegrationTest {
   }
 
   @Test
-  void auditColumnsExistAndUserColumnsAreNullableBigintWithoutForeignKey() {
+  void auditColumnsExistAndUserColumnsAreNullableBigintWithForeignKey() {
     List<String> nullableBigint =
         jdbc.queryForList(
             """
@@ -74,7 +77,7 @@ class CatalogMigrationIntegrationTest {
             Integer.class);
 
     assertThat(nullableBigint).containsExactlyInAnyOrder("created_by", "updated_by");
-    assertThat(foreignKeys).isZero();
+    assertThat(foreignKeys).isPositive(); // od P03 odkazujú na user_account
   }
 
   @Test
@@ -111,11 +114,13 @@ class CatalogMigrationIntegrationTest {
 
   @Test
   void emptyCatalogEndpointsReturnEmptyLists() throws Exception {
-    mvc.perform(get("/api/catalog/centres")).andExpect(status().isOk());
-    mvc.perform(get("/api/catalog/rooms/999999")).andExpect(status().isNotFound());
-    mvc.perform(get("/api/room-blocks?from=2026-02-01&to=2026-01-01"))
+    TestUsers.create(jdbc, encoder, "catalog.viewer", "Heslo-na-test-1", false, "RECEPTIONIST");
+    var viewer = TestUsers.as(jdbc, "catalog.viewer");
+    mvc.perform(get("/api/catalog/centres").with(viewer)).andExpect(status().isOk());
+    mvc.perform(get("/api/catalog/rooms/999999").with(viewer)).andExpect(status().isNotFound());
+    mvc.perform(get("/api/room-blocks?from=2026-02-01&to=2026-01-01").with(viewer))
         .andExpect(status().isBadRequest());
-    mvc.perform(get("/api/room-blocks?roomId=-1")).andExpect(jsonPath("$").isEmpty());
+    mvc.perform(get("/api/room-blocks?roomId=-1").with(viewer)).andExpect(jsonPath("$").isEmpty());
   }
 
   private Long insertRoom(String number, int regular, int extra) {

@@ -1,3 +1,20 @@
+server:
+  servlet:
+    session:
+      timeout: ${security.session.idleTimeout}
+      cookie:
+        http-only: true
+        secure: true
+        same-site: strict
+
+# Nastavenia zabezpečenia (HLD kap. 9)
+security:
+  login:
+    maxFailedAttempts: 5
+    lockDuration: PT15M
+  session:
+    idleTimeout: PT30M
+
 spring:
   application:
     name: therasuite-backend

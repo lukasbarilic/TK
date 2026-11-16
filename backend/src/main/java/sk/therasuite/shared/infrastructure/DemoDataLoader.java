@@ -11,6 +11,7 @@ import java.util.Map;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  */
 @Component
 @Profile("demo")
+@Order(10)
 public class DemoDataLoader implements ApplicationRunner {
 
   /** Poradie zodpovedá cudzím kľúčom; stĺpce sa berú z hlavičky CSV. */

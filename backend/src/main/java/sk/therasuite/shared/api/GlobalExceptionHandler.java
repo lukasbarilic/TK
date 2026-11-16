@@ -7,12 +7,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import sk.therasuite.shared.application.ApiException;
 
 /** Jednotný formát chýb: {@link ProblemDetail} (RFC 9457) s poľom {@code code}. */
 @RestControllerAdvice
@@ -22,6 +24,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   public static final String NOT_FOUND = "NOT_FOUND";
   public static final String CONFLICT = "CONFLICT";
   public static final String BAD_REQUEST = "BAD_REQUEST";
+  public static final String FORBIDDEN = "FORBIDDEN";
   public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
 
   @Override
@@ -83,6 +86,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 HttpStatus.CONFLICT,
                 CONFLICT,
                 "Záznam medzitým zmenil iný používateľ. Načítajte ho znova."));
+  }
+
+  @ExceptionHandler(ApiException.class)
+  public ResponseEntity<ProblemDetail> handleApi(ApiException ex) {
+    return ResponseEntity.status(ex.getStatus())
+        .body(problem(ex.getStatus(), ex.getCode(), ex.getMessage()));
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ProblemDetail> handleAccessDenied(AccessDeniedException ex) {
+    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+        .body(problem(HttpStatus.FORBIDDEN, FORBIDDEN, "Na túto akciu nemáte oprávnenie."));
   }
 
   private static ProblemDetail problem(HttpStatus status, String code, String detail) {

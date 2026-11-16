@@ -1,0 +1,6 @@
+username,display_name,roles,reception_code,password
+admin,Administrátor,ADMIN,,Demo123!
+recepcna.hlavna,Recepčná – hlavná budova,RECEPTIONIST,MAIN,Demo123!
+recepcna.pavilony,Recepčná – pavilóny,RECEPTIONIST,PAV,Demo123!
+veduca,Vedúca recepcie,RECEPTION_MANAGER,,Demo123!
+auditor,Audítor,AUDITOR,,Demo123!
