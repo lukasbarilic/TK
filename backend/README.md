@@ -10,6 +10,7 @@ docker compose -f ../docker-compose.yml up -d postgres   # alebo z koreňa: dock
 ```
 - Health: <http://localhost:8080/actuator/health>, info: `/actuator/info`
 - Swagger UI (profily `local`, `demo`): <http://localhost:8080/swagger-ui.html>
+- pgAdmin (prehliadač databázy): `docker compose up -d pgadmin`, potom <http://localhost:5050> (heslo k DB: `POSTGRES_PASSWORD` z `.env`)
 
 Profily: `local` (DB z docker-compose), `demo` (ako `local`, demo dáta pribudnú neskôr), `test` (Testcontainers).
 
