@@ -117,14 +117,12 @@ jobs:
       # --- Agent ---------------------------------------------------------------
       - name: Claude Code
         uses: anthropics/claude-code-action@v1
-        show_full_output: true
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             Implementuj Jira tiket ${{ env.KEY }}. Zadanie (popis, akceptačné kritériá, mimo rozsahu, závislosti)
             je v súbore .ai/task.md. Riaď sa CLAUDE.md a návrhom docs/HLD-ubytovanie.md.
           claude_args: >-
-            --model claude-sonnet-4-5
             --max-turns 80
             --allowedTools "Edit,Write,Read,Glob,Grep,Bash(cd *),Bash(ls *),Bash(mkdir *),Bash(cp *),Bash(git status),Bash(git diff *),Bash(git log *),Bash(./mvnw *),Bash(mvn *),Bash(java -version),Bash(docker ps *),Bash(npm *),Bash(npx *)"
             --append-system-prompt "Pracuješ ako AI vývojár. Postup: 1) Prečítaj .ai/task.md, CLAUDE.md a relevantné kapitoly docs/HLD-ubytovanie.md. 2) Ak zadanie nemá jasný cieľ alebo akceptačné kritériá, NIČ neimplementuj, napíš konkrétne otázky do .ai/summary.md a skonči. 3) Inak implementuj čo najmenšiu zmenu, ktorá splní všetky akceptačné kritériá, vrátane testov. 4) Spusti ./mvnw -B verify v backend/; ak padá, oprav to. 5) NEcommituj ani nepushuj, to spraví workflow. 6) Na záver zapíš do .ai/summary.md po slovensky: čo si zmenil, ako si to overil, ktoré akceptačné kritériá sú splnené a čo má človek pri review skontrolovať. Nikdy nemeň .github/workflows, tajomstvá ani produkčnú konfiguráciu. Demo a testovacie dáta len fiktívne."
