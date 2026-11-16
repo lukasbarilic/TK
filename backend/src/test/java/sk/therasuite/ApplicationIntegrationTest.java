@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -45,14 +46,19 @@ class ApplicationIntegrationTest {
 
   @Test
   void infoContainsVersion() throws Exception {
-    mvc.perform(get("/actuator/info"))
+    mvc.perform(get("/actuator/info").with(SecurityMockMvcRequestPostProcessors.user("x")))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.build.version").isNotEmpty());
   }
 
   @Test
+  void infoRequiresLogin() throws Exception {
+    mvc.perform(get("/actuator/info")).andExpect(status().isUnauthorized());
+  }
+
+  @Test
   void unknownPathReturnsProblemDetail404() throws Exception {
-    mvc.perform(get("/api/neexistuje"))
+    mvc.perform(get("/api/neexistuje").with(SecurityMockMvcRequestPostProcessors.user("x")))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("NOT_FOUND"));
   }

@@ -29,9 +29,13 @@ class DemoDataIntegrationTest {
   @Autowired DemoDataLoader loader;
   @Autowired ApplicationArguments args;
 
+  private org.springframework.test.web.servlet.request.RequestPostProcessor user() {
+    return sk.therasuite.TestUsers.as(jdbc, "recepcna.hlavna");
+  }
+
   @Test
   void demoDataIsLoadedWith56RoomsAndBeds() throws Exception {
-    mvc.perform(get("/api/catalog/rooms"))
+    mvc.perform(get("/api/catalog/rooms").with(user()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$", hasSize(56)))
         .andExpect(jsonPath("$[?(@.beds.length() == 0)]").isEmpty());
@@ -51,7 +55,7 @@ class DemoDataIntegrationTest {
 
   @Test
   void roomDetailIncludesExtraBed() throws Exception {
-    mvc.perform(get("/api/catalog/rooms/1"))
+    mvc.perform(get("/api/catalog/rooms/1").with(user()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.number").value("101"))
         .andExpect(jsonPath("$.beds", hasSize(3)))
@@ -60,16 +64,36 @@ class DemoDataIntegrationTest {
 
   @Test
   void otherEndpointsServeDemoData() throws Exception {
-    mvc.perform(get("/api/catalog/centres")).andExpect(jsonPath("$", hasSize(1)));
-    mvc.perform(get("/api/catalog/receptions")).andExpect(jsonPath("$", hasSize(2)));
-    mvc.perform(get("/api/catalog/buildings")).andExpect(jsonPath("$", hasSize(5)));
-    mvc.perform(get("/api/catalog/rooms?buildingId=1")).andExpect(status().isOk());
-    mvc.perform(get("/api/catalog/room-categories")).andExpect(jsonPath("$", hasSize(8)));
-    mvc.perform(get("/api/catalog/payers")).andExpect(jsonPath("$", hasSize(4)));
-    mvc.perform(get("/api/room-blocks?from=2026-11-16&to=2026-11-17"))
+    mvc.perform(get("/api/catalog/centres").with(user())).andExpect(jsonPath("$", hasSize(1)));
+    mvc.perform(get("/api/catalog/receptions").with(user())).andExpect(jsonPath("$", hasSize(2)));
+    mvc.perform(get("/api/catalog/buildings").with(user())).andExpect(jsonPath("$", hasSize(5)));
+    mvc.perform(get("/api/catalog/rooms?buildingId=1").with(user())).andExpect(status().isOk());
+    mvc.perform(get("/api/catalog/room-categories").with(user()))
+        .andExpect(jsonPath("$", hasSize(8)));
+    mvc.perform(get("/api/catalog/payers").with(user())).andExpect(jsonPath("$", hasSize(4)));
+    mvc.perform(get("/api/room-blocks?from=2026-11-16&to=2026-11-17").with(user()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].roomId").value(9));
-    mvc.perform(get("/api/room-blocks")).andExpect(jsonPath("$", hasSize(5)));
+    mvc.perform(get("/api/room-blocks").with(user())).andExpect(jsonPath("$", hasSize(5)));
+  }
+
+  @Test
+  void demoUsersAreCreatedWithoutForcedPasswordChangeAndScopedToReception() {
+    assertThat(
+            jdbc.queryForList(
+                "select username from user_account where username <> 'system' order by username",
+                String.class))
+        .containsExactly("admin", "auditor", "recepcna.hlavna", "recepcna.pavilony", "veduca");
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from user_account where must_change_password", Integer.class))
+        .isZero();
+    assertThat(
+            jdbc.queryForObject(
+                "select r.code from user_role ur join user_account u on u.id = ur.user_id"
+                    + " join reception r on r.id = ur.reception_id where u.username = 'recepcna.hlavna'",
+                String.class))
+        .isEqualTo("MAIN");
   }
 
   @Test
