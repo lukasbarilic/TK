@@ -1,0 +1,4 @@
+# Demo = local + (v neskorších tiketoch) načítanie fiktívnych demo dát.
+spring:
+  config:
+    import: classpath:application-local.yml

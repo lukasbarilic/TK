@@ -1,0 +1,5 @@
+# Databázu poskytuje Testcontainers (@ServiceConnection), URL sa nenastavuje.
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
