@@ -1,0 +1,6 @@
+id,room_id,reason_id,date_from,date_to,note
+1,9,1,2026-11-16,2026-11-21,Oprava kúpeľne
+2,50,1,2026-10-29,2026-11-08,Oprava kúpeľne
+3,31,1,2026-10-02,2026-10-12,Oprava kúpeľne
+5,32,2,2026-11-18,2026-11-26,Maľovanie
+6,39,2,2026-10-29,2026-11-07,Maľovanie

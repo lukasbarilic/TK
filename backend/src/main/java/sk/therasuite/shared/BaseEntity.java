@@ -26,11 +26,11 @@ public abstract class BaseEntity {
 
   @CreatedDate private Instant createdAt;
 
-  @CreatedBy private String createdBy;
+  @CreatedBy private Long createdBy;
 
   @LastModifiedDate private Instant updatedAt;
 
-  @LastModifiedBy private String updatedBy;
+  @LastModifiedBy private Long updatedBy;
 
   public Long getId() {
     return id;
@@ -44,7 +44,7 @@ public abstract class BaseEntity {
     return createdAt;
   }
 
-  public String getCreatedBy() {
+  public Long getCreatedBy() {
     return createdBy;
   }
 
@@ -52,7 +52,7 @@ public abstract class BaseEntity {
     return updatedAt;
   }
 
-  public String getUpdatedBy() {
+  public Long getUpdatedBy() {
     return updatedBy;
   }
 }
