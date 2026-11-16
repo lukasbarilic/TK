@@ -11,7 +11,8 @@ TheraSuite – webová aplikácia zložená z backendu (REST API) a frontendu (S
 - Backend: Java 25, Spring Boot 4, Maven (s Maven Wrapperom `mvnw`)
 - Frontend: React + TypeScript, Vite, Vitest + Testing Library, ESLint
 - Komunikácia: REST/JSON, backend na `/api/**`
-- Databáza: [doplniť, napr. PostgreSQL + Flyway]; v testoch H2 alebo Testcontainers
+- Databáza: PostgreSQL 17 + Flyway (migrácie v `backend/src/main/resources/db/migration`); testy cez Testcontainers (potrebujú bežiaci Docker)
+- Hlavný návrh: `docs/HLD-ubytovanie.md`
 
 ## Štruktúra repozitára
 - `backend/` – Spring Boot aplikácia
@@ -22,6 +23,12 @@ TheraSuite – webová aplikácia zložená z backendu (REST API) a frontendu (S
   - `src/features/<doména>/` – komponenty, hooky a API volania jednej domény
   - `src/shared/` – spoločné komponenty a utility
 - `.github/` – CI a šablóny (nemeniť)
+
+## Lokálne spustenie backendu
+1. `cp .env.example .env` (len lokálne hodnoty, `.env` sa necommituje)
+2. `docker compose up -d postgres`
+3. v `backend/`: `./mvnw spring-boot:run -Dspring-boot.run.profiles=local`
+Profily: `local` (DB z docker-compose, Swagger UI na `/swagger-ui.html`), `demo` (ako `local` + demo dáta), `test` (Testcontainers).
 
 ## Príkazy
 Backend (spúšťaj v `backend/`):
@@ -44,6 +51,10 @@ Pred dokončením úlohy VŽDY spusti build a testy tej časti, ktorej sa zmena 
 - Frontend: funkčné komponenty, striktný TypeScript (žiadne `any`), API volania len cez `src/shared/api/`.
 - Každý nový komponent s logikou má test vo Viteste.
 - Commit správy: `typ: krátky popis (#číslo-issue)`, typy `feat`, `fix`, `test`, `refactor`, `docs`, `chore`.
+
+## Demo a testovacie dáta
+Len **fiktívne**: žiadne skutočné mená, adresy, kontakty, rodné čísla ani čísla dokladov (OP, pas).
+Ak je údaj potrebný, použi zjavne vymyslenú hodnotu (napr. „Ukážková 1, 000 00 Demovo“, doklad `XX000000`, e-mail `@example.invalid`).
 
 ## Čoho sa nedotýkať
 - `.github/workflows/` – CI a nasadenie
