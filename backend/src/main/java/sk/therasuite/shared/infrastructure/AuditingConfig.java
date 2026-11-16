@@ -6,13 +6,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
-/** Plnenie created_by / updated_by. Kým nie je prihlásenie (P03), je to "system". */
+/** Plnenie created_by / updated_by. Kým nie je prihlásenie (P03), ostáva NULL. */
 @Configuration
 @EnableJpaAuditing
 class AuditingConfig {
 
   @Bean
-  AuditorAware<String> auditorAware() {
-    return () -> Optional.of("system");
+  AuditorAware<Long> auditorAware() {
+    return () -> Optional.empty();
   }
 }
