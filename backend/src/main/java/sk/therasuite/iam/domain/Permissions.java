@@ -9,6 +9,7 @@ public final class Permissions {
   public static final String AUDIT_VIEW = "AUDIT_VIEW";
   public static final String RESERVATION_VIEW = "RESERVATION_VIEW";
   public static final String RESERVATION_EDIT = "RESERVATION_EDIT";
+  public static final String BUSINESS_DAY_CLOSE = "BUSINESS_DAY_CLOSE";
 
   /** Najvyšší limit (365 nocí = bez obmedzenia). */
   public static final int MAX_LIMIT = 365;
