@@ -7,6 +7,8 @@ public final class Permissions {
   public static final String STAY_CREATE = "STAY_CREATE";
   public static final String USER_ADMIN = "USER_ADMIN";
   public static final String AUDIT_VIEW = "AUDIT_VIEW";
+  public static final String RESERVATION_VIEW = "RESERVATION_VIEW";
+  public static final String RESERVATION_EDIT = "RESERVATION_EDIT";
 
   /** Najvyšší limit (365 nocí = bez obmedzenia). */
   public static final int MAX_LIMIT = 365;
