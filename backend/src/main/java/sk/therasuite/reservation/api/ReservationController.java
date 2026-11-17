@@ -92,13 +92,13 @@ public class ReservationController {
     } else {
       permissions.require(Permissions.RESERVATION_VIEW);
     }
-    return service.search(q, status, from, to, page, size);
+    return service.search(q, status, from, to, page, size).value();
   }
 
   @GetMapping("/{id}")
   public Detail get(@PathVariable long id) {
     permissions.require(Permissions.RESERVATION_VIEW);
-    return service.get(id);
+    return service.get(id).value();
   }
 
   @PostMapping

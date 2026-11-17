@@ -1,9 +1,11 @@
 package sk.therasuite.audit.application;
 
+import java.time.Instant;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sk.therasuite.audit.application.AuditViews.AccessView;
 import sk.therasuite.audit.application.AuditViews.ChangeView;
 import sk.therasuite.audit.application.AuditViews.EventDetail;
 import sk.therasuite.audit.application.AuditViews.EventSummary;
@@ -37,6 +39,30 @@ public class AuditQueryService {
             .map(AuditQueryService::summary)
             .toList();
     return new PageView<>(content, safePage, safeSize, repository.count(filter));
+  }
+
+  public PageView<AccessView> clientAccesses(
+      long clientId, Instant from, Instant to, int page, int size) {
+    if (from != null && to != null && from.isAfter(to)) {
+      throw new ApiException(
+          HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", "Parameter 'from' musí byť pred 'to'.");
+    }
+    int safeSize = Math.max(1, Math.min(size, MAX_PAGE_SIZE));
+    int safePage = Math.max(0, page);
+    List<AccessView> content =
+        repository.accessesOf(clientId, from, to, safeSize, safePage * safeSize).stream()
+            .map(a ->
+                new AccessView(
+                    a.eventId(),
+                    a.occurredAt(),
+                    a.userId(),
+                    a.username(),
+                    a.roles(),
+                    a.operation(),
+                    a.dataScope()))
+            .toList();
+    return new PageView<>(
+        content, safePage, safeSize, repository.countAccesses(clientId, from, to));
   }
 
   public EventDetail detail(long id) {

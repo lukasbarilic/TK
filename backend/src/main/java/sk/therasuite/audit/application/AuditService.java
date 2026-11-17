@@ -1,6 +1,7 @@
 package sk.therasuite.audit.application;
 
 import jakarta.validation.ConstraintViolationException;
+import java.util.Collection;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,7 @@ import sk.therasuite.audit.infrastructure.AuditRepository;
 import sk.therasuite.audit.infrastructure.AuditRepository.NewEvent;
 import sk.therasuite.audit.infrastructure.AuditRequestInfo;
 import sk.therasuite.shared.AuthenticatedUser;
+import sk.therasuite.shared.DataScope;
 import sk.therasuite.shared.application.ApiException;
 
 /**
@@ -85,6 +87,25 @@ public class AuditService {
     } finally {
       AuditContext.clear();
     }
+  }
+
+  /**
+   * Zapíše audit čítania (event READ + hromadne audit_subject_access) v jednej transakcii. Pri
+   * zlyhaní vyhodí výnimku, takže dáta sa neodošlú.
+   */
+  public void recordRead(String operation, DataScope scope, Collection<Long> clientIds) {
+    AuditEventSpec spec =
+        new AuditEventSpec(
+            AuditEventType.READ, operation, null, null, null, AuditOutcome.SUCCESS, null);
+    Actor actor = resolveActor(spec);
+    AuditRequestInfo.Info request = AuditRequestInfo.current();
+    new TransactionTemplate(transactionManager)
+        .executeWithoutResult(s -> {
+          AuditContext.Current event =
+              repository.insertEvent(
+                  newEvent(spec, actor, AuditOutcome.SUCCESS, null, null, request));
+          repository.insertSubjectAccess(event, clientIds, scope.name());
+        });
   }
 
   public <T> T execute(AuditEventSpec spec, Supplier<T> body) {

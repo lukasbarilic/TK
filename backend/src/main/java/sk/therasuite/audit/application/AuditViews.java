@@ -42,5 +42,15 @@ public final class AuditViews {
       Object confirmedWarnings,
       List<ChangeView> changes) {}
 
+  /** Jeden prístup k údajom klienta (podklad pre žiadosť podľa GDPR). */
+  public record AccessView(
+      long eventId,
+      Instant occurredAt,
+      Long userId,
+      String username,
+      String roles,
+      String operation,
+      String dataScope) {}
+
   public record PageView<T>(List<T> content, int page, int size, long totalElements) {}
 }
