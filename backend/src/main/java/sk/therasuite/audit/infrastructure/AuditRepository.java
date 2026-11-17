@@ -72,6 +72,16 @@ public class AuditRepository {
       Instant to,
       String operation) {}
 
+  /** Prístup k údajom klienta: kto a kedy ich čítal. */
+  public record AccessRow(
+      long eventId,
+      Instant occurredAt,
+      Long userId,
+      String username,
+      String roles,
+      String operation,
+      String dataScope) {}
+
   private static final String EVENT_COLUMNS =
       "e.id, e.event_uid, e.event_type, e.occurred_at, e.user_id, e.username, e.roles,"
           + " e.operation, e.use_case, e.target_type, e.target_id, e.outcome, e.error_code,"
@@ -154,6 +164,74 @@ public class AuditRepository {
         beforeJson,
         afterJson,
         changedFieldsJson);
+  }
+
+  /** Jedným hromadným INSERT zapíše všetkých klientov čítania do audit_subject_access. */
+  public void insertSubjectAccess(
+      AuditContext.Current event, java.util.Collection<Long> clientIds, String dataScope) {
+    if (clientIds.isEmpty()) {
+      return;
+    }
+    Long[] ids = clientIds.stream().distinct().toArray(Long[]::new);
+    jdbc.update(con -> {
+      var ps =
+          con.prepareStatement(
+              "insert into audit_subject_access (audit_event_id, occurred_at, client_id,"
+                  + " data_scope) select ?, ?, c, ? from unnest(?) as c");
+      ps.setLong(1, event.eventId());
+      ps.setObject(2, OffsetDateTime.ofInstant(event.occurredAt(), ZoneOffset.UTC));
+      ps.setString(3, dataScope);
+      ps.setArray(4, con.createArrayOf("bigint", ids));
+      return ps;
+    });
+  }
+
+  public List<AccessRow> accessesOf(
+      long clientId, Instant from, Instant to, int limit, int offset) {
+    List<Object> args = new ArrayList<>();
+    String where = accessWhere(clientId, from, to, args);
+    args.add(limit);
+    args.add(offset);
+    return jdbc.query(
+        "select e.id, e.occurred_at, e.user_id, e.username, e.roles, e.operation, a.data_scope"
+            + " from audit_subject_access a join audit_event e"
+            + " on e.id = a.audit_event_id and e.occurred_at = a.occurred_at"
+            + where
+            + " order by e.occurred_at desc, e.id desc limit ? offset ?",
+        (rs, i) ->
+            new AccessRow(
+                rs.getLong(1),
+                rs.getObject(2, OffsetDateTime.class).toInstant(),
+                (Long) rs.getObject(3),
+                rs.getString(4),
+                rs.getString(5),
+                rs.getString(6),
+                rs.getString(7)),
+        args.toArray());
+  }
+
+  public long countAccesses(long clientId, Instant from, Instant to) {
+    List<Object> args = new ArrayList<>();
+    Long n =
+        jdbc.queryForObject(
+            "select count(*) from audit_subject_access a" + accessWhere(clientId, from, to, args),
+            Long.class,
+            args.toArray());
+    return n == null ? 0 : n;
+  }
+
+  private static String accessWhere(long clientId, Instant from, Instant to, List<Object> args) {
+    StringBuilder sql = new StringBuilder(" where a.client_id = ?");
+    args.add(clientId);
+    if (from != null) {
+      sql.append(" and a.occurred_at >= ?");
+      args.add(Timestamp.from(from));
+    }
+    if (to != null) {
+      sql.append(" and a.occurred_at <= ?");
+      args.add(Timestamp.from(to));
+    }
+    return sql.toString();
   }
 
   public Optional<Long> userIdByUsername(String username) {

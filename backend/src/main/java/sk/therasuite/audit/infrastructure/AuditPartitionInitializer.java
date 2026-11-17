@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class AuditPartitionInitializer implements ApplicationRunner {
 
   public static final int MONTHS_AHEAD = 2;
-  private static final String[] TABLES = {"audit_event", "audit_change"};
+  private static final String[] TABLES = {"audit_event", "audit_change", "audit_subject_access"};
 
   private final JdbcTemplate jdbc;
 

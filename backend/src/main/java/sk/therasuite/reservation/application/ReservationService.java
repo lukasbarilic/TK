@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -21,8 +22,12 @@ import sk.therasuite.reservation.infrastructure.ReservationGuest;
 import sk.therasuite.reservation.infrastructure.ReservationGuestRepository;
 import sk.therasuite.reservation.infrastructure.ReservationQueries;
 import sk.therasuite.reservation.infrastructure.ReservationQueries.Result;
+import sk.therasuite.reservation.infrastructure.ReservationQueries.Row;
 import sk.therasuite.reservation.infrastructure.ReservationRepository;
 import sk.therasuite.shared.AuditedOperation;
+import sk.therasuite.shared.AuditedRead;
+import sk.therasuite.shared.AuditedReadResult;
+import sk.therasuite.shared.DataScope;
 import sk.therasuite.shared.application.ApiException;
 
 /**
@@ -81,8 +86,9 @@ public class ReservationService {
     this.queries = queries;
   }
 
+  @AuditedRead(operation = "RESERVATION_VIEW", scope = DataScope.NAME)
   @Transactional(readOnly = true)
-  public PageView<ListItem> search(
+  public AuditedReadResult<PageView<ListItem>> search(
       String q, ReservationStatus status, LocalDate from, LocalDate to, int page, int size) {
     if (page < 0 || size < 1 || size > MAX_PAGE_SIZE) {
       throw badRequest("Stránkovanie: page ≥ 0 a size 1–" + MAX_PAGE_SIZE + ".");
@@ -106,12 +112,17 @@ public class ReservationService {
                     r.bookedCategoryId(),
                     r.bookedCategoryName()))
             .toList();
-    return new PageView<>(items, page, size, result.total());
+    List<Long> clientIds =
+        result.rows().stream().map(Row::guestClientId).filter(Objects::nonNull).toList();
+    return new AuditedReadResult<>(new PageView<>(items, page, size, result.total()), clientIds);
   }
 
+  @AuditedRead(operation = "RESERVATION_VIEW", scope = DataScope.CONTACT)
   @Transactional(readOnly = true)
-  public Detail get(long id) {
-    return detail(load(id));
+  public AuditedReadResult<Detail> get(long id) {
+    Detail detail = detail(load(id));
+    return new AuditedReadResult<>(
+        detail, detail.guests().stream().map(GuestView::clientId).toList());
   }
 
   @AuditedOperation(operation = "RESERVATION_CREATE", useCase = "UC1")

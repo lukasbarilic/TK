@@ -23,7 +23,8 @@ public class ReservationQueries {
       String bookedCategoryName,
       String guestFirstName,
       String guestLastName,
-      Integer guestBirthYear) {}
+      Integer guestBirthYear,
+      Long guestClientId) {}
 
   /** Stránka výsledkov. */
   public record Result(List<Row> rows, long total) {}
@@ -33,7 +34,7 @@ public class ReservationQueries {
       from reservation r
       join room_category rc on rc.id = r.booked_category_id
       left join lateral (
-        select c.first_name, c.last_name, c.birth_date
+        select c.id, c.first_name, c.last_name, c.birth_date
         from reservation_guest g join client c on c.id = g.client_id
         where g.reservation_id = r.id and g.primary_guest
         order by g.id limit 1) pg on true
@@ -92,7 +93,7 @@ public class ReservationQueries {
             """
             select r.id, r.reservation_number, r.status, r.arrival_date, r.departure_date,
                    r.booked_category_id, rc.name, pg.first_name, pg.last_name,
-                   extract(year from pg.birth_date)::int
+                   extract(year from pg.birth_date)::int, pg.id
             """
                 + FROM
                 + where
@@ -108,7 +109,8 @@ public class ReservationQueries {
                     rs.getString(7),
                     rs.getString(8),
                     rs.getString(9),
-                    (Integer) rs.getObject(10)),
+                    (Integer) rs.getObject(10),
+                    (Long) rs.getObject(11)),
             pageArgs.toArray());
     return new Result(rows, total == null ? 0 : total);
   }
