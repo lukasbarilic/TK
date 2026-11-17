@@ -110,8 +110,10 @@ public class DemoDataLoader implements ApplicationRunner {
       insert(file[1], rows);
     }
     generateBeds();
+    insertStays(read("stays"));
     List<String> tables = new ArrayList<>(FILES.stream().map(f -> f[1]).toList());
     tables.add("reservation_party");
+    tables.add("stay");
     for (String table : tables) {
       jdbc.execute(
           "select setval(pg_get_serial_sequence('"
@@ -150,6 +152,35 @@ public class DemoDataLoader implements ApplicationRunner {
         values[i] = i < row.length && !row[i].isEmpty() ? row[i] : null;
       }
       jdbc.update(sql, values);
+    }
+  }
+
+  /**
+   * Pobyty: {@code room_id} + {@code bed_number} + {@code bed_type} sa prevedie na {@code bed_id}.
+   */
+  private void insertStays(List<String[]> rows) {
+    List<String> header = List.of(rows.getFirst());
+    for (String[] row : rows.subList(1, rows.size())) {
+      int updated =
+          jdbc.update(
+              """
+              insert into stay (id, reservation_id, bed_id, date_from, date_to, price_category_id, locked)
+              select ?::bigint, ?::bigint, b.id, ?::date, ?::date, ?::bigint, ?::boolean
+              from bed b where b.room_id = ?::bigint and b.bed_number = ?::int and b.type = ?
+              """,
+              row[header.indexOf("id")],
+              row[header.indexOf("reservation_id")],
+              row[header.indexOf("date_from")],
+              row[header.indexOf("date_to")],
+              row[header.indexOf("price_category_id")],
+              row[header.indexOf("locked")],
+              row[header.indexOf("room_id")],
+              row[header.indexOf("bed_number")],
+              row[header.indexOf("bed_type")]);
+      if (updated != 1) {
+        throw new IllegalStateException(
+            "stays.csv: lôžko sa nenašlo pre riadok " + String.join(",", row));
+      }
     }
   }
 
