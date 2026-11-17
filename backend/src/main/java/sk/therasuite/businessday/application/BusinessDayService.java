@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +16,7 @@ import sk.therasuite.businessday.domain.Finding;
 import sk.therasuite.businessday.domain.Severity;
 import sk.therasuite.businessday.infrastructure.BusinessDayQueries;
 import sk.therasuite.businessday.infrastructure.BusinessDayQueries.RuleConfig;
+import sk.therasuite.notification.application.LiveEvent;
 import sk.therasuite.shared.AuditedOperation;
 import sk.therasuite.shared.AuthenticatedUser;
 import sk.therasuite.shared.application.ApiException;
@@ -42,16 +44,19 @@ public class BusinessDayService {
   private final List<ClosingRule> rules;
   private final BusinessDayProperties properties;
   private final JsonMapper json;
+  private final ApplicationEventPublisher events;
 
   public BusinessDayService(
       BusinessDayQueries queries,
       List<ClosingRule> rules,
       BusinessDayProperties properties,
-      JsonMapper json) {
+      JsonMapper json,
+      ApplicationEventPublisher events) {
     this.queries = queries;
     this.rules = rules;
     this.properties = properties;
     this.json = json;
+    this.events = events;
   }
 
   /**
@@ -96,6 +101,7 @@ public class BusinessDayService {
     queries.close(day.id(), userId, summaryJson(preview));
     LocalDate next = day.businessDate().plusDays(1);
     queries.insertOpen(receptionId, next);
+    events.publishEvent(new LiveEvent.BusinessDayChanged(receptionId, next));
     return new DayView(receptionId, next, "OPEN");
   }
 

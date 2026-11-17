@@ -56,6 +56,12 @@ public class AuditService {
     this.json = json;
   }
 
+  /** Identifikátor audit záznamu práve prebiehajúcej auditovanej operácie, inak {@code null}. */
+  public static Long currentEventId() {
+    AuditContext.Current current = AuditContext.get();
+    return current == null ? null : current.eventId();
+  }
+
   /** Vykoná operáciu v auditovanej transakcii; výnimky vracia nezmenené. */
   public <T> T executeChecked(AuditEventSpec spec, Body<T> body) throws Throwable {
     if (AuditContext.get() != null) {

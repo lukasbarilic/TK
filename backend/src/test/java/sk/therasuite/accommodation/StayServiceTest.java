@@ -42,7 +42,13 @@ class StayServiceTest {
   private final BusinessDateProvider dates = mock(BusinessDateProvider.class);
   private final ReservationService reservations = mock(ReservationService.class);
   private final StayService service =
-      new StayService(stays, queries, permissions, dates, reservations);
+      new StayService(
+          stays,
+          queries,
+          permissions,
+          dates,
+          reservations,
+          mock(org.springframework.context.ApplicationEventPublisher.class));
 
   @BeforeEach
   void setUp() {
