@@ -41,6 +41,21 @@ public class PermissionChecker {
     }
   }
 
+  /** {@code true}, ak má používateľ oprávnenie platné pre danú recepciu. */
+  public boolean has(String permission, long receptionId) {
+    return !matching(permission, receptionId).isEmpty();
+  }
+
+  /** Najvyšší limit oprávnenia platný pre danú recepciu; bez práva vyhodí výnimku. */
+  public int limit(String permission, long receptionId) {
+    List<Grant> grants = matching(permission, receptionId);
+    if (grants.isEmpty()) {
+      throw new AccessDeniedException(
+          "Chýba oprávnenie " + permission + " pre recepciu " + receptionId);
+    }
+    return maxLimit(grants);
+  }
+
   /** Najvyšší limit oprávnenia zo všetkých platných rolí; bez práva vyhodí výnimku. */
   public int limit(String permission) {
     List<Grant> grants = matching(permission, null);

@@ -54,6 +54,17 @@ class DemoDataIntegrationTest {
   }
 
   @Test
+  void demoStaysAreLoadedWithBedsResolvedFromRoomAndBedNumber() {
+    Integer stays = jdbc.queryForObject("select count(*) from stay", Integer.class);
+    Integer unresolved =
+        jdbc.queryForObject(
+            "select count(*) from stay s left join bed b on b.id = s.bed_id where b.id is null",
+            Integer.class);
+    assertThat(stays).isEqualTo(162);
+    assertThat(unresolved).isZero();
+  }
+
+  @Test
   void roomDetailIncludesExtraBed() throws Exception {
     mvc.perform(get("/api/catalog/rooms/1").with(user()))
         .andExpect(status().isOk())

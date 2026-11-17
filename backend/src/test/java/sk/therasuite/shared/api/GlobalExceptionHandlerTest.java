@@ -51,8 +51,26 @@ class GlobalExceptionHandlerTest {
         .andExpect(jsonPath("$.code").value("CONFLICT"));
   }
 
+  @Test
+  void apiExceptionExtensionsAreAddedToProblemDetail() throws Exception {
+    mvc.perform(get("/confirm"))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.code").value("CONFIRMATION_REQUIRED"))
+        .andExpect(jsonPath("$.confirmable").value(true))
+        .andExpect(jsonPath("$.warnings[0]").value("X"));
+  }
+
   @RestController
   static class DummyController {
+    @GetMapping("/confirm")
+    void confirm() {
+      throw new sk.therasuite.shared.application.ApiException(
+          org.springframework.http.HttpStatus.CONFLICT,
+          "CONFIRMATION_REQUIRED",
+          "Potvrďte.",
+          java.util.Map.of("confirmable", true, "warnings", java.util.List.of("X")));
+    }
+
     record Body(@NotBlank String name) {}
 
     @PostMapping("/test")

@@ -113,4 +113,32 @@ public class BusinessDayQueries {
         status,
         Date.valueOf(day));
   }
+
+  /**
+   * Karty CHECKED_IN, ktoré v daný deň majú byť ubytované (príchod ≤ deň &lt; odchod), ale žiadny
+   * ich pobyt tento deň nepokrýva. Karta bez akéhokoľvek pobytu sa hlási každej recepcii, inak len
+   * recepcii, v ktorej budovách už mala pobyt.
+   */
+  public List<CardRef> checkedInWithoutStay(long receptionId, LocalDate day) {
+    return jdbc.query(
+        """
+        select r.id, r.reservation_number from reservation r
+        where r.status = 'CHECKED_IN' and r.arrival_date <= ? and ? < r.departure_date
+          and not exists (select 1 from stay s
+                          where s.reservation_id = r.id and s.date_from <= ? and ? < s.date_to)
+          and (not exists (select 1 from stay s where s.reservation_id = r.id)
+               or exists (select 1 from stay s
+                          join bed b on b.id = s.bed_id
+                          join room rm on rm.id = b.room_id
+                          join building bu on bu.id = rm.building_id
+                          where s.reservation_id = r.id and bu.reception_id = ?))
+        order by r.id
+        """,
+        (rs, i) -> new CardRef(rs.getLong(1), rs.getString(2)),
+        Date.valueOf(day),
+        Date.valueOf(day),
+        Date.valueOf(day),
+        Date.valueOf(day),
+        receptionId);
+  }
 }
