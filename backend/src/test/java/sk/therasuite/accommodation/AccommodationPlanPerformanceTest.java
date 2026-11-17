@@ -17,7 +17,7 @@ import sk.therasuite.TestUsers;
 import sk.therasuite.TestcontainersConfig;
 
 /**
- * Výkon celého plánu nad demo dátami (56 izieb × 31 dní). V CI sa nespúšťa; lokálne: {@code ./mvnw
+ * Výkon celého plánu nad demo dátami (431 izieb × 31 dní). V CI sa nespúšťa; lokálne: {@code ./mvnw
  * test -Dtest.excludedGroups=none -Dgroups=performance -Dtest=AccommodationPlanPerformanceTest}
  */
 @Tag("performance")
@@ -35,7 +35,7 @@ class AccommodationPlanPerformanceTest {
     var user = TestUsers.as(jdbc, "veduca");
     String url = "/api/accommodation-plan?from=2025-01-01&to=2025-02-01";
     String warm = mvc.perform(get(url).with(user)).andReturn().getResponse().getContentAsString();
-    assertThat(JsonPath.<java.util.List<Object>>read(warm, "$.rooms")).hasSize(56);
+    assertThat(JsonPath.<java.util.List<Object>>read(warm, "$.rooms")).hasSize(431);
 
     long best = Long.MAX_VALUE;
     for (int i = 0; i < 5; i++) {
@@ -43,7 +43,7 @@ class AccommodationPlanPerformanceTest {
       mvc.perform(get(url).with(user)).andReturn();
       best = Math.min(best, (System.nanoTime() - start) / 1_000_000);
     }
-    System.out.println("Plán 56 izieb × 31 dní: " + best + " ms");
+    System.out.println("Plán 431 izieb × 31 dní: " + best + " ms");
     assertThat(best).isLessThan(300);
   }
 }

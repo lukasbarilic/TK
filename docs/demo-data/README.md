@@ -10,7 +10,7 @@ Demo a testovacie dáta **nesmú obsahovať nič reálne**. Z pôvodnej databáz
 |---|---|
 | Mená a priezviská klientov a kontaktných osôb | vymyslené kombinácie (priezviská typu Testovský, Ukážková, Nanečisto), náhodne, deterministicky |
 | Dátum narodenia | náhodný dátum 1940–1989 |
-| Budovy | Hotel Alfa, Kúpeľný dom Beta, Vila Gama, Penzión Delta, Hotel Epsilon |
+| Budovy | **výnimka:** reálne názvy hotelov kúpeľov (Hotel Ozón, Alexander, Alžbeta, Dukla, Astória, Vila Blanka) – sú verejné a neobsahujú osobné údaje |
 | Platitelia | Samoplatca, Poisťovňa Alfa/Beta/Gama, kódy P00–P03 |
 | Skupiny | Firma Demo s.r.o., Klub seniorov Ukážkovo… |
 | Adresy, telefóny, e-maily, rodné čísla, doklady | **neuvádzajú sa vôbec**; ak ich neskôr model bude vyžadovať, použije sa zjavne vymyslená hodnota (napr. ulica „Ukážková 1, 000 00 Demovo“, doklad „XX000000“, e-mail `meno@example.invalid`) |
@@ -21,8 +21,8 @@ Načítava ich `DemoDataLoader` len v profile `demo` a len do prázdnej databáz
 | Súbor | Tabuľka | Poznámka |
 |---|---|---|
 | centres.csv | centre | jedno stredisko „Kúpele Demo“ |
-| receptions.csv | reception | 2 recepcie: MAIN (budovy 1, 2, 5), PAV (budovy 3, 4) |
-| buildings.csv | building | |
+| receptions.csv | reception | 2 recepcie: MAIN (budovy 1, 2, 5), PAV (budovy 3, 4, 6) |
+| buildings.csv | building | 6 budov, 431 izieb, 797 riadnych lôžok; názvy a kapacity podľa verejného webu kúpeľov (Ozón 346, Alexander 145, Alžbeta 137, Dukla 64, Astória 80, Blanka 25 lôžok); rozdelenie na izby je vymyslené |
 | base_categories.csv, room_categories.csv | base_category, room_category | |
 | departments.csv | department | |
 | rooms.csv | room | lôžka (`bed`) sa **generujú**: REGULAR 1..regular_beds, EXTRA regular_beds+1..regular_beds+extra_beds |
@@ -32,7 +32,7 @@ Načítava ich `DemoDataLoader` len v profile `demo` a len do prázdnej databáz
 | reservation_groups.csv | reservation_group | |
 | reservations.csv | reservation | `party_id` = malá skupina (partneri v jednej izbe), hodnota je ID prvej karty dvojice |
 | reservation_guests.csv | reservation_guest | |
-| stays.csv | stay | `room_id` + `bed_number` + `bed_type` sa prevedú na `bed_id` |
+| stays.csv | stay | `room_id` + `bed_number` + `bed_type` sa prevedú na `bed_id`; pôvodných 56 izieb je premapovaných na nové izby rovnakej kategórie a recepcie (rovnaké číslo lôžka), takže pobyty, malé skupiny aj blokácie ostali konzistentné |
 | users.csv | user_account | **len demo**, heslo `Demo123!`, bez vynútenej zmeny hesla |
 
 Kontrolované: žiadne prekrytie pobytov na lôžku, pobyty s výhradným užívaním izby (karty 130–133, 135, 139) sú v izbe samé,
