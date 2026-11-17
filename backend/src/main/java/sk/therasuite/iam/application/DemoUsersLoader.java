@@ -13,7 +13,8 @@ import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionTemplate;
+import sk.therasuite.audit.application.AuditEventSpec;
+import sk.therasuite.audit.application.AuditService;
 import sk.therasuite.iam.infrastructure.IamQueries;
 import sk.therasuite.iam.infrastructure.UserAccount;
 import sk.therasuite.iam.infrastructure.UserAccountRepository;
@@ -30,17 +31,17 @@ public class DemoUsersLoader implements ApplicationRunner {
   private final UserAccountRepository users;
   private final IamQueries queries;
   private final PasswordEncoder encoder;
-  private final TransactionTemplate tx;
+  private final AuditService audit;
 
   public DemoUsersLoader(
       UserAccountRepository users,
       IamQueries queries,
       PasswordEncoder encoder,
-      TransactionTemplate tx) {
+      AuditService audit) {
     this.users = users;
     this.queries = queries;
     this.encoder = encoder;
-    this.tx = tx;
+    this.audit = audit;
   }
 
   @Override
@@ -48,7 +49,7 @@ public class DemoUsersLoader implements ApplicationRunner {
     if (users.countByUsernameNot(UserAdminService.SYSTEM_USERNAME) > 0) {
       return;
     }
-    tx.executeWithoutResult(status -> load());
+    audit.run(AuditEventSpec.system("DEMO_DATA_LOAD"), this::load);
   }
 
   private void load() {

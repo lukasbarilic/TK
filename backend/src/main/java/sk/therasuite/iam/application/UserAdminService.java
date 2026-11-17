@@ -13,6 +13,7 @@ import sk.therasuite.iam.infrastructure.IamQueries;
 import sk.therasuite.iam.infrastructure.IamQueries.Assignment;
 import sk.therasuite.iam.infrastructure.UserAccount;
 import sk.therasuite.iam.infrastructure.UserAccountRepository;
+import sk.therasuite.shared.AuditedOperation;
 import sk.therasuite.shared.application.ApiException;
 
 /** Správa používateľov (oprávnenie USER_ADMIN, kontroluje ho volajúci controller). */
@@ -60,6 +61,7 @@ public class UserAdminService {
     return users.findAllByOrderByUsernameAsc().stream().map(this::view).toList();
   }
 
+  @AuditedOperation(operation = "USER_CREATE", useCase = "USER_ADMIN")
   @Transactional
   public CreatedUser create(
       String username,
@@ -85,6 +87,7 @@ public class UserAdminService {
     return new CreatedUser(view(user), password);
   }
 
+  @AuditedOperation(operation = "USER_UPDATE", useCase = "USER_ADMIN")
   @Transactional
   public UserView update(
       long id,
@@ -120,6 +123,7 @@ public class UserAdminService {
     return view(users.saveAndFlush(user));
   }
 
+  @AuditedOperation(operation = "USER_ROLES_REPLACE", useCase = "USER_ADMIN")
   @Transactional
   public UserView replaceRoles(long id, List<RoleAssignmentInput> roles) {
     UserAccount user = editable(id);
@@ -127,6 +131,7 @@ public class UserAdminService {
     return view(user);
   }
 
+  @AuditedOperation(operation = "USER_PASSWORD_RESET", useCase = "USER_ADMIN")
   @Transactional
   public String resetPassword(long id) {
     UserAccount user = editable(id);
@@ -136,6 +141,7 @@ public class UserAdminService {
     return password;
   }
 
+  @AuditedOperation(operation = "USER_UNLOCK", useCase = "USER_ADMIN")
   @Transactional
   public UserView unlock(long id) {
     UserAccount user = editable(id);

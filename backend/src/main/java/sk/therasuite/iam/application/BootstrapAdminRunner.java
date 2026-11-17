@@ -8,7 +8,8 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionTemplate;
+import sk.therasuite.audit.application.AuditEventSpec;
+import sk.therasuite.audit.application.AuditService;
 import sk.therasuite.iam.infrastructure.IamQueries;
 import sk.therasuite.iam.infrastructure.UserAccount;
 import sk.therasuite.iam.infrastructure.UserAccountRepository;
@@ -27,19 +28,19 @@ public class BootstrapAdminRunner implements ApplicationRunner {
   private final IamQueries queries;
   private final PasswordEncoder encoder;
   private final BootstrapProperties properties;
-  private final TransactionTemplate tx;
+  private final AuditService audit;
 
   public BootstrapAdminRunner(
       UserAccountRepository users,
       IamQueries queries,
       PasswordEncoder encoder,
       BootstrapProperties properties,
-      TransactionTemplate tx) {
+      AuditService audit) {
     this.users = users;
     this.queries = queries;
     this.encoder = encoder;
     this.properties = properties;
-    this.tx = tx;
+    this.audit = audit;
   }
 
   @Override
@@ -50,13 +51,15 @@ public class BootstrapAdminRunner implements ApplicationRunner {
     String username = blank(properties.username()) ? "admin" : properties.username().trim();
     boolean generated = blank(properties.password());
     String password = generated ? UserAdminService.generatePassword() : properties.password();
-    tx.executeWithoutResult(status -> {
-      UserAccount admin = new UserAccount(username, "Administrátor");
-      admin.changePassword(encoder.encode(password), true, Instant.now());
-      admin = users.saveAndFlush(admin);
-      queries.addAssignment(
-          admin.getId(), queries.roleId("ADMIN").orElseThrow(), null, null, null, null);
-    });
+    audit.run(
+        AuditEventSpec.system("BOOTSTRAP_ADMIN"),
+        () -> {
+          UserAccount admin = new UserAccount(username, "Administrátor");
+          admin.changePassword(encoder.encode(password), true, Instant.now());
+          admin = users.saveAndFlush(admin);
+          queries.addAssignment(
+              admin.getId(), queries.roleId("ADMIN").orElseThrow(), null, null, null, null);
+        });
     if (generated) {
       log.warn(
           "Bootstrap: vytvorený administrátor '{}' s jednorazovým heslom: {} (zobrazené len raz,"
