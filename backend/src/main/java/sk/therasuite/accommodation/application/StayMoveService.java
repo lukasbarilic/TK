@@ -9,7 +9,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -36,9 +38,11 @@ import sk.therasuite.accommodation.infrastructure.AccommodationQueries.RoomRow;
 import sk.therasuite.accommodation.infrastructure.AccommodationQueries.StayDetail;
 import sk.therasuite.accommodation.infrastructure.Stay;
 import sk.therasuite.accommodation.infrastructure.StayRepository;
+import sk.therasuite.audit.application.AuditService;
 import sk.therasuite.businessday.application.BusinessDateProvider;
 import sk.therasuite.iam.application.PermissionChecker;
 import sk.therasuite.iam.domain.Permissions;
+import sk.therasuite.notification.application.LiveEvent;
 import sk.therasuite.reservation.application.ReservationService;
 import sk.therasuite.reservation.application.ReservationService.UpdateCommand;
 import sk.therasuite.shared.AuditedOperation;
@@ -80,6 +84,7 @@ public class StayMoveService {
   private final BusinessDateProvider businessDates;
   private final ReservationService reservations;
   private final AccommodationPlanService plans;
+  private final ApplicationEventPublisher events;
   private final OccupancyGuard guard = new OccupancyGuard();
 
   public StayMoveService(
@@ -88,13 +93,15 @@ public class StayMoveService {
       PermissionChecker permissions,
       BusinessDateProvider businessDates,
       ReservationService reservations,
-      AccommodationPlanService plans) {
+      AccommodationPlanService plans,
+      ApplicationEventPublisher events) {
     this.stays = stays;
     this.queries = queries;
     this.permissions = permissions;
     this.businessDates = businessDates;
     this.reservations = reservations;
     this.plans = plans;
+    this.events = events;
   }
 
   /** Presun celého pobytu (UC8) alebo od dňa {@code fromDate} (UC9). */
@@ -199,6 +206,7 @@ public class StayMoveService {
               new StayPeriod(stay.dateFrom(), stay.dateTo()),
               stay.dateFrom()));
     }
+    publishChanges(ops);
     return plan(ops);
   }
 
@@ -287,6 +295,7 @@ public class StayMoveService {
       stays.saveAllAndFlush(toSave);
       queries.enforceStayOverlap();
     });
+    publishChanges(ops);
     return plan(ops);
   }
 
@@ -460,6 +469,30 @@ public class StayMoveService {
   private long priceCategory(CardRow card, RoomRow room) {
     String mode = queries.cardMeta(card.id()).orElseThrow().priceMode();
     return "KEEP_BOOKED".equals(mode) ? card.bookedCategoryId() : room.categoryId();
+  }
+
+  /** Pre každú dotknutú recepciu zverejní zmenu plánu (odošle sa až po COMMIT). */
+  private void publishChanges(List<Op> ops) {
+    Map<Long, Set<Long>> roomsByReception = new TreeMap<>();
+    LocalDate from = null;
+    LocalDate to = null;
+    for (Op op : ops) {
+      roomsByReception
+          .computeIfAbsent(op.stay().receptionId(), k -> new TreeSet<>())
+          .add(op.stay().roomId());
+      if (op.target() != null) {
+        roomsByReception
+            .computeIfAbsent(op.target().receptionId(), k -> new TreeSet<>())
+            .add(op.target().roomId());
+      }
+      from = min(from, min(op.stay().dateFrom(), op.period().from()));
+      to = max(to, max(op.stay().dateTo(), op.period().to()));
+    }
+    Long auditEventId = AuditService.currentEventId();
+    for (Map.Entry<Long, Set<Long>> e : roomsByReception.entrySet()) {
+      events.publishEvent(
+          new LiveEvent.PlanChanged(e.getKey(), List.copyOf(e.getValue()), from, to, auditEventId));
+    }
   }
 
   private Plan plan(List<Op> ops) {

@@ -72,9 +72,20 @@ public class PermissionChecker {
         .orElse(Permissions.MAX_LIMIT);
   }
 
+  /**
+   * Oprávnenie pre zadaného používateľa (bez prihláseného kontextu, napr. pri živých udalostiach).
+   */
+  public boolean hasForUser(long userId, String permission, long receptionId) {
+    return !matching(userId, permission, receptionId).isEmpty();
+  }
+
   private List<Grant> matching(String permission, Long receptionId) {
+    return matching(currentUserId(), permission, receptionId);
+  }
+
+  private List<Grant> matching(long userId, String permission, Long receptionId) {
     List<Grant> grants =
-        queries.grants(currentUserId(), LocalDate.now()).stream()
+        queries.grants(userId, LocalDate.now()).stream()
             .filter(g -> g.code().equals(permission))
             .toList();
     if (receptionId == null) {

@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
 import java.util.Set;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,9 +26,11 @@ import sk.therasuite.accommodation.infrastructure.AccommodationQueries.StayRef;
 import sk.therasuite.accommodation.infrastructure.AccommodationQueries.StayRow;
 import sk.therasuite.accommodation.infrastructure.Stay;
 import sk.therasuite.accommodation.infrastructure.StayRepository;
+import sk.therasuite.audit.application.AuditService;
 import sk.therasuite.businessday.application.BusinessDateProvider;
 import sk.therasuite.iam.application.PermissionChecker;
 import sk.therasuite.iam.domain.Permissions;
+import sk.therasuite.notification.application.LiveEvent;
 import sk.therasuite.reservation.application.ReservationService;
 import sk.therasuite.reservation.application.ReservationService.UpdateCommand;
 import sk.therasuite.shared.AuditedOperation;
@@ -56,6 +59,7 @@ public class StayService {
   private final PermissionChecker permissions;
   private final BusinessDateProvider businessDates;
   private final ReservationService reservations;
+  private final ApplicationEventPublisher events;
   private final OccupancyGuard guard = new OccupancyGuard();
 
   public StayService(
@@ -63,12 +67,14 @@ public class StayService {
       AccommodationQueries queries,
       PermissionChecker permissions,
       BusinessDateProvider businessDates,
-      ReservationService reservations) {
+      ReservationService reservations,
+      ApplicationEventPublisher events) {
     this.stays = stays;
     this.queries = queries;
     this.permissions = permissions;
     this.businessDates = businessDates;
     this.reservations = reservations;
+    this.events = events;
   }
 
   /** „Zobraziť ubytovanie“ karty; audit čítania so skráteným rozsahom {@code NAME}. */
@@ -148,6 +154,13 @@ public class StayService {
       }
       throw e;
     }
+    events.publishEvent(
+        new LiveEvent.PlanChanged(
+            bed.receptionId(),
+            List.of(room.id()),
+            period.from(),
+            period.to(),
+            AuditService.currentEventId()));
     return view(queries.stay(saved.getId()).orElseThrow());
   }
 
@@ -169,6 +182,13 @@ public class StayService {
     }
     stays.deleteById(stayId);
     stays.flush();
+    events.publishEvent(
+        new LiveEvent.PlanChanged(
+            ref.receptionId(),
+            List.of(ref.roomId()),
+            ref.dateFrom(),
+            ref.dateTo(),
+            AuditService.currentEventId()));
   }
 
   private OccupancyResult check(

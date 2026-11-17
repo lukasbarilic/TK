@@ -72,7 +72,8 @@ public class AccommodationQueries {
       boolean locked) {}
 
   /** Pobyt a recepcia jeho izby (pre zrušenie pobytu). */
-  public record StayRef(long id, long roomId, long receptionId, LocalDate dateFrom) {}
+  public record StayRef(
+      long id, long roomId, long receptionId, LocalDate dateFrom, LocalDate dateTo) {}
 
   /** Pobyt s izbou a recepciou pre sťahovanie a zmenu dĺžky. */
   public record StayDetail(
@@ -350,12 +351,16 @@ public class AccommodationQueries {
   public Optional<StayRef> stayRef(long stayId) {
     return jdbc
         .query(
-            "select s.id, rm.id, bu.reception_id, s.date_from from stay s"
+            "select s.id, rm.id, bu.reception_id, s.date_from, s.date_to from stay s"
                 + " join bed b on b.id = s.bed_id join room rm on rm.id = b.room_id"
                 + " join building bu on bu.id = rm.building_id where s.id = ?",
             (rs, i) ->
                 new StayRef(
-                    rs.getLong(1), rs.getLong(2), rs.getLong(3), rs.getObject(4, LocalDate.class)),
+                    rs.getLong(1),
+                    rs.getLong(2),
+                    rs.getLong(3),
+                    rs.getObject(4, LocalDate.class),
+                    rs.getObject(5, LocalDate.class)),
             stayId)
         .stream()
         .findFirst();
