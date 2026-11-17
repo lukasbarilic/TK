@@ -19,9 +19,9 @@ import sk.therasuite.audit.application.AuditEventSpec;
 import sk.therasuite.audit.application.AuditService;
 
 /**
- * Načíta fiktívne demo dáta katalógu z CSV (classpath:demo/). Beží len v profile {@code demo} a len
- * ak je tabuľka {@code centre} prázdna. Lôžka generuje z izieb (REGULAR 1..regular_beds, EXTRA
- * nasledujú).
+ * Načíta fiktívne demo dáta (katalóg, klienti, rezervačné karty) z CSV (classpath:demo/). Beží len
+ * v profile {@code demo} a len ak je tabuľka {@code centre} prázdna. Lôžka generuje z izieb
+ * (REGULAR 1..regular_beds, EXTRA nasledujú).
  */
 @Component
 @Profile("demo")
@@ -40,7 +40,11 @@ public class DemoDataLoader implements ApplicationRunner {
           new String[] {"rooms", "room"},
           new String[] {"payers", "payer"},
           new String[] {"block_reasons", "block_reason"},
-          new String[] {"room_blocks", "room_block"});
+          new String[] {"room_blocks", "room_block"},
+          new String[] {"clients", "client"},
+          new String[] {"reservation_groups", "reservation_group"},
+          new String[] {"reservations", "reservation"},
+          new String[] {"reservation_guests", "reservation_guest"});
 
   /** Stĺpce, ktoré sa konvertujú na dátum / číslo / boolean; ostatné sú text. */
   private static final Map<String, String> TYPES =
@@ -55,6 +59,22 @@ public class DemoDataLoader implements ApplicationRunner {
           Map.entry("department_id", "bigint"),
           Map.entry("room_id", "bigint"),
           Map.entry("reason_id", "bigint"),
+          Map.entry("payer_id", "bigint"),
+          Map.entry("booked_category_id", "bigint"),
+          Map.entry("group_id", "bigint"),
+          Map.entry("party_id", "bigint"),
+          Map.entry("client_id", "bigint"),
+          Map.entry("reservation_id", "bigint"),
+          Map.entry("adults", "int"),
+          Map.entry("children", "int"),
+          Map.entry("birth_date", "date"),
+          Map.entry("arrival_date", "date"),
+          Map.entry("departure_date", "date"),
+          Map.entry("exclusive_room_use", "boolean"),
+          Map.entry("do_not_move", "boolean"),
+          Map.entry("early_check_in", "boolean"),
+          Map.entry("late_check_out", "boolean"),
+          Map.entry("primary_guest", "boolean"),
           Map.entry("sort_order", "int"),
           Map.entry("bed_count", "int"),
           Map.entry("regular_beds", "int"),
@@ -83,17 +103,34 @@ public class DemoDataLoader implements ApplicationRunner {
 
   private void load() {
     for (String[] file : FILES) {
-      insert(file[1], read(file[0]));
+      List<String[]> rows = read(file[0]);
+      if (file[1].equals("reservation")) {
+        insertParties(rows);
+      }
+      insert(file[1], rows);
     }
     generateBeds();
-    for (String[] file : FILES) {
+    List<String> tables = new ArrayList<>(FILES.stream().map(f -> f[1]).toList());
+    tables.add("reservation_party");
+    for (String table : tables) {
       jdbc.execute(
           "select setval(pg_get_serial_sequence('"
-              + file[1]
+              + table
               + "', 'id'), (select max(id) from "
-              + file[1]
+              + table
               + "))");
     }
+  }
+
+  /** Malé skupiny (reservation_party) vzniknú z rôznych hodnôt stĺpca party_id kariet. */
+  private void insertParties(List<String[]> reservationRows) {
+    int column = List.of(reservationRows.getFirst()).indexOf("party_id");
+    reservationRows.subList(1, reservationRows.size()).stream()
+        .map(row -> row[column])
+        .filter(value -> !value.isEmpty())
+        .map(Long::valueOf)
+        .distinct()
+        .forEach(id -> jdbc.update("insert into reservation_party (id) values (?)", id));
   }
 
   private void insert(String table, List<String[]> rows) {

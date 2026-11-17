@@ -97,6 +97,31 @@ class DemoDataIntegrationTest {
   }
 
   @Test
+  void reservationDemoDataIsLoadedWithPartiesAndGuests() throws Exception {
+    assertThat(jdbc.queryForObject("select count(*) from client", Integer.class)).isEqualTo(102);
+    assertThat(jdbc.queryForObject("select count(*) from reservation_group", Integer.class))
+        .isEqualTo(5);
+    assertThat(jdbc.queryForObject("select count(*) from reservation", Integer.class))
+        .isEqualTo(165);
+    assertThat(jdbc.queryForObject("select count(*) from reservation_guest", Integer.class))
+        .isEqualTo(195);
+    assertThat(jdbc.queryForObject("select count(*) from reservation_party", Integer.class))
+        .isEqualTo(15);
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from reservation where party_id is not null", Integer.class))
+        .isEqualTo(30);
+
+    mvc.perform(get("/api/reservations?q=ukazkova&size=5").with(user()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[0].reservationNumber").exists());
+    mvc.perform(get("/api/reservations/1").with(user()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.reservationNumber").value("R100001"))
+        .andExpect(jsonPath("$.guests[0].primaryGuest").value(true));
+  }
+
+  @Test
   void loaderDoesNothingWhenCentreIsNotEmpty() {
     loader.run(args);
 
