@@ -41,3 +41,7 @@ springdoc:
     enabled: false
   swagger-ui:
     enabled: false
+
+# Časové pásmo inštalácie (HLD kap. 9); určuje prvý obchodný deň
+organization:
+  timezone: Europe/Bratislava

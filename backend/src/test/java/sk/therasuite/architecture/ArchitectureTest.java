@@ -49,4 +49,26 @@ class ArchitectureTest {
                 }
               })
           .allowEmptyShould(true);
+
+  /**
+   * Dnešný dátum dáva len BusinessDateProvider (HLD kap. 5.8); výnimka: modul businessday. Platnosť
+   * pridelení rolí (kalendárny deň, nie obchodný deň recepcie) rieši iam.PermissionChecker a
+   * iam.MeService.
+   */
+  @ArchTest
+  static final ArchRule noLocalDateNowOutsideBusinessDay =
+      noClasses()
+          .that()
+          .resideOutsideOfPackages("sk.therasuite.businessday..")
+          .and()
+          .doNotHaveFullyQualifiedName("sk.therasuite.iam.application.PermissionChecker")
+          .and()
+          .doNotHaveFullyQualifiedName("sk.therasuite.iam.application.MeService")
+          .should()
+          .callMethod(java.time.LocalDate.class, "now")
+          .orShould()
+          .callMethod(java.time.LocalDate.class, "now", java.time.ZoneId.class)
+          .orShould()
+          .callMethod(java.time.LocalDate.class, "now", java.time.Clock.class)
+          .allowEmptyShould(true);
 }
