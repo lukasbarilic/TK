@@ -56,4 +56,20 @@ public class Stay extends BaseEntity {
   public boolean isLocked() {
     return locked;
   }
+
+  public void setBedId(Long bedId) {
+    this.bedId = bedId;
+  }
+
+  public void setDateTo(LocalDate dateTo) {
+    this.dateTo = dateTo;
+  }
+
+  public void setPriceCategoryId(Long priceCategoryId) {
+    this.priceCategoryId = priceCategoryId;
+  }
+
+  public void setLocked(boolean locked) {
+    this.locked = locked;
+  }
 }

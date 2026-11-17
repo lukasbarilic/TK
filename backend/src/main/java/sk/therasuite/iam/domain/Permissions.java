@@ -6,6 +6,7 @@ public final class Permissions {
   public static final String PLAN_VIEW = "PLAN_VIEW";
   public static final String STAY_CREATE = "STAY_CREATE";
   public static final String STAY_BACKDATE = "STAY_BACKDATE";
+  public static final String STAY_MOVE = "STAY_MOVE";
   public static final String STAY_MOVE_LOCKED = "STAY_MOVE_LOCKED";
   public static final String STAY_OTHER_CATEGORY = "STAY_OTHER_CATEGORY";
   public static final String USER_ADMIN = "USER_ADMIN";

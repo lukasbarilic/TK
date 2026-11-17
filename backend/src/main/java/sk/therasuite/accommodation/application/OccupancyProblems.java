@@ -24,7 +24,8 @@ final class OccupancyProblems {
           ROOM_NOT_EMPTY,
           BED_UNAVAILABLE,
           RELEASES_HELD_BED,
-          STAY_LOCKED ->
+          STAY_LOCKED,
+          PARTY_MEMBER_MOVED ->
           HttpStatus.CONFLICT;
       default -> HttpStatus.UNPROCESSABLE_ENTITY;
     };

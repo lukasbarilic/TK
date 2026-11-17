@@ -101,6 +101,15 @@ public class AccommodationPlanService {
     return assemble(period, data, filter);
   }
 
+  /**
+   * Pásiky vybraných izieb v období, pre odpoveď zápisových operácií. Bez auditu čítania a bez
+   * kontroly PLAN_VIEW: volajúca zápisová operácia je už auditovaná a oprávnená.
+   */
+  public Plan roomsOf(List<Long> roomIds, StayPeriod period) {
+    PlanData data = queries.loadPlan(period, null, roomIds, null, reception -> true);
+    return assemble(period, data, new PlanFilter(null, roomIds, null, false, false)).value();
+  }
+
   private AuditedReadResult<Plan> assemble(StayPeriod period, PlanData data, PlanFilter filter) {
     Map<Long, List<PlanStayRow>> staysByRoom = new LinkedHashMap<>();
     data.stays()

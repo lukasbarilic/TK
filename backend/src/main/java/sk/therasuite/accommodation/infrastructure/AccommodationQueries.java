@@ -74,6 +74,21 @@ public class AccommodationQueries {
   /** Pobyt a recepcia jeho izby (pre zrušenie pobytu). */
   public record StayRef(long id, long roomId, long receptionId, LocalDate dateFrom) {}
 
+  /** Pobyt s izbou a recepciou pre sťahovanie a zmenu dĺžky. */
+  public record StayDetail(
+      long id,
+      long reservationId,
+      long version,
+      long bedId,
+      long roomId,
+      long receptionId,
+      LocalDate dateFrom,
+      LocalDate dateTo,
+      boolean locked) {}
+
+  /** Režim kategórie pre cenu a malá skupina karty. */
+  public record CardMeta(String priceMode, Long partyId) {}
+
   /** Voľné lôžko izby. */
   public record FreeBed(long id, int bedNumber, String type) {}
 
@@ -267,6 +282,16 @@ public class AccommodationQueries {
     jdbc.queryForList("select id from room where id = ? for update", Long.class, roomId);
   }
 
+  /** Odloží kontrolu prekrytia pobytov na lôžku do {@link #enforceStayOverlap()} (dávka zmien). */
+  public void deferStayOverlap() {
+    jdbc.execute("SET CONSTRAINTS stay_bed_no_overlap DEFERRED");
+  }
+
+  /** Vyžiada okamžitú kontrolu prekrytia; porušenie vyhodí výnimku tu, nie až pri commite. */
+  public void enforceStayOverlap() {
+    jdbc.execute("SET CONSTRAINTS stay_bed_no_overlap IMMEDIATE");
+  }
+
   public List<StayRow> staysOfReservation(long reservationId) {
     return jdbc.query(
         STAY_SELECT + " where s.reservation_id = ? order by s.date_from, s.id",
@@ -277,6 +302,49 @@ public class AccommodationQueries {
   public Optional<StayRow> stay(long stayId) {
     return jdbc.query(STAY_SELECT + " where s.id = ?", StayRowMapper.INSTANCE, stayId).stream()
         .findFirst();
+  }
+
+  public Optional<StayDetail> stayDetail(long stayId) {
+    return jdbc
+        .query(
+            "select s.id, s.reservation_id, s.version, s.bed_id, rm.id, bu.reception_id,"
+                + " s.date_from, s.date_to, s.locked from stay s"
+                + " join bed b on b.id = s.bed_id join room rm on rm.id = b.room_id"
+                + " join building bu on bu.id = rm.building_id where s.id = ?",
+            (rs, i) ->
+                new StayDetail(
+                    rs.getLong(1),
+                    rs.getLong(2),
+                    rs.getLong(3),
+                    rs.getLong(4),
+                    rs.getLong(5),
+                    rs.getLong(6),
+                    rs.getObject(7, LocalDate.class),
+                    rs.getObject(8, LocalDate.class),
+                    rs.getBoolean(9)),
+            stayId)
+        .stream()
+        .findFirst();
+  }
+
+  public Optional<CardMeta> cardMeta(long reservationId) {
+    return jdbc
+        .query(
+            "select price_category_mode, party_id from reservation where id = ?",
+            (rs, i) -> new CardMeta(rs.getString(1), (Long) rs.getObject(2)),
+            reservationId)
+        .stream()
+        .findFirst();
+  }
+
+  /** Ostatné aktívne karty malej skupiny. */
+  public List<Long> otherPartyCards(long reservationId, long partyId) {
+    return jdbc.queryForList(
+        "select id from reservation where party_id = ? and id <> ?"
+            + " and status in ('RESERVED', 'CHECKED_IN')",
+        Long.class,
+        partyId,
+        reservationId);
   }
 
   public Optional<StayRef> stayRef(long stayId) {
