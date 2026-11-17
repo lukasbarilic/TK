@@ -13,7 +13,8 @@ public enum OccupancyCode {
   MAX_NIGHTS_EXCEEDED(false),
   CATEGORY_MISMATCH(false),
   RELEASES_HELD_BED(true),
-  STAY_LOCKED(true);
+  STAY_LOCKED(true),
+  PARTY_MEMBER_MOVED(true);
 
   private final boolean warning;
 

@@ -236,7 +236,7 @@ public class StayService {
         r.locked());
   }
 
-  private static boolean isExclusionViolation(Throwable e) {
+  static boolean isExclusionViolation(Throwable e) {
     for (Throwable c = e; c != null; c = c.getCause()) {
       if (c instanceof java.sql.SQLException sql && EXCLUSION_VIOLATION.equals(sql.getSQLState())) {
         return true;
