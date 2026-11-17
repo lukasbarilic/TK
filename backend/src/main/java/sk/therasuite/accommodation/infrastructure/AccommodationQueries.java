@@ -3,10 +3,14 @@ package sk.therasuite.accommodation.infrastructure;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import sk.therasuite.accommodation.domain.OccupancyModel.Bed;
@@ -85,6 +89,48 @@ public class AccommodationQueries {
       String categoryName,
       Long secondaryCategoryId,
       List<FreeBed> freeBeds) {}
+
+  /** Izba plánu s lôžkami a obchodným dňom recepcie jej budovy. */
+  public record PlanRoomRow(
+      long roomId,
+      long buildingId,
+      String buildingCode,
+      long receptionId,
+      LocalDate businessDate,
+      String number,
+      String floor,
+      long categoryId,
+      String categoryCode,
+      List<FreeBed> beds) {}
+
+  /** Pobyt pre plán; meno hosťa je len na skrátenie štítku, {@code clientId} ide do auditu. */
+  public record PlanStayRow(
+      long id,
+      long reservationId,
+      long bedId,
+      long roomId,
+      LocalDate dateFrom,
+      LocalDate dateTo,
+      boolean locked,
+      String status,
+      LocalDate arrivalDate,
+      LocalDate departureDate,
+      boolean earlyCheckIn,
+      boolean lateCheckOut,
+      Long partyId,
+      Long clientId,
+      String lastName,
+      String firstName) {}
+
+  public record PlanBlockRow(
+      long id, long roomId, String reason, String note, LocalDate dateFrom, LocalDate dateTo) {}
+
+  /** Podklady plánu načítané štyrmi dotazmi. */
+  public record PlanData(
+      List<PlanRoomRow> rooms,
+      List<PlanStayRow> stays,
+      List<PlanBlockRow> blocks,
+      Set<Long> exclusiveReservationIds) {}
 
   private static final String STAY_SELECT =
       """
@@ -329,6 +375,190 @@ public class AccommodationQueries {
           room.freeBeds().add(new FreeBed(rs.getLong(10), rs.getInt(11), rs.getString(12)));
         },
         args.toArray());
+    return new ArrayList<>(rooms.values());
+  }
+
+  /**
+   * Plán ubytovania: presne štyri dotazy (izby s lôžkami a obchodným dňom, pobyty, blokácie, karty
+   * s výhradným užívaním). Izby recepcií, pre ktoré {@code receptionAllowed} vráti false, sa
+   * zahodia ešte pred načítaním pobytov. Prázdne filtre ({@code null}) nič neobmedzujú.
+   */
+  public PlanData loadPlan(
+      StayPeriod period,
+      List<Long> buildingIds,
+      List<Long> roomIds,
+      Long receptionId,
+      Predicate<Long> receptionAllowed) {
+    List<PlanRoomRow> rooms = planRooms(buildingIds, roomIds, receptionId, receptionAllowed);
+    if (rooms.isEmpty()) {
+      return new PlanData(List.of(), List.of(), List.of(), Set.of());
+    }
+    Long[] ids = rooms.stream().map(PlanRoomRow::roomId).toArray(Long[]::new);
+    Date from = Date.valueOf(period.from());
+    Date to = Date.valueOf(period.to());
+    List<PlanStayRow> stays =
+        jdbc.query(
+            con -> {
+              var ps =
+                  con.prepareStatement(
+                      """
+                      select s.id, s.reservation_id, s.bed_id, b.room_id, s.date_from, s.date_to,
+                             s.locked, r.status, r.arrival_date, r.departure_date,
+                             r.early_check_in, r.late_check_out, r.party_id,
+                             c.id, c.last_name, c.first_name
+                      from stay s
+                      join bed b on b.id = s.bed_id
+                      join reservation r on r.id = s.reservation_id
+                      left join lateral (
+                          select cl.id, cl.last_name, cl.first_name
+                          from reservation_guest g join client cl on cl.id = g.client_id
+                          where g.reservation_id = r.id and not g.cancelled
+                          order by g.primary_guest desc, g.id
+                          limit 1) c on true
+                      where b.room_id = any (?) and s.date_from < ? and ? < s.date_to
+                      order by b.room_id, s.bed_id, s.date_from
+                      """);
+              ps.setArray(1, con.createArrayOf("bigint", ids));
+              ps.setDate(2, to);
+              ps.setDate(3, from);
+              return ps;
+            },
+            (rs, i) ->
+                new PlanStayRow(
+                    rs.getLong(1),
+                    rs.getLong(2),
+                    rs.getLong(3),
+                    rs.getLong(4),
+                    rs.getObject(5, LocalDate.class),
+                    rs.getObject(6, LocalDate.class),
+                    rs.getBoolean(7),
+                    rs.getString(8),
+                    rs.getObject(9, LocalDate.class),
+                    rs.getObject(10, LocalDate.class),
+                    rs.getBoolean(11),
+                    rs.getBoolean(12),
+                    (Long) rs.getObject(13),
+                    (Long) rs.getObject(14),
+                    rs.getString(15),
+                    rs.getString(16)));
+    List<PlanBlockRow> blocks =
+        jdbc.query(
+            con -> {
+              var ps =
+                  con.prepareStatement(
+                      """
+                      select k.id, k.room_id, br.name, k.note, k.date_from, k.date_to
+                      from room_block k join block_reason br on br.id = k.reason_id
+                      where k.room_id = any (?) and k.date_from < ? and ? < k.date_to
+                      order by k.room_id, k.date_from
+                      """);
+              ps.setArray(1, con.createArrayOf("bigint", ids));
+              ps.setDate(2, to);
+              ps.setDate(3, from);
+              return ps;
+            },
+            (rs, i) ->
+                new PlanBlockRow(
+                    rs.getLong(1),
+                    rs.getLong(2),
+                    rs.getString(3),
+                    rs.getString(4),
+                    rs.getObject(5, LocalDate.class),
+                    rs.getObject(6, LocalDate.class)));
+    Set<Long> exclusive = new HashSet<>();
+    jdbc.query(
+        con -> {
+          var ps =
+              con.prepareStatement(
+                  """
+                  select distinct r.id
+                  from reservation r
+                  join stay s on s.reservation_id = r.id
+                  join bed b on b.id = s.bed_id
+                  where r.exclusive_room_use and b.room_id = any (?)
+                    and s.date_from < ? and ? < s.date_to
+                  """);
+          ps.setArray(1, con.createArrayOf("bigint", ids));
+          ps.setDate(2, to);
+          ps.setDate(3, from);
+          return ps;
+        },
+        rs -> {
+          exclusive.add(rs.getLong(1));
+        });
+    return new PlanData(rooms, stays, blocks, exclusive);
+  }
+
+  private List<PlanRoomRow> planRooms(
+      List<Long> buildingIds, List<Long> roomIds, Long receptionId, Predicate<Long> allowed) {
+    StringBuilder sql =
+        new StringBuilder(
+            """
+            select r.id, bu.id, bu.code, bu.reception_id, d.business_date, r.number, r.floor,
+                   r.category_id, rc.code, b.id, b.bed_number, b.type
+            from room r
+            join building bu on bu.id = r.building_id
+            join room_category rc on rc.id = r.category_id
+            left join business_day d on d.reception_id = bu.reception_id and d.status = 'OPEN'
+            left join bed b on b.room_id = r.id and b.active
+            where r.active and bu.active
+            """);
+    List<Object> args = new ArrayList<>();
+    if (buildingIds != null && !buildingIds.isEmpty()) {
+      sql.append(" and r.building_id = any (?)");
+      args.add(buildingIds.toArray(Long[]::new));
+    }
+    if (roomIds != null && !roomIds.isEmpty()) {
+      sql.append(" and r.id = any (?)");
+      args.add(roomIds.toArray(Long[]::new));
+    }
+    if (receptionId != null) {
+      sql.append(" and bu.reception_id = ?");
+      args.add(receptionId);
+    }
+    sql.append(" order by bu.sort_order, bu.id, r.number, r.id, b.bed_number");
+    Map<Long, PlanRoomRow> rooms = new LinkedHashMap<>();
+    Map<Long, Boolean> allowedCache = new HashMap<>();
+    jdbc.query(
+        con -> {
+          var ps = con.prepareStatement(sql.toString());
+          for (int i = 0; i < args.size(); i++) {
+            Object a = args.get(i);
+            if (a instanceof Long[] arr) {
+              ps.setArray(i + 1, con.createArrayOf("bigint", arr));
+            } else {
+              ps.setObject(i + 1, a);
+            }
+          }
+          return ps;
+        },
+        rs -> {
+          long reception = rs.getLong(4);
+          if (!allowedCache.computeIfAbsent(reception, allowed::test)) {
+            return;
+          }
+          long roomId = rs.getLong(1);
+          PlanRoomRow row = rooms.get(roomId);
+          if (row == null) {
+            row =
+                new PlanRoomRow(
+                    roomId,
+                    rs.getLong(2),
+                    rs.getString(3),
+                    reception,
+                    rs.getObject(5, LocalDate.class),
+                    rs.getString(6),
+                    rs.getString(7),
+                    rs.getLong(8),
+                    rs.getString(9),
+                    new ArrayList<>());
+            rooms.put(roomId, row);
+          }
+          long bedId = rs.getLong(10);
+          if (!rs.wasNull()) {
+            row.beds().add(new FreeBed(bedId, rs.getInt(11), rs.getString(12)));
+          }
+        });
     return new ArrayList<>(rooms.values());
   }
 

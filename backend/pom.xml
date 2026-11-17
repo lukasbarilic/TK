@@ -23,6 +23,7 @@
     <spotless.version>3.11.0</spotless.version>
     <jacoco.version>0.8.16</jacoco.version>
     <bouncycastle.version>1.83</bouncycastle.version>
+    <test.excludedGroups>performance</test.excludedGroups>
   </properties>
 
   <dependencies>
@@ -124,6 +125,14 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!-- Výkonnostné testy (@Tag("performance")) sa v CI nespúšťajú; lokálne:
+               ./mvnw test -Dtest.excludedGroups=none -Dgroups=performance -->
+          <excludedGroups>${test.excludedGroups}</excludedGroups>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
