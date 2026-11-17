@@ -5,9 +5,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sk.therasuite.audit.application.AuditEventSpec;
+import sk.therasuite.audit.application.AuditEventSpec.Actor;
+import sk.therasuite.audit.application.AuditService;
+import sk.therasuite.audit.domain.AuditOutcome;
 import sk.therasuite.iam.domain.UserStatus;
 import sk.therasuite.iam.infrastructure.UserAccount;
 import sk.therasuite.iam.infrastructure.UserAccountRepository;
+import sk.therasuite.shared.AuditedOperation;
 import sk.therasuite.shared.AuthenticatedUser;
 import sk.therasuite.shared.application.ApiException;
 
@@ -22,20 +27,26 @@ public class AuthService {
   private final UserAccountRepository users;
   private final PasswordEncoder encoder;
   private final IamProperties properties;
+  private final AuditService audit;
   private volatile String dummyHash;
 
   public AuthService(
-      UserAccountRepository users, PasswordEncoder encoder, IamProperties properties) {
+      UserAccountRepository users,
+      PasswordEncoder encoder,
+      IamProperties properties,
+      AuditService audit) {
     this.users = users;
+    this.audit = audit;
     this.encoder = encoder;
     this.properties = properties;
   }
 
   /**
-   * Overí prihlasovacie údaje. Neúspešné pokusy sa zapisujú aj pri výnimke (noRollbackFor); po
-   * {@code security.login.maxFailedAttempts} pokusoch sa účet zamkne.
+   * Overí prihlasovacie údaje a zapíše audit záznam typu LOGIN (úspech, neúspech, zamknutie účtu).
+   * Výsledok je známy pred zápisom, lebo audit je len na pridávanie; zmena stavu účtu (počítadlo
+   * pokusov, zamknutie) prebehne v transakcii auditu. Po {@code security.login.maxFailedAttempts}
+   * pokusoch sa účet zamkne.
    */
-  @Transactional(noRollbackFor = ApiException.class)
   public AuthenticatedUser login(String username, String password) {
     Instant now = Instant.now();
     UserAccount user = users.findByUsername(username).orElse(null);
@@ -44,26 +55,60 @@ public class AuthService {
         || user.getStatus() == UserStatus.DISABLED
         || !"LOCAL".equals(user.getAuthProvider())) {
       encoder.matches(password, dummyHash());
+      audit.run(
+          AuditEventSpec.login(
+              "LOGIN",
+              new Actor(user == null ? null : user.getId(), username),
+              AuditOutcome.REJECTED,
+              INVALID_CREDENTIALS),
+          () -> {});
       throw invalid();
     }
-    if (user.lockExpired(now)) {
-      user.unlock();
-    }
+    boolean locked = user.getStatus() == UserStatus.LOCKED && !user.lockExpired(now);
     boolean matches = encoder.matches(password, user.getPasswordHash());
-    if (user.getStatus() == UserStatus.LOCKED) {
+    Actor actor = new Actor(user.getId(), user.getUsername());
+    if (locked) {
+      audit.run(
+          AuditEventSpec.login(
+              "LOGIN",
+              actor,
+              AuditOutcome.REJECTED,
+              matches ? ACCOUNT_LOCKED : INVALID_CREDENTIALS),
+          () -> unlockIfExpired(user.getId(), now));
       throw matches
           ? new ApiException(HttpStatus.LOCKED, ACCOUNT_LOCKED, "Účet je zamknutý.")
           : invalid();
     }
     if (!matches) {
-      user.registerFailedLogin(
-          properties.login().maxFailedAttempts(), properties.login().lockDuration(), now);
+      boolean locksNow = user.getFailedLoginCount() + 1 >= properties.login().maxFailedAttempts();
+      audit.run(
+          AuditEventSpec.login(
+              locksNow ? "ACCOUNT_LOCK" : "LOGIN",
+              actor,
+              AuditOutcome.REJECTED,
+              locksNow ? ACCOUNT_LOCKED : INVALID_CREDENTIALS),
+          () -> {
+            UserAccount u = unlockIfExpired(user.getId(), now);
+            u.registerFailedLogin(
+                properties.login().maxFailedAttempts(), properties.login().lockDuration(), now);
+          });
       throw invalid();
     }
-    user.registerSuccessfulLogin(now);
+    audit.run(
+        AuditEventSpec.login("LOGIN", actor, AuditOutcome.SUCCESS, null),
+        () -> unlockIfExpired(user.getId(), now).registerSuccessfulLogin(now));
     return new AuthenticatedUser(user.getId(), user.getUsername());
   }
 
+  private UserAccount unlockIfExpired(long userId, Instant now) {
+    UserAccount u = users.findById(userId).orElseThrow();
+    if (u.lockExpired(now)) {
+      u.unlock();
+    }
+    return u;
+  }
+
+  @AuditedOperation(operation = "PASSWORD_CHANGE", useCase = "IAM")
   @Transactional
   public void changePassword(long userId, String currentPassword, String newPassword) {
     UserAccount user = users.findById(userId).orElseThrow();

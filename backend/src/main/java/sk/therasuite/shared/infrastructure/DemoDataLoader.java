@@ -15,7 +15,8 @@ import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionTemplate;
+import sk.therasuite.audit.application.AuditEventSpec;
+import sk.therasuite.audit.application.AuditService;
 
 /**
  * Načíta fiktívne demo dáta katalógu z CSV (classpath:demo/). Beží len v profile {@code demo} a len
@@ -64,11 +65,11 @@ public class DemoDataLoader implements ApplicationRunner {
           Map.entry("date_to", "date"));
 
   private final JdbcTemplate jdbc;
-  private final TransactionTemplate tx;
+  private final AuditService audit;
 
-  public DemoDataLoader(JdbcTemplate jdbc, TransactionTemplate tx) {
+  public DemoDataLoader(JdbcTemplate jdbc, AuditService audit) {
     this.jdbc = jdbc;
-    this.tx = tx;
+    this.audit = audit;
   }
 
   @Override
@@ -77,7 +78,7 @@ public class DemoDataLoader implements ApplicationRunner {
     if (existing != null && existing > 0) {
       return;
     }
-    tx.executeWithoutResult(status -> load());
+    audit.run(AuditEventSpec.system("DEMO_DATA_LOAD"), this::load);
   }
 
   private void load() {

@@ -11,11 +11,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
-import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.transaction.support.TransactionTemplate;
+import sk.therasuite.audit.application.AuditEventSpec;
+import sk.therasuite.audit.application.AuditService;
 import sk.therasuite.iam.application.BootstrapAdminRunner;
 import sk.therasuite.iam.application.BootstrapProperties;
 import sk.therasuite.iam.infrastructure.IamQueries;
@@ -27,7 +27,7 @@ class BootstrapAdminRunnerTest {
   private final UserAccountRepository users = mock(UserAccountRepository.class);
   private final IamQueries queries = mock(IamQueries.class);
   private final PasswordEncoder encoder = mock(PasswordEncoder.class);
-  private final TransactionTemplate tx = mock(TransactionTemplate.class);
+  private final AuditService audit = mock(AuditService.class);
 
   BootstrapAdminRunnerTest() {
     when(encoder.encode(any())).thenAnswer(i -> "hash:" + i.getArgument(0));
@@ -40,16 +40,16 @@ class BootstrapAdminRunnerTest {
     when(queries.roleId("ADMIN")).thenReturn(Optional.of(7L));
     doAnswer(
             i -> {
-              i.<Consumer<Object>>getArgument(0).accept(null);
+              i.<Runnable>getArgument(1).run();
               return null;
             })
-        .when(tx)
-        .executeWithoutResult(any());
+        .when(audit)
+        .run(any(AuditEventSpec.class), any(Runnable.class));
   }
 
   private BootstrapAdminRunner runner(String username, String password) {
     return new BootstrapAdminRunner(
-        users, queries, encoder, new BootstrapProperties(username, password), tx);
+        users, queries, encoder, new BootstrapProperties(username, password), audit);
   }
 
   @Test
@@ -62,6 +62,10 @@ class BootstrapAdminRunnerTest {
     assertThat(saved.getValue().getPasswordHash()).isEqualTo("hash:Pociatocne-heslo-1");
     assertThat(saved.getValue().isMustChangePassword()).isTrue();
     verify(queries).addAssignment(anyLong(), eq(7L), eq(null), eq(null), eq(null), eq(null));
+    ArgumentCaptor<AuditEventSpec> spec = ArgumentCaptor.forClass(AuditEventSpec.class);
+    verify(audit).run(spec.capture(), any(Runnable.class));
+    assertThat(spec.getValue().operation()).isEqualTo("BOOTSTRAP_ADMIN");
+    assertThat(spec.getValue().actor().username()).isEqualTo("system");
   }
 
   @Test
