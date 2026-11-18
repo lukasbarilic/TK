@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sk.therasuite.catalog.application.CatalogViews.BedView;
@@ -25,6 +26,7 @@ import sk.therasuite.catalog.infrastructure.ReceptionRepository;
 import sk.therasuite.catalog.infrastructure.Room;
 import sk.therasuite.catalog.infrastructure.RoomCategoryRepository;
 import sk.therasuite.catalog.infrastructure.RoomRepository;
+import sk.therasuite.shared.application.CacheConfig;
 
 /** Čítanie katalógu ubytovacích kapacít. */
 @Service
@@ -56,6 +58,7 @@ public class CatalogService {
     this.payers = payers;
   }
 
+  @Cacheable(cacheNames = CacheConfig.CATALOG, key = "'centres'")
   public List<CentreView> centres() {
     return centres.findAll().stream()
         .sorted(Comparator.comparing(c -> c.getId()))
@@ -63,6 +66,7 @@ public class CatalogService {
         .toList();
   }
 
+  @Cacheable(cacheNames = CacheConfig.CATALOG, key = "'receptions'")
   public List<ReceptionView> receptions() {
     return receptions.findAll().stream()
         .sorted(Comparator.comparing(r -> r.getId()))
@@ -71,6 +75,7 @@ public class CatalogService {
         .toList();
   }
 
+  @Cacheable(cacheNames = CacheConfig.CATALOG, key = "'buildings'")
   public List<BuildingView> buildings() {
     return buildings.findAll().stream()
         .sorted(Comparator.comparingInt(b -> b.getSortOrder()))
@@ -87,6 +92,7 @@ public class CatalogService {
         .toList();
   }
 
+  @Cacheable(cacheNames = CacheConfig.CATALOG, key = "'roomCategories'")
   public List<RoomCategoryView> roomCategories() {
     return roomCategories.findAll().stream()
         .sorted(Comparator.comparing(c -> c.getId()))
@@ -102,6 +108,7 @@ public class CatalogService {
         .toList();
   }
 
+  @Cacheable(cacheNames = CacheConfig.CATALOG, key = "'payers'")
   public List<PayerView> payers() {
     return payers.findAll().stream()
         .sorted(Comparator.comparing(p -> p.getId()))
@@ -112,6 +119,7 @@ public class CatalogService {
   }
 
   /** Izby s lôžkami; ak je zadaná budova, len jej izby. */
+  @Cacheable(cacheNames = CacheConfig.CATALOG, key = "'rooms:' + #buildingId")
   public List<RoomView> rooms(Long buildingId) {
     List<Room> found =
         buildingId == null
@@ -120,6 +128,7 @@ public class CatalogService {
     return toViews(found);
   }
 
+  @Cacheable(cacheNames = CacheConfig.CATALOG, key = "'room:' + #id")
   public Optional<RoomView> room(Long id) {
     return rooms.findById(id).map(r -> toViews(List.of(r)).getFirst());
   }

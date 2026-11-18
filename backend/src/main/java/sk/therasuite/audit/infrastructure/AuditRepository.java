@@ -80,7 +80,8 @@ public class AuditRepository {
       String username,
       String roles,
       String operation,
-      String dataScope) {}
+      String dataScope,
+      String source) {}
 
   private static final String EVENT_COLUMNS =
       "e.id, e.event_uid, e.event_type, e.occurred_at, e.user_id, e.username, e.roles,"
@@ -142,6 +143,40 @@ public class AuditRepository {
         e.userAgent());
   }
 
+  /** Zaeviduje uid z klienta; {@code false}, ak už bol prijatý (duplicita). */
+  public boolean registerOfflineUid(UUID uid) {
+    return jdbc.update(
+            "insert into audit_offline_uid (event_uid) values (?) on conflict do nothing", uid)
+        > 0;
+  }
+
+  /** Vloží READ udalosť z lokálnej kópie s uid, zdrojom, časom a zariadením z klienta. */
+  public AuditContext.Current insertOfflineReadEvent(
+      UUID uid, NewEvent e, String source, Instant clientOccurredAt, String deviceId) {
+    return jdbc.queryForObject(
+        """
+        insert into audit_event (event_uid, event_type, user_id, username, roles, operation,
+                                 outcome, request_id, client_ip, user_agent, source,
+                                 client_occurred_at, device_id)
+        values (?, 'READ', ?, ?, ?, ?, 'SUCCESS', ?, ?, ?, ?, ?, ?)
+        returning id, occurred_at
+        """,
+        (rs, i) ->
+            new AuditContext.Current(
+                rs.getLong(1), rs.getObject(2, OffsetDateTime.class).toInstant()),
+        uid,
+        e.userId(),
+        e.username(),
+        e.roles(),
+        e.operation(),
+        e.requestId(),
+        e.clientIp(),
+        e.userAgent(),
+        source,
+        OffsetDateTime.ofInstant(clientOccurredAt, ZoneOffset.UTC),
+        deviceId);
+  }
+
   public void insertChange(
       AuditContext.Current event,
       String entityType,
@@ -193,7 +228,7 @@ public class AuditRepository {
     args.add(limit);
     args.add(offset);
     return jdbc.query(
-        "select e.id, e.occurred_at, e.user_id, e.username, e.roles, e.operation, a.data_scope"
+        "select e.id, e.occurred_at, e.user_id, e.username, e.roles, e.operation, a.data_scope, e.source"
             + " from audit_subject_access a join audit_event e"
             + " on e.id = a.audit_event_id and e.occurred_at = a.occurred_at"
             + where
@@ -206,7 +241,8 @@ public class AuditRepository {
                 rs.getString(4),
                 rs.getString(5),
                 rs.getString(6),
-                rs.getString(7)),
+                rs.getString(7),
+                rs.getString(8)),
         args.toArray());
   }
 

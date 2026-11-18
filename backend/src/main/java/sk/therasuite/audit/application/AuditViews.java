@@ -50,7 +50,8 @@ public final class AuditViews {
       String username,
       String roles,
       String operation,
-      String dataScope) {}
+      String dataScope,
+      String source) {}
 
   public record PageView<T>(List<T> content, int page, int size, long totalElements) {}
 }

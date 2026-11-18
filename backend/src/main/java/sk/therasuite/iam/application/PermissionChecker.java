@@ -33,6 +33,11 @@ public class PermissionChecker {
     }
   }
 
+  /** {@code true}, ak má používateľ oprávnenie v ľubovoľnom rozsahu. */
+  public boolean hasAny(String permission) {
+    return !matching(permission, null).isEmpty();
+  }
+
   /** Vyžaduje oprávnenie platné pre danú recepciu (a stredisko, do ktorého recepcia patrí). */
   public void require(String permission, long receptionId) {
     if (matching(permission, receptionId).isEmpty()) {

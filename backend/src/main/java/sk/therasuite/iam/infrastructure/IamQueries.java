@@ -29,6 +29,16 @@ public class IamQueries {
     }
   }
 
+  /** Oprávnenie z číselníka. */
+  public record PermissionRow(String code, String module, String description, boolean hasLimit) {}
+
+  /** Oprávnenie pridelené roli, s prípadným limitom. */
+  public record RolePermissionRow(String code, String description, Integer limit) {}
+
+  /** Rola bez oprávnení. */
+  public record RoleRow(
+      long id, String code, String name, String description, boolean systemRole) {}
+
   private final JdbcTemplate jdbc;
 
   public IamQueries(JdbcTemplate jdbc) {
@@ -79,6 +89,44 @@ public class IamQueries {
                 rs.getObject(5, LocalDate.class),
                 rs.getObject(6, LocalDate.class)),
         userId);
+  }
+
+  public List<PermissionRow> allPermissions() {
+    return jdbc.query(
+        "select code, module, description, has_limit from permission order by module, code",
+        (rs, i) ->
+            new PermissionRow(rs.getString(1), rs.getString(2), rs.getString(3), rs.getBoolean(4)));
+  }
+
+  public List<RoleRow> allRoles() {
+    return jdbc.query(
+        "select id, code, name, description, system_role from role order by code",
+        (rs, i) ->
+            new RoleRow(
+                rs.getLong(1),
+                rs.getString(2),
+                rs.getString(3),
+                rs.getString(4),
+                rs.getBoolean(5)));
+  }
+
+  /** Oprávnenia všetkých rolí, kľúč je id roly. */
+  public java.util.Map<Long, List<RolePermissionRow>> rolePermissions() {
+    java.util.Map<Long, List<RolePermissionRow>> result = new java.util.HashMap<>();
+    jdbc.query(
+        """
+        select rp.role_id, rp.permission_code, p.description, rp.limit_value
+        from role_permission rp join permission p on p.code = rp.permission_code
+        order by rp.role_id, rp.permission_code
+        """,
+        rs -> {
+          result
+              .computeIfAbsent(rs.getLong(1), k -> new java.util.ArrayList<>())
+              .add(
+                  new RolePermissionRow(
+                      rs.getString(2), rs.getString(3), (Integer) rs.getObject(4)));
+        });
+    return result;
   }
 
   public Optional<Long> roleId(String code) {
