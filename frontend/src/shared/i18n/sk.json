@@ -5,7 +5,13 @@
   },
   "shell": {
     "menuLabel": "Hlavné menu",
-    "menuEmpty": "Menu zatiaľ neobsahuje žiadne položky."
+    "menuEmpty": "Menu zatiaľ neobsahuje žiadne položky.",
+    "receptionLabel": "Recepcia",
+    "businessDay": "Obchodný deň",
+    "businessDayUnknown": "Obchodný deň nie je k dispozícii",
+    "logout": "Odhlásiť",
+    "loading": "Načítavam…",
+    "comingSoon": "{{title}} – pripravuje sa"
   },
   "plan": {
     "title": "Plán ubytovania",
@@ -14,5 +20,39 @@
   "errors": {
     "forbidden": "Na túto akciu nemáte oprávnenie.",
     "generic": "Nastala neočakávaná chyba."
+  },
+  "menu": {
+    "plan": "Plán ubytovania",
+    "reservations": "Rezervačné karty",
+    "movements": "Príchody a odchody",
+    "businessDayClose": "Nočná uzávierka",
+    "guests": "Zoznam hostí",
+    "users": "Používatelia",
+    "audit": "Audit"
+  },
+  "auth": {
+    "loginTitle": "Prihlásenie",
+    "loginHint": "Prihláste sa účtom, ktorý vám založil administrátor.",
+    "tagline": "Recepcia a ubytovanie kúpeľov",
+    "username": "Používateľské meno",
+    "password": "Heslo",
+    "submit": "Prihlásiť sa",
+    "invalidCredentials": "Nesprávne meno alebo heslo.",
+    "locked": "Účet je zamknutý.",
+    "lockedUntil": "Účet je zamknutý do {{time}}.",
+    "lockedContactAdmin": "Odomknúť ho môže administrátor.",
+    "serverUnavailable": "Server nie je dostupný. Skontrolujte pripojenie a skúste to znova.",
+    "changeTitle": "Zmena hesla",
+    "changeHint": "Pri prvom prihlásení si musíte zmeniť jednorazové heslo.",
+    "currentPassword": "Súčasné heslo",
+    "newPassword": "Nové heslo",
+    "repeatPassword": "Nové heslo znova",
+    "passwordsDiffer": "Heslá sa nezhodujú.",
+    "changeSubmit": "Zmeniť heslo",
+    "changeFailed": "Heslo sa nepodarilo zmeniť.",
+    "sessionExpiredTitle": "Relácia vypršala",
+    "sessionExpiredHint": "Zadajte heslo a pokračujte tam, kde ste skončili.",
+    "forbiddenTitle": "Nemáte oprávnenie",
+    "forbiddenText": "Na túto časť aplikácie nemáte oprávnenie."
   }
 }

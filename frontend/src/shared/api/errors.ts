@@ -13,6 +13,7 @@ export interface ProblemDetail {
   confirmable?: boolean;
   warnings?: string[];
   fieldViolations?: FieldViolation[];
+  lockedUntil?: string; // ISO čas odomknutia účtu (423 ACCOUNT_LOCKED), ak ho server vráti
 }
 
 export class ApiError extends Error {
@@ -24,6 +25,7 @@ export class ApiError extends Error {
   warnings: string[];
   fieldViolations: FieldViolation[];
   auditEventId?: string;
+  lockedUntil?: string;
 
   constructor(status: number, problem: ProblemDetail = {}, auditEventId?: string) {
     super(problem.title ?? problem.detail ?? `HTTP ${status}`);
@@ -36,6 +38,7 @@ export class ApiError extends Error {
     this.warnings = problem.warnings ?? [];
     this.fieldViolations = problem.fieldViolations ?? [];
     this.auditEventId = auditEventId;
+    this.lockedUntil = problem.lockedUntil;
   }
 }
 
@@ -65,6 +68,7 @@ export function parseProblemDetail(json: unknown): ProblemDetail {
       ? json.warnings.filter((w): w is string => typeof w === 'string')
       : undefined,
     fieldViolations: violations,
+    lockedUntil: str(json.lockedUntil),
   };
 }
 
@@ -75,4 +79,9 @@ export function toApiError(
   headers: Record<string, string> = {},
 ): ApiError {
   return new ApiError(status, parseProblemDetail(json), headers['x-audit-event-id']);
+}
+
+/** Sieťová chyba z platformy (server nedostupný, timeout, TLS, konfigurácia). */
+export function isNetError(e: unknown): e is { kind: string; message: string } {
+  return isRecord(e) && typeof e.kind === 'string' && !(e instanceof Error);
 }
