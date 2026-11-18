@@ -34,10 +34,10 @@ class DemoDataIntegrationTest {
   }
 
   @Test
-  void demoDataIsLoadedWith56RoomsAndBeds() throws Exception {
+  void demoDataIsLoadedWith431RoomsAndBeds() throws Exception {
     mvc.perform(get("/api/catalog/rooms").with(user()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$", hasSize(56)))
+        .andExpect(jsonPath("$", hasSize(431)))
         .andExpect(jsonPath("$[?(@.beds.length() == 0)]").isEmpty());
 
     Integer rooms = jdbc.queryForObject("select count(*) from room", Integer.class);
@@ -49,7 +49,7 @@ class DemoDataIntegrationTest {
                or r.regular_beds <> (select count(*) from bed b where b.room_id = r.id and b.type = 'REGULAR')
             """,
             Integer.class);
-    assertThat(rooms).isEqualTo(56);
+    assertThat(rooms).isEqualTo(431);
     assertThat(extraMismatch).isZero();
   }
 
@@ -77,14 +77,14 @@ class DemoDataIntegrationTest {
   void otherEndpointsServeDemoData() throws Exception {
     mvc.perform(get("/api/catalog/centres").with(user())).andExpect(jsonPath("$", hasSize(1)));
     mvc.perform(get("/api/catalog/receptions").with(user())).andExpect(jsonPath("$", hasSize(2)));
-    mvc.perform(get("/api/catalog/buildings").with(user())).andExpect(jsonPath("$", hasSize(5)));
+    mvc.perform(get("/api/catalog/buildings").with(user())).andExpect(jsonPath("$", hasSize(6)));
     mvc.perform(get("/api/catalog/rooms?buildingId=1").with(user())).andExpect(status().isOk());
     mvc.perform(get("/api/catalog/room-categories").with(user()))
         .andExpect(jsonPath("$", hasSize(8)));
     mvc.perform(get("/api/catalog/payers").with(user())).andExpect(jsonPath("$", hasSize(4)));
     mvc.perform(get("/api/room-blocks?from=2026-11-16&to=2026-11-17").with(user()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$[0].roomId").value(9));
+        .andExpect(jsonPath("$[0].roomId").value(195));
     mvc.perform(get("/api/room-blocks").with(user())).andExpect(jsonPath("$", hasSize(5)));
   }
 
@@ -136,7 +136,7 @@ class DemoDataIntegrationTest {
   void loaderDoesNothingWhenCentreIsNotEmpty() {
     loader.run(args);
 
-    assertThat(jdbc.queryForObject("select count(*) from room", Integer.class)).isEqualTo(56);
+    assertThat(jdbc.queryForObject("select count(*) from room", Integer.class)).isEqualTo(431);
     assertThat(jdbc.queryForObject("select count(*) from centre", Integer.class)).isEqualTo(1);
   }
 }
