@@ -117,6 +117,28 @@ describe('prihlásenie', () => {
     expect(await screen.findByTestId('plan-page')).toBeInTheDocument();
   });
 
+  it('prihlásenie s mustChangePassword otvorí zmenu hesla, aj keď server GET /api/me odmieta', async () => {
+    let loggedIn = false;
+    server.use(
+      http.get('/api/me', () =>
+        loggedIn
+          ? HttpResponse.json({ status: 403, code: 'PASSWORD_CHANGE_REQUIRED' }, { status: 403 })
+          : HttpResponse.json({}, { status: 401 }),
+      ),
+      http.post('/api/auth/login', () => {
+        loggedIn = true;
+        return HttpResponse.json({ ...admin, mustChangePassword: true });
+      }),
+    );
+    renderApp();
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText(/^Používateľské meno/), 'admin.demo');
+    await user.type(screen.getByLabelText(/^Heslo/), 'jednorazove');
+    await user.click(screen.getByRole('button', { name: 'Prihlásiť sa' }));
+    expect(await screen.findByLabelText(/^Súčasné heslo/)).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('odhlásenie zavolá POST /api/auth/logout a vráti na prihlásenie', async () => {
     mockApi(receptionist);
     let called = false;
