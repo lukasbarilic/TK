@@ -7,6 +7,8 @@ export const DS = {
   reservation: 'reservation',
   movements: 'movements',
   guestList: 'guest-list',
+  /** Denník čítaní z lokálnej kópie (DLD kap. 7); kľúč = `uid`. Odosiela ho F15. */
+  journal: 'journal',
   /** Pomocná sada: ETag a zoznam ID kariet z hromadného volania B03 (kľúč = `<receptionId>`). */
   reservationSync: 'reservation-sync',
   /** Nastavenia používateľa (B06); kľúč = kľúč nastavenia, napr. `plan.defaultView`. */
