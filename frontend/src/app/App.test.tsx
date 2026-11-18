@@ -333,7 +333,7 @@ describe('menu a trasy podľa oprávnení', () => {
   it('admin: používatelia a audit; úvod = používatelia', async () => {
     mockApi(admin);
     const { router } = renderApp();
-    expect(await screen.findByText('Používatelia – pripravuje sa')).toBeInTheDocument();
+    expect(await screen.findByTestId('users-page')).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/admin/users');
     expect(menu().getAllByRole('link').map((l) => l.textContent)).toEqual(['Používatelia', 'Audit']);
   });
