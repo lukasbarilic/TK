@@ -95,6 +95,7 @@ function connectLive(
   onState: (s: LiveState) => void,
 ): () => void {
   onState('connecting');
+  if (typeof EventSource === 'undefined') return () => onState('closed'); // prostredie bez SSE (napr. jsdom)
   const source = new EventSource('/api/events', { withCredentials: true });
   source.onopen = () => onState('open');
   source.onerror = () => onState(source.readyState === EventSource.CLOSED ? 'closed' : 'connecting');
@@ -128,6 +129,8 @@ function createMemoryVault(): Vault {
     created: string;
     failed: number;
     blockedUntil: number;
+    lastFullSyncAt?: string;
+    maxAgeDays: number | null;
   }
   const stores = new Map<string, Store>();
   let current: { username: string; store: Store } | null = null;
@@ -147,6 +150,7 @@ function createMemoryVault(): Vault {
         created: new Date().toISOString(),
         failed: 0,
         blockedUntil: 0,
+        maxAgeDays: null,
       };
       stores.set(k(u), store);
       current = { username: u, store };
@@ -161,6 +165,14 @@ function createMemoryVault(): Vault {
           'Príliš veľa nesprávnych pokusov.',
           new Date(store.blockedUntil).toISOString(),
         );
+      }
+      if (
+        store.maxAgeDays !== null &&
+        store.lastFullSyncAt &&
+        Date.now() - Date.parse(store.lastFullSyncAt) > store.maxAgeDays * 86_400_000
+      ) {
+        stores.delete(k(u));
+        return 'expired';
       }
       if (store.password !== password) {
         store.failed += 1;
@@ -203,10 +215,16 @@ function createMemoryVault(): Vault {
       const store = open();
       keys.forEach((key) => store.data.delete(id(dataset, key)));
     },
+    setSyncState: async (lastFullSyncAt, maxAgeDays) => {
+      const store = open();
+      store.lastFullSyncAt = lastFullSyncAt;
+      store.maxAgeDays = maxAgeDays;
+    },
     info: async () =>
       current
         ? {
             username: current.username,
+            lastFullSyncAt: current.store.lastFullSyncAt,
             sizeBytes: JSON.stringify([...current.store.data.values()]).length,
           }
         : null,

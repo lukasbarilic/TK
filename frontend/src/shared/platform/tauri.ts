@@ -71,6 +71,8 @@ function createVault(): Vault {
       vaultCall<{ value: T; meta: EntryMeta } | null>('vault_get', { dataset, key }),
     list: (dataset) => vaultCall('vault_list', { dataset }),
     remove: (dataset, keys) => vaultCall('vault_remove', { dataset, keys }),
+    setSyncState: (lastFullSyncAt, maxAgeDays) =>
+      vaultCall('vault_set_sync_state', { lastFullSyncAt, maxAgeDays }),
     // zamknutý trezor = žiadne informácie (rovnako ako vo webovom trezore)
     info: async () => {
       try {

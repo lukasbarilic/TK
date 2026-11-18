@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../shared/api/queryKeys';
+import { connection } from '../../shared/offline';
 import { platform } from '../../shared/platform';
 import { changePassword, fetchMe, login, logout } from './authApi';
 import { loginFlow, syncVaultAfterPasswordChange } from './loginFlow';
@@ -22,6 +23,7 @@ export function useLogin() {
     meta: { skipSessionExpired: true },
     onSuccess: async (res) => {
       clearSessionExpired();
+      connection.reset(res.offline ? 'offline' : 'online');
       if (res.offline) qc.setQueryData<Me | null>(queryKeys.me, res.me);
       else await qc.invalidateQueries({ queryKey: queryKeys.me });
     },
@@ -55,6 +57,7 @@ export function useChangePassword() {
 
 function clearSession(qc: QueryClient) {
   clearSessionExpired();
+  connection.reset('online');
   qc.removeQueries({ predicate: (q) => q.queryKey[0] !== queryKeys.me[0] });
   qc.setQueryData<Me | null>(queryKeys.me, null);
 }

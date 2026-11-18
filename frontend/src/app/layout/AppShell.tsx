@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { NavLink as RouterLink, Outlet } from 'react-router-dom';
 import { apiCall } from '../../shared/api/client';
 import { queryKeys } from '../../shared/api/queryKeys';
+import { ConnectionBar, ConnectionRuntime } from '../../features/offline';
 import { receptionInScope, useLogout, useLogoutAndWipe, useMe } from '../../features/auth';
 import { visibleMenu } from '../menu';
 
@@ -114,6 +115,8 @@ export function AppShell() {
       </Modal>
       <MantineAppShell.Main bg="#EEF5FC">
         <Box>
+          <ConnectionRuntime />
+          <ConnectionBar />
           <Outlet />
         </Box>
       </MantineAppShell.Main>

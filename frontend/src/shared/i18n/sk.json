@@ -63,6 +63,26 @@
     "noVault": "Na tomto počítači ste sa ešte neprihlásili online.",
     "vaultExpired": "Offline údaje na tomto počítači vypršali. Prihláste sa online.",
     "vaultThrottled": "Príliš veľa nesprávnych pokusov. Skúste to znova o {{time}}.",
-    "deactivated": "Účet je deaktivovaný. Údaje z tohto počítača boli vymazané."
+    "deactivated": "Účet je deaktivovaný. Údaje z tohto počítača boli vymazané.",
+    "lockedTitle": "Aplikácia je zamknutá",
+    "lockedHint": "Po dlhšej nečinnosti sa aplikácia zamkla. Odomknite ju heslom.",
+    "unlock": "Odomknúť"
+  },
+  "offline": {
+    "writeDisabled": "Nedostupné bez spojenia so serverom",
+    "dataAge": "Údaje z {{time}}",
+    "notStored": "Tieto údaje nie sú na tomto počítači uložené",
+    "onlineOnly": "Dostupné len online",
+    "status": {
+      "online": "Online",
+      "syncing": "Synchronizujem…",
+      "partial": "Časť údajov sa nepodarilo obnoviť",
+      "checking": "Overujem spojenie…",
+      "offline": "Offline",
+      "expired": "Relácia vypršala – prihláste sa znova"
+    },
+    "statusOnlineSynced": "Online – synchronizované {{time}}",
+    "statusOffline": "Offline – len na čítanie, údaje z {{time}}",
+    "statusOfflineNoData": "Offline – len na čítanie"
   }
 }

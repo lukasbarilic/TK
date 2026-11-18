@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { connection } from '../../shared/offline';
 
 // Stav „relácia vypršala“ (401 z ktorejkoľvek požiadavky). Dialóg sa zobrazí nad aktuálnou obrazovkou.
 let expired = false;
@@ -13,6 +14,7 @@ export function markSessionExpired() {
     expired = true;
     emit();
   }
+  connection.onUnauthorized();
 }
 
 export function clearSessionExpired() {
@@ -20,6 +22,7 @@ export function clearSessionExpired() {
     expired = false;
     emit();
   }
+  connection.sessionRestored();
 }
 
 export function useSessionExpired(): boolean {

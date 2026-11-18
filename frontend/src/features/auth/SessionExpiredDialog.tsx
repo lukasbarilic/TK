@@ -1,6 +1,7 @@
 import { Alert, Button, Modal, PasswordInput, Stack, Text } from '@mantine/core';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useConnection } from '../../shared/offline';
 import { useMe, useReauthenticate } from './hooks';
 import { useLoginErrorText } from './LoginPage';
 import { useSessionExpired } from './session';
@@ -8,7 +9,9 @@ import { useSessionExpired } from './session';
 /** Dialóg „Relácia vypršala“ nad aktuálnou obrazovkou; po prihlásení sa dáta obnovia. */
 export function SessionExpiredDialog() {
   const { t } = useTranslation();
-  const expired = useSessionExpired();
+  const flagged = useSessionExpired();
+  const connState = useConnection().state;
+  const expired = flagged || connState === 'session-expired';
   const me = useMe().data;
   const reauth = useReauthenticate();
   const errorText = useLoginErrorText();

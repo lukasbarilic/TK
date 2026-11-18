@@ -78,6 +78,7 @@ pub fn run() {
             commands::vault_list,
             commands::vault_remove,
             commands::vault_info,
+            commands::vault_set_sync_state,
         ])
         .run(tauri::generate_context!())
         .expect("chyba pri spustení aplikácie");
