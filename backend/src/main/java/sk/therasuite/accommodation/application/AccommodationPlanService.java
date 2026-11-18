@@ -284,7 +284,7 @@ public class AccommodationPlanService {
   }
 
   /** Skrátené meno „Priezvisko M.“. */
-  static String label(String lastName, String firstName) {
+  public static String label(String lastName, String firstName) {
     String last = lastName == null ? "" : lastName.trim();
     String first = firstName == null ? "" : firstName.trim();
     if (first.isEmpty()) {
