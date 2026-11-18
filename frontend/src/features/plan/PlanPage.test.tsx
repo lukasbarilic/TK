@@ -140,6 +140,21 @@ describe('PlanPage – online', () => {
     expect(bar('stay:812', 11)).toHaveStyle({ width: '168px' });
   });
 
+  it('odkaz z karty na vzdialený dátum posunie rozsah, ale neuloží ho do plan.defaultView', async () => {
+    mockServer();
+    renderWithProviders(<PlanPage me={receptionist} focus={{ date: '2027-01-27' }} />);
+    await waitFor(() => expect(screen.getByTestId('plan-range')).toHaveTextContent('2027-01-26 – 2027-02-09'));
+    // načíta sa len posunutý rozsah, nie spolu s oknom okolo obchodného dňa
+    await waitFor(() =>
+      expect(planRequests.some((u) => u.searchParams.get('from') === '2027-01-26' && u.searchParams.get('to') === '2027-02-09')).toBe(true),
+    );
+    await new Promise((r) => setTimeout(r, 600));
+    expect(preferenceWrites).toEqual([]);
+    // „Dnes“ vráti rozsah k obchodnému dňu
+    await userEvent.click(screen.getByText('Dnes'));
+    await waitFor(() => expect(screen.getByTestId('plan-range')).toHaveTextContent('2026-11-17 – 2026-12-01'));
+  });
+
   it('posledný pohľad sa načíta z plan.defaultView a farby z plan.colors', async () => {
     mockServer();
     server.use(
