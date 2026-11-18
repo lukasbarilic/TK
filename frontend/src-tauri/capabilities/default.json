@@ -1,0 +1,16 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Povolené príkazy hlavného okna: len príkazy aplikácie a plugin dialog.",
+  "windows": ["main"],
+  "permissions": [
+    "allow-http-request",
+    "allow-live-connect",
+    "allow-live-disconnect",
+    "allow-config-get",
+    "allow-config-set-server-url",
+    "allow-config-device-id",
+    "allow-app-version",
+    "dialog:default"
+  ]
+}

@@ -1,0 +1,22 @@
+[package]
+name = "therasuite-net"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+reqwest = { version = "0.12", default-features = false, features = ["cookies", "stream", "json", "rustls-tls-manual-roots"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+rustls-platform-verifier = "0.5"
+futures-util = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+url = "2"
+uuid = { version = "1", features = ["v4"] }
+log = "0.4"
+tokio = { version = "1", features = ["time", "sync", "macros", "rt"] }
+percent-encoding = "2"
+
+[dev-dependencies]
+tempfile = "3"
+tokio = { version = "1", features = ["rt", "macros", "time", "net", "io-util"] }
