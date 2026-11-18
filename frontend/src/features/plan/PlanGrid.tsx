@@ -1,6 +1,6 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { observeElementRect, useVirtualizer, type Rect } from '@tanstack/react-virtual';
-import { memo, useMemo, useRef, type CSSProperties } from 'react';
+import { memo, useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { colorKeyOf, type BarColors, type ColorKey } from './colors';
 import { canTouch, isRangeFree, type MovePerms, type Occupied } from './moves';
@@ -162,12 +162,14 @@ interface Props {
   onFreeCell?: (click: { roomId: number; bedId: number; day: string }) => void;
   /** Ťahanie (len online a s oprávnením); musí byť stabilná hodnota (useMemo). */
   dnd?: DndConfig;
+  /** Izba z odkazu `?roomId`: mriežka na ňu raz odroluje a zvýrazní ju. */
+  focusRoomId?: number;
 }
 
 /** Je lôžko v daný deň (noc `day`) voľné podľa lokálnych dát? Rozhoduje server, toto je len pomoc. */
 const isFree = (bars: BarVM[], day: string) => !bars.some((b) => b.from <= day && day < b.to);
 
-export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, selectedBarKey, onSelectBar, onFreeCell, dnd }: Props) {
+export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, selectedBarKey, onSelectBar, onFreeCell, dnd, focusRoomId }: Props) {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const dayWidth = DAY_WIDTH[zoom];
@@ -183,6 +185,16 @@ export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, sele
     observeElementRect: (instance, cb) =>
       observeElementRect(instance, (r: Rect) => cb(r.height > 0 ? r : { width: r.width, height: FALLBACK_VIEWPORT_HEIGHT })),
   });
+
+  // Odkaz na izbu: riadok môže byť mimo vykresleného výseku (virtualizácia), preto roluje virtualizér, nie DOM.
+  const scrolledTo = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (focusRoomId === undefined || scrolledTo.current === focusRoomId) return;
+    const index = vm.rows.findIndex((r) => r.kind === 'room' && r.roomId === focusRoomId);
+    if (index < 0) return;
+    scrolledTo.current = focusRoomId;
+    virtualizer.scrollToIndex(index, { align: 'center' });
+  }, [focusRoomId, vm.rows, virtualizer]);
 
   const businessCol = useMemo(() => {
     const date = receptionId === undefined ? undefined : vm.businessDates[receptionId];
@@ -287,6 +299,7 @@ export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, sele
                 onSelectBar={onSelectBar}
                 onFreeCell={onFreeCell}
                 dnd={dnd}
+                focused={row.kind === 'room' && row.roomId === focusRoomId}
               />
             );
           })}
@@ -308,10 +321,12 @@ interface RowProps {
   onSelectBar: (click: BarClick) => void;
   onFreeCell?: Props['onFreeCell'];
   dnd?: DndConfig;
+  /** Izba z odkazu `?roomId` (zvýraznený názov). */
+  focused?: boolean;
 }
 
 /** Riadok mriežky: `memo`, takže zmena v inom riadku (ťahanie, výber) ho neprekreslí. */
-const PlanRowView = memo(function PlanRowView({ row, top, days, dayWidth, width, gridLines, colors, selectedBarId, onSelectBar, onFreeCell, dnd }: RowProps) {
+const PlanRowView = memo(function PlanRowView({ row, top, days, dayWidth, width, gridLines, colors, selectedBarId, onSelectBar, onFreeCell, dnd, focused }: RowProps) {
   const { t } = useTranslation();
   const isRoom = row.kind === 'room';
   const bedId = row.kind === 'bed' ? row.bedId : 0;
@@ -334,6 +349,7 @@ const PlanRowView = memo(function PlanRowView({ row, top, days, dayWidth, width,
       data-testid={isRoom ? 'plan-room-row' : 'plan-bed-row'}
       data-room-id={row.roomId}
       data-bed-id={isRoom ? undefined : row.bedId}
+      data-focused={focused ? 'true' : undefined}
       style={{
         position: 'absolute',
         top: 0,
@@ -360,8 +376,9 @@ const PlanRowView = memo(function PlanRowView({ row, top, days, dayWidth, width,
           fontSize: 13,
           fontWeight: isRoom ? 600 : 400,
           color: isRoom ? '#13243A' : '#4A5D75',
-          background: isRoom ? '#DCEBFA' : '#FFFFFF',
+          background: focused ? '#FFE8A3' : isRoom ? '#DCEBFA' : '#FFFFFF',
           borderRight: '1px solid #C9DCEF',
+          boxShadow: focused ? 'inset 4px 0 0 #B4540A' : undefined,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
