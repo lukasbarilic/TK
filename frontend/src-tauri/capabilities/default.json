@@ -22,6 +22,9 @@
     "allow-vault-list",
     "allow-vault-remove",
     "allow-vault-info",
+    "allow-vault-set-sync-state",
+    "allow-update-check",
+    "allow-update-install",
     "dialog:default"
   ]
 }

@@ -7,6 +7,7 @@ import { apiCall } from '../../shared/api/client';
 import { queryKeys } from '../../shared/api/queryKeys';
 import { ConnectionBar, ConnectionRuntime } from '../../features/offline';
 import { receptionInScope, useLogout, useLogoutAndWipe, useMe } from '../../features/auth';
+import { UpdateRuntime } from '../../features/updates';
 import { visibleMenu } from '../menu';
 
 // Oprávnenia, ktoré sa viažu na recepciu; z nich sa určuje „recepcie v rozsahu“.
@@ -117,6 +118,7 @@ export function AppShell() {
         <Box>
           <ConnectionRuntime />
           <ConnectionBar />
+          <UpdateRuntime />
           <Outlet />
         </Box>
       </MantineAppShell.Main>

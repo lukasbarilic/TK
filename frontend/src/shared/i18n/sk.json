@@ -387,5 +387,16 @@
     "prev": "Späť",
     "next": "Ďalej",
     "pageOf": "Strana {{page}} z {{pages}}"
+  },
+  "updates": {
+    "available": "Je k dispozícii nová verzia",
+    "install": "Aktualizovať a reštartovať",
+    "requiredTitle": "Je potrebná aktualizácia",
+    "requiredText": "Táto verzia aplikácie už nie je podporovaná serverom. Pred ďalšou prácou ju aktualizujte.",
+    "newVersion": "Dostupná verzia: {{version}}",
+    "notAvailable": "Aktualizácia zatiaľ nie je na serveri k dispozícii. Obráťte sa na správcu.",
+    "update": "Aktualizovať",
+    "installing": "Inštalujem aktualizáciu",
+    "failed": "Aktualizáciu sa nepodarilo nainštalovať. Skúste to znova."
   }
 }

@@ -187,3 +187,58 @@ pub fn vault_set_sync_state(
 pub fn vault_info(state: State<'_, AppState>) -> Result<VaultInfo, VaultError> {
     state.vault.info()
 }
+
+/// Informácia o dostupnej aktualizácii pre UI.
+#[derive(serde::Serialize)]
+pub struct UpdateInfo {
+    pub version: String,
+    pub notes: Option<String>,
+}
+
+/// Aktualizátor s endpointom `<serverUrl>/updates/latest.json` (DLD kap. 12); podpis overuje plugin verejným kľúčom z `tauri.conf.json`.
+async fn find_update(
+    app: &AppHandle,
+    state: &AppState,
+) -> Result<Option<tauri_plugin_updater::Update>, String> {
+    use tauri_plugin_updater::UpdaterExt;
+    let server = config::resolve_server_url(&state.paths).ok_or("server nie je nakonfigurovaný")?;
+    let endpoint = format!("{}/updates/latest.json", server.trim_end_matches('/'));
+    let url = endpoint.parse().map_err(|e| format!("neplatná adresa aktualizácií: {e}"))?;
+    app.updater_builder()
+        .endpoints(vec![url])
+        .map_err(|e| e.to_string())?
+        .build()
+        .map_err(|e| e.to_string())?
+        .check()
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn update_check(app: AppHandle, state: State<'_, AppState>) -> Result<Option<UpdateInfo>, String> {
+    Ok(find_update(&app, &state).await?.map(|u| UpdateInfo {
+        version: u.version.clone(),
+        notes: u.body.clone(),
+    }))
+}
+
+/// Stiahne a nainštaluje aktualizáciu (MSI v režime `passive`), priebeh posiela udalosťou `update://progress` (0–100) a aplikáciu reštartuje.
+#[tauri::command]
+pub async fn update_install(app: AppHandle, state: State<'_, AppState>) -> Result<(), String> {
+    let update = find_update(&app, &state).await?.ok_or("aktualizácia nie je k dispozícii")?;
+    let mut done: u64 = 0;
+    let progress = app.clone();
+    update
+        .download_and_install(
+            move |chunk, total| {
+                done += chunk as u64;
+                if let Some(total) = total.filter(|t| *t > 0) {
+                    let _ = progress.emit("update://progress", (done * 100 / total).min(100));
+                }
+            },
+            || {},
+        )
+        .await
+        .map_err(|e| e.to_string())?;
+    app.restart()
+}

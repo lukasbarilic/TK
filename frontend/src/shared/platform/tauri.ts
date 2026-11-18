@@ -49,6 +49,16 @@ function connectLive(
   };
 }
 
+/** Stiahne a nainštaluje aktualizáciu; jadro po inštalácii aplikáciu reštartuje (preto sa `invoke` nemusí vrátiť). */
+async function installUpdate(onProgress: (pct: number) => void): Promise<void> {
+  const unlisten = await listen<number>('update://progress', (e) => onProgress(e.payload));
+  try {
+    await invoke('update_install');
+  } finally {
+    unlisten();
+  }
+}
+
 /** Príkazy `vault_*`; chyby jadra sa menia na `VaultError`. DEK sa do JS nikdy nedostane. */
 async function vaultCall<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
   try {
@@ -98,8 +108,8 @@ export function createTauriPlatform(): Platform {
     },
     app: {
       version: () => invoke<string>('app_version'),
-      checkUpdate: notImplemented, // F16
-      installUpdate: notImplemented, // F16
+      checkUpdate: () => invoke<{ version: string; notes?: string } | null>('update_check'),
+      installUpdate: installUpdate,
     },
     files: { save: notImplemented },
   };
