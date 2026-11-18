@@ -192,8 +192,13 @@ export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, sele
     if (focusRoomId === undefined || scrolledTo.current === focusRoomId) return;
     const index = vm.rows.findIndex((r) => r.kind === 'room' && r.roomId === focusRoomId);
     if (index < 0) return;
-    scrolledTo.current = focusRoomId;
-    virtualizer.scrollToIndex(index, { align: 'center' });
+    // až po dokončení vykreslenia: virtualizér pri (opakovanom) pripojení vráti posun na uložený offset,
+    // napr. v React StrictMode, ktorý vo vývoji spúšťa efekty dvakrát
+    const frame = requestAnimationFrame(() => {
+      scrolledTo.current = focusRoomId;
+      virtualizer.scrollToIndex(index, { align: 'center' });
+    });
+    return () => cancelAnimationFrame(frame);
   }, [focusRoomId, vm.rows, virtualizer]);
 
   const businessCol = useMemo(() => {
