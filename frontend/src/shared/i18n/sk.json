@@ -1,0 +1,18 @@
+{
+  "app": {
+    "name": "TheraSuite",
+    "by": "by N-teq"
+  },
+  "shell": {
+    "menuLabel": "Hlavné menu",
+    "menuEmpty": "Menu zatiaľ neobsahuje žiadne položky."
+  },
+  "plan": {
+    "title": "Plán ubytovania",
+    "comingSoon": "Plán ubytovania – pripravuje sa"
+  },
+  "errors": {
+    "forbidden": "Na túto akciu nemáte oprávnenie.",
+    "generic": "Nastala neočakávaná chyba."
+  }
+}
