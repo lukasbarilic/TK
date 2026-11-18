@@ -87,6 +87,31 @@ class AuditIntegrationTest {
   }
 
   @Test
+  void scheduledTaskRecreatesDroppedPartitions() {
+    YearMonth last = YearMonth.now(ZoneOffset.UTC).plusMonths(2);
+    String suffix = "_y%04dm%02d".formatted(last.getYear(), last.getMonthValue());
+    List<String> tables = List.of("audit_change", "audit_subject_access", "audit_event");
+    jdbc.execute("drop table " + String.join(suffix + ", ", tables) + suffix + " cascade");
+    for (String table : tables) {
+      assertThat(
+              jdbc.queryForObject("select to_regclass(?) is null", Boolean.class, table + suffix))
+          .as(table + suffix)
+          .isTrue();
+    }
+
+    partitions.ensureUpcomingPartitions();
+    partitions.ensureUpcomingPartitions(); // idempotentné
+
+    for (String table : tables) {
+      assertThat(
+              jdbc.queryForObject(
+                  "select to_regclass(?) is not null", Boolean.class, table + suffix))
+          .as(table + suffix)
+          .isTrue();
+    }
+  }
+
+  @Test
   void writeCreatesAuditEventWithChangeAndHeaderAndNoPassword() throws Exception {
     MvcResult result = createUser(as("audit.admin", "ADMIN"), "audit.created");
 
