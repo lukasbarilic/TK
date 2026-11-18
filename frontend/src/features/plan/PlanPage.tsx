@@ -42,8 +42,9 @@ import {
   syncWindow,
   type Preference,
 } from './planApi';
-import { barKey, PlanGrid, type ActiveDrag, type BarClick, type DndConfig } from './PlanGrid';
+import { barKey, LEFT_WIDTH, PlanGrid, type ActiveDrag, type BarClick, type DndConfig } from './PlanGrid';
 import { StayPanel } from './StayPanel';
+import { fillDays } from './fillDays';
 import { DAY_WIDTH, ZOOMS, type BarVM, type DefaultView, type PlanFilters } from './types';
 import { planDataKey, usePlanLive } from './usePlanLive';
 
@@ -138,9 +139,28 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
     () => (businessDate && !config.isPending ? syncWindow(businessDate, config.data?.data) : undefined),
     [businessDate, config.isPending, config.data],
   );
+  // šírka mriežky: dni sa doplnia tak, aby mriežka vyplnila priestor (šírka dňa zostáva podľa zoomu)
+  const [gridWidth, setGridWidth] = useState(0);
+  const gridBoxRef = useCallback((el: HTMLDivElement | null) => {
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      if (entry) setGridWidth(Math.floor(entry.contentRect.width));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const extra = fillDays(gridWidth, DAY_WIDTH[filters.zoom], LEFT_WIDTH, filters.daysBack + filters.daysAhead + 1);
+  // `range` = načítaný rozsah (po celých týždňoch), `view` = zobrazený rozsah (presne do šírky)
   const range = useMemo(
-    () => (businessDate ? { from: addDays(businessDate, -filters.daysBack), to: addDays(businessDate, filters.daysAhead) } : undefined),
-    [businessDate, filters.daysBack, filters.daysAhead],
+    () =>
+      businessDate
+        ? { from: addDays(businessDate, -filters.daysBack), to: addDays(businessDate, filters.daysAhead + extra.fetch) }
+        : undefined,
+    [businessDate, filters.daysBack, filters.daysAhead, extra.fetch],
+  );
+  const view = useMemo(
+    () => (range && businessDate ? { from: range.from, to: addDays(businessDate, filters.daysAhead + extra.show) } : undefined),
+    [range, businessDate, filters.daysAhead, extra.show],
   );
   const plan = useQuery({
     queryKey: [...planDataKey(receptionId ?? 0), range?.from, range?.to, win?.from, win?.to],
@@ -150,11 +170,11 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
   usePlanLive(receptionId);
 
   // --- model zobrazenia ---
-  const planFilters: PlanFilters | undefined = range && {
+  const planFilters: PlanFilters | undefined = view && {
     receptionId,
     buildingIds: filters.buildingIds,
-    from: range.from,
-    to: range.to,
+    from: view.from,
+    to: view.to,
     freeOnly: filters.freeOnly,
     fullyFree: filters.fullyFree,
   };
@@ -162,7 +182,7 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
   const vm = useMemo(
     () => (planFilters && stored ? buildPlanVM(stored.plan, planFilters, { showExtraBeds }) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [stored, range?.from, range?.to, receptionId, filters.buildingIds, filters.freeOnly, filters.fullyFree, showExtraBeds],
+    [stored, view?.from, view?.to, receptionId, filters.buildingIds, filters.freeOnly, filters.fullyFree, showExtraBeds],
   );
   // odkaz z karty (`?roomId`): po zobrazení plánu sa izba odroluje do pohľadu
   const focusRoom = focus?.roomId;
@@ -376,7 +396,7 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
         <Group gap={4}>
           <Button variant="default" size="sm" aria-label={t('plan.prevWeek')} onClick={() => shift(-7)} disabled={!range}>‹</Button>
           <Text fw={600} size="sm" data-testid="plan-range" px="xs">
-            {range ? `${range.from} – ${range.to}` : '–'}
+            {view ? `${view.from} – ${view.to}` : '–'}
           </Text>
           <Button variant="default" size="sm" aria-label={t('plan.nextWeek')} onClick={() => shift(7)} disabled={!range}>›</Button>
           <Button variant="default" size="sm" onClick={() => patch({ daysBack: 1, daysAhead: 13 })}>{t('plan.today')}</Button>
@@ -439,7 +459,7 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
       {vm && shownVm && stored && (
         <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDrag(null)}>
         <Group align="flex-start" wrap="nowrap" gap="md">
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div ref={gridBoxRef} style={{ flex: 1, minWidth: 0 }}>
             <PlanGrid
               vm={shownVm}
               zoom={filters.zoom}
