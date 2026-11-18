@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Vlastnosť MSI SERVER_URL (HLD-frontend kap. 2.4): ak je zadaná, zapíše sa do
+  %ProgramData%\TheraSuite\config.json ako {"serverUrl": "..."}.
+  Odinštalovanie súbor ani trezory používateľov (%LOCALAPPDATA%\TheraSuite\vaults) nemaže.
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <!-- Hodnota nesmie obsahovať úvodzovky, apostrof ani zátvorky (hodnota ide do príkazu PowerShellu). -->
+    <SetProperty Id="WriteServerUrlConfig" Before="WriteServerUrlConfig" Sequence="execute" Value="&quot;[SystemFolder]WindowsPowerShell\v1.0\powershell.exe&quot; -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command &quot;$d = Join-Path $env:ProgramData 'TheraSuite'; New-Item -ItemType Directory -Force -Path $d | Out-Null; [IO.File]::WriteAllText((Join-Path $d 'config.json'), (@{ serverUrl = '[SERVER_URL]' } | ConvertTo-Json), (New-Object Text.UTF8Encoding $false))&quot;">SERVER_URL &lt;&gt; "" AND NOT REMOVE~="ALL"</SetProperty>
+
+    <CustomAction Id="WriteServerUrlConfig" BinaryKey="WixCA" DllEntry="CAQuietExec" Execute="deferred" Impersonate="no" Return="check" />
+
+    <CustomAction Id="CheckServerUrl" Error="Hodnota SERVER_URL je neplatná: musí začínať https:// (alebo http://) a nesmie obsahovať úvodzovky, apostrof ani medzery." />
+
+    <InstallExecuteSequence>
+      <Custom Action="CheckServerUrl" Before="CostFinalize"><![CDATA[SERVER_URL <> "" AND NOT REMOVE~="ALL" AND (NOT (SERVER_URL >< "://") OR SERVER_URL >< "'" OR SERVER_URL >< " ")]]></Custom>
+      <Custom Action="WriteServerUrlConfig" Before="InstallFinalize" />
+    </InstallExecuteSequence>
+
+    <!-- Prázdny komponent: Tauri ho potrebuje ako ComponentRef, aby sa fragment zlinkoval. -->
+    <DirectoryRef Id="TARGETDIR">
+      <Component Id="ServerUrlConfig" Guid="7B1E5C2A-3D4F-4A6B-9C8D-0E1F2A3B4C5D">
+        <RegistryValue Root="HKLM" Key="Software\TheraSuite" Name="ConfigInstalled" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+</Wix>
