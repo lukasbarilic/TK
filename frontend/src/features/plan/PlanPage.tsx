@@ -6,7 +6,7 @@ import type { components } from '../../shared/api/schema';
 import { queryKeys } from '../../shared/api/queryKeys';
 import { DataAge, useConnection } from '../../shared/offline';
 import { receptionsInScope } from '../../shared/offline/scope';
-import { addDays } from '../../shared/time';
+import { addDays, diffDays } from '../../shared/time';
 import { buildPlanVM } from './buildPlanVM';
 import { resolveColors } from './colors';
 import {
@@ -31,7 +31,12 @@ const SAVE_DELAY_MS = 400;
 const DEFAULT_VIEW_KEY = 'plan.defaultView';
 
 /** Plán ubytovania (DLD kap. 9): mriežka, filtre, bočný panel, živé zmeny. Načíta nastavenia a až potom zobrazí obrazovku. */
-export function PlanPage({ me }: { me: Me | null | undefined }) {
+export interface PlanFocus {
+  roomId?: number;
+  date?: string;
+}
+
+export function PlanPage({ me, focus }: { me: Me | null | undefined; focus?: PlanFocus }) {
   const view = useQuery({ queryKey: queryKeys.preference(DEFAULT_VIEW_KEY), queryFn: () => loadPreference(DEFAULT_VIEW_KEY) });
   const colors = useQuery({ queryKey: queryKeys.preference('plan.colors'), queryFn: () => loadPreference('plan.colors') });
   const extra = useQuery({ queryKey: queryKeys.preference('plan.showExtraBeds'), queryFn: () => loadPreference('plan.showExtraBeds') });
@@ -39,6 +44,7 @@ export function PlanPage({ me }: { me: Me | null | undefined }) {
   return (
     <PlanScreen
       me={me}
+      focus={focus}
       initial={parseDefaultView(view.data?.data?.value)}
       initialVersion={view.data?.data?.version}
       colorPref={colors.data?.data?.value}
@@ -49,13 +55,14 @@ export function PlanPage({ me }: { me: Me | null | undefined }) {
 
 interface ScreenProps {
   me: Me | null | undefined;
+  focus?: PlanFocus;
   initial: DefaultView;
   initialVersion?: number;
   colorPref: unknown;
   showExtraBeds: boolean;
 }
 
-function PlanScreen({ me, initial, initialVersion, colorPref, showExtraBeds }: ScreenProps) {
+function PlanScreen({ me, focus, initial, initialVersion, colorPref, showExtraBeds }: ScreenProps) {
   const { t } = useTranslation();
   const { state, canWrite } = useConnection();
   const [filters, setFilters] = useState<DefaultView>(initial);
@@ -80,6 +87,15 @@ function PlanScreen({ me, initial, initialVersion, colorPref, showExtraBeds }: S
   });
   const config = useQuery({ queryKey: [...queryKeys.plan, 'config'], queryFn: loadClientConfig });
   const businessDate = day.data?.data?.businessDate;
+  // odkaz z karty (`?date`): rozsah plánu sa rozšíri tak, aby obsahoval požadovaný dátum
+  const focusDate = focus?.date;
+  const focused = useRef(false);
+  useEffect(() => {
+    if (!focusDate || !businessDate || focused.current) return;
+    focused.current = true;
+    const diff = diffDays(businessDate, focusDate);
+    setFilters((f) => ({ ...f, daysBack: Math.min(31, Math.max(f.daysBack, 1 - diff)), daysAhead: Math.min(60, Math.max(f.daysAhead, diff + 7)) }));
+  }, [focusDate, businessDate]);
   const win = useMemo(
     () => (businessDate && !config.isPending ? syncWindow(businessDate, config.data?.data) : undefined),
     [businessDate, config.isPending, config.data],
@@ -110,6 +126,16 @@ function PlanScreen({ me, initial, initialVersion, colorPref, showExtraBeds }: S
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [stored, range?.from, range?.to, receptionId, filters.buildingIds, filters.freeOnly, filters.fullyFree, showExtraBeds],
   );
+  // odkaz z karty (`?roomId`): po zobrazení plánu sa izba odroluje do pohľadu
+  const focusRoom = focus?.roomId;
+  const scrolledRoom = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (focusRoom === undefined || !vm || scrolledRoom.current === focusRoom) return;
+    const el = document.querySelector(`[data-room-id="${focusRoom}"]`);
+    if (!el) return;
+    scrolledRoom.current = focusRoom;
+    el.scrollIntoView({ block: 'center' });
+  }, [focusRoom, vm]);
   const palette = useMemo(() => resolveColors(colorPref), [colorPref]);
 
   const buildings = useMemo(() => {
