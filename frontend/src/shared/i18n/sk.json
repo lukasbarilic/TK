@@ -59,6 +59,38 @@
         "HELD_BED": "Držané lôžko",
         "ROOM_BLOCK": "Blokácia izby"
       }
+    },
+    "moves": {
+      "refreshed": "Dotknuté izby sa obnovili.",
+      "swapPick": "Vyberte druhý pobyt, s ktorým sa vymení.",
+      "swapCancel": "Zrušiť výmenu",
+      "cancelTitle": "Zrušiť ubytovanie",
+      "cancelText": "Naozaj zrušiť toto budúce ubytovanie?",
+      "cancelYes": "Zrušiť ubytovanie",
+      "cancelNo": "Ponechať",
+      "notAllowedHere": "Tento presun nie je povolený."
+    },
+    "menu": {
+      "moveFrom": "Presťahovať od…",
+      "swap": "Vymeniť s…",
+      "cancel": "Zrušiť ubytovanie"
+    },
+    "moveFrom": {
+      "bed": "Cieľové lôžko",
+      "day": "Od dňa",
+      "invalid": "Deň musí byť vnútri pobytu.",
+      "submit": "Presťahovať"
+    },
+    "parking": {
+      "title": "Odkladisko",
+      "hint": "Presuňte sem pásiky a potom ich pustite na nové lôžka.",
+      "empty": "Prázdne",
+      "noTarget": "Pustite na lôžko v pláne",
+      "failed": "Táto položka zlyhala",
+      "remove": "Vrátiť",
+      "save": "Uložiť zmeny",
+      "clear": "Zahodiť",
+      "saveFailed": "Zmeny sa neuložili, odkladisko ostalo."
     }
   },
   "errors": {
