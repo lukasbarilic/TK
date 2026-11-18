@@ -5,10 +5,10 @@ import { ComingSoon } from './ComingSoon';
 import { HomeRedirect } from './HomeRedirect';
 import { AppShell } from './layout/AppShell';
 import { MENU } from './menu';
-import { PlanPlaceholder } from './PlanPlaceholder';
+import { PlanRoute } from './PlanRoute';
 
 const pageFor = (path: string, labelKey: string): ReactNode =>
-  path === '/plan' ? <PlanPlaceholder /> : <ComingSoon titleKey={labelKey} />;
+  path === '/plan' ? <PlanRoute /> : <ComingSoon titleKey={labelKey} />;
 
 export const routes: RouteObject[] = [
   {

@@ -45,8 +45,11 @@ export interface SyncEngine {
 export interface SyncEngineOptions {
   vault: Platform['vault'];
   connection: Pick<Connection, 'getState' | 'onUnauthorized'>;
-  /** Volá sa po úspešnom obnovení dát (TanStack Query: invalidácia všetkých dotazov). */
-  onDataChanged?: () => void;
+  /**
+   * Volá sa po úspešnom obnovení dát (TanStack Query: invalidácia dotazov). `scope: 'rooms'` = čiastočná obnova po
+   * `plan-changed`: plán si dotknuté izby obnoví sám, takže jeho dotazy sa nemajú invalidovať celé.
+   */
+  onDataChanged?: (scope?: 'rooms') => void;
   now?: () => Date;
   concurrency?: number;
 }
@@ -379,7 +382,7 @@ export function createSyncEngine(opts: SyncEngineOptions): SyncEngine {
       await fetchMovements(receptionId, day);
       await fetchMovements(receptionId, addDays(day, 1));
     }
-    opts.onDataChanged?.();
+    opts.onDataChanged?.('rooms');
   }
 
   const engine: SyncEngine = {

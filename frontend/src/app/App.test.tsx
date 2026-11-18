@@ -48,7 +48,7 @@ describe('prihlásenie', () => {
     await user.type(await screen.findByLabelText(/^Používateľské meno/), 'recepcna.demo');
     await user.type(screen.getByLabelText(/^Heslo/), 'heslo-demo');
     await user.click(screen.getByRole('button', { name: 'Prihlásiť sa' }));
-    expect(await screen.findByText('Plán ubytovania – pripravuje sa')).toBeInTheDocument();
+    expect(await screen.findByTestId('plan-page')).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/plan');
   });
 
@@ -114,7 +114,7 @@ describe('prihlásenie', () => {
     await user.type(screen.getByLabelText(/^Nové heslo(?! znova)/), 'nove-heslo-1');
     await user.type(screen.getByLabelText(/^Nové heslo znova/), 'nove-heslo-1');
     await user.click(screen.getByRole('button', { name: 'Zmeniť heslo' }));
-    expect(await screen.findByText('Plán ubytovania – pripravuje sa')).toBeInTheDocument();
+    expect(await screen.findByTestId('plan-page')).toBeInTheDocument();
   });
 
   it('odhlásenie zavolá POST /api/auth/logout a vráti na prihlásenie', async () => {
@@ -165,7 +165,7 @@ describe('lokálny trezor a prihlásenie bez servera', () => {
     online();
     renderApp();
     await typeCredentials('recepcna.demo', 'heslo-demo');
-    await screen.findByText('Plán ubytovania – pripravuje sa');
+    await screen.findByTestId('plan-page');
     expect(await platform.vault.exists('recepcna.demo')).toBe(true);
     expect((await platform.vault.get(SESSION_DATASET, SESSION_KEY))?.value).toEqual(receptionist);
   });
@@ -178,7 +178,7 @@ describe('lokálny trezor a prihlásenie bez servera', () => {
     online();
     renderApp();
     await typeCredentials('recepcna.demo', 'nove-heslo');
-    await screen.findByText('Plán ubytovania – pripravuje sa');
+    await screen.findByTestId('plan-page');
     expect(await platform.vault.get('plan', '1')).toBeNull();
     await platform.vault.lock();
     expect(await platform.vault.unlock('recepcna.demo', 'nove-heslo')).toBe('ok');
@@ -192,7 +192,7 @@ describe('lokálny trezor a prihlásenie bez servera', () => {
     online();
     renderApp();
     await typeCredentials('recepcna.demo', 'heslo-demo');
-    await screen.findByText('Plán ubytovania – pripravuje sa');
+    await screen.findByTestId('plan-page');
     expect((await platform.vault.get('plan', '1'))?.value).toEqual({ a: 1 });
   });
 
@@ -205,7 +205,7 @@ describe('lokálny trezor a prihlásenie bez servera', () => {
     );
     renderApp();
     await typeCredentials('recepcna.demo', 'heslo-demo');
-    expect(await screen.findByText('Plán ubytovania – pripravuje sa')).toBeInTheDocument();
+    expect(await screen.findByTestId('plan-page')).toBeInTheDocument();
     expect(screen.getByText('Recepčná Ukážková')).toBeInTheDocument();
   });
 
@@ -288,7 +288,7 @@ describe('lokálny trezor a prihlásenie bez servera', () => {
     await user.type(screen.getByLabelText(/^Nové heslo(?! znova)/), 'nove-heslo-1');
     await user.type(screen.getByLabelText(/^Nové heslo znova/), 'nove-heslo-1');
     await user.click(screen.getByRole('button', { name: 'Zmeniť heslo' }));
-    await screen.findByText('Plán ubytovania – pripravuje sa');
+    await screen.findByTestId('plan-page');
     await platform.vault.lock();
     expect(await platform.vault.unlock('recepcna.demo', 'stare')).toBe('wrong-password');
     expect(await platform.vault.unlock('recepcna.demo', 'nove-heslo-1')).toBe('ok');
@@ -314,7 +314,7 @@ describe('menu a trasy podľa oprávnení', () => {
   it('recepčná: plán, karty, príchody, uzávierka, hostia; úvod = plán', async () => {
     mockApi(receptionist);
     const { router } = renderApp();
-    expect(await screen.findByText('Plán ubytovania – pripravuje sa')).toBeInTheDocument();
+    expect(await screen.findByTestId('plan-page')).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/plan');
     expect(menu().getAllByRole('link').map((l) => l.textContent)).toEqual([
       'Plán ubytovania', 'Rezervačné karty', 'Príchody a odchody', 'Nočná uzávierka', 'Zoznam hostí',
@@ -361,8 +361,10 @@ describe('recepcia a obchodný deň', () => {
     renderApp();
     const select = await screen.findByRole('combobox', { name: 'Recepcia' });
     await userEvent.setup().click(select);
-    expect(await screen.findByRole('option', { name: 'Recepcia A', hidden: true })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Recepcia B', hidden: true })).toBeInTheDocument();
+    // zoznam v menu (plán má vlastný natívny výber recepcie s rovnakými názvami)
+    const list = within(await screen.findByRole('listbox', { hidden: true }));
+    expect(await list.findByRole('option', { name: 'Recepcia A', hidden: true })).toBeInTheDocument();
+    expect(list.getByRole('option', { name: 'Recepcia B', hidden: true })).toBeInTheDocument();
   });
 });
 
@@ -385,19 +387,19 @@ describe('relácia vypršala', () => {
       }),
     );
     const { client } = renderApp();
-    await screen.findByText('Plán ubytovania – pripravuje sa');
+    await screen.findByTestId('plan-page');
     await waitFor(() => expect(businessDayCalls).toBe(1));
 
     expired = true;
     await client.invalidateQueries({ queryKey: ['business-day'] });
     expect(await screen.findByText('Relácia vypršala')).toBeInTheDocument();
-    expect(screen.getByText('Plán ubytovania – pripravuje sa')).toBeInTheDocument();
+    expect(screen.getByTestId('plan-page')).toBeInTheDocument();
 
     const user = userEvent.setup();
     await user.type(screen.getByLabelText(/^Heslo/), 'heslo-demo');
     await user.click(screen.getByRole('button', { name: 'Prihlásiť sa' }));
     await waitFor(() => expect(screen.queryByText('Relácia vypršala')).not.toBeInTheDocument());
     await waitFor(() => expect(businessDayCalls).toBeGreaterThan(2));
-    expect(screen.getByText('Plán ubytovania – pripravuje sa')).toBeInTheDocument();
+    expect(screen.getByTestId('plan-page')).toBeInTheDocument();
   });
 });
