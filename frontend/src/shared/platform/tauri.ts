@@ -1,15 +1,58 @@
-import type { Platform } from './types';
+import { invoke } from '@tauri-apps/api/core';
+import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+import type { HttpRequest, HttpResponse, LiveEvent, LiveState, Platform } from './types';
 
 const notImplemented = (): never => {
   throw new Error('Tauri platforma nie je implementovaná');
 };
 
-// Kostra; implementácia príde v tikete F02.
+interface WireResponse {
+  status: number;
+  headers: Record<string, string>;
+  json?: unknown;
+  bytes?: number[];
+}
+
+interface LiveStatePayload {
+  state: LiveState;
+  reason?: string;
+}
+
+async function http(req: HttpRequest): Promise<HttpResponse> {
+  const res = await invoke<WireResponse>('http_request', { request: req });
+  const { bytes, ...rest } = res;
+  return bytes ? { ...rest, bytes: new Uint8Array(bytes) } : rest;
+}
+
+function connectLive(
+  onEvent: (e: LiveEvent) => void,
+  onState: (s: LiveState) => void,
+): () => void {
+  let closed = false;
+  const unlisten: UnlistenFn[] = [];
+  const setup = Promise.all([
+    listen<LiveEvent>('live://event', (e) => onEvent(e.payload)),
+    listen<LiveStatePayload>('live://state', (e) => onState(e.payload.state)),
+  ]).then(async (fns) => {
+    unlisten.push(...fns);
+    if (closed) fns.forEach((f) => f());
+    else await invoke('live_connect');
+  });
+  setup.catch(() => onState('closed'));
+  return () => {
+    if (closed) return;
+    closed = true;
+    unlisten.forEach((f) => f());
+    void setup.then(() => invoke('live_disconnect')).catch(() => {});
+    onState('closed');
+  };
+}
+
 export function createTauriPlatform(): Platform {
   return {
     kind: 'tauri',
-    http: () => Promise.reject(new Error('Tauri platforma nie je implementovaná')),
-    live: { connect: notImplemented },
+    http,
+    live: { connect: connectLive },
     vault: {
       exists: notImplemented,
       create: notImplemented,
@@ -23,8 +66,16 @@ export function createTauriPlatform(): Platform {
       remove: notImplemented,
       info: notImplemented,
     },
-    config: { serverUrl: notImplemented, setServerUrl: notImplemented, deviceId: notImplemented },
-    app: { version: notImplemented, checkUpdate: notImplemented, installUpdate: notImplemented },
+    config: {
+      serverUrl: () => invoke<string | null>('config_get'),
+      setServerUrl: (url) => invoke<void>('config_set_server_url', { url }),
+      deviceId: () => invoke<string>('config_device_id'),
+    },
+    app: {
+      version: () => invoke<string>('app_version'),
+      checkUpdate: notImplemented, // F16
+      installUpdate: notImplemented, // F16
+    },
     files: { save: notImplemented },
   };
 }
