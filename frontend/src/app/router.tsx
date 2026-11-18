@@ -5,10 +5,12 @@ import { ComingSoon } from './ComingSoon';
 import { HomeRedirect } from './HomeRedirect';
 import { AppShell } from './layout/AppShell';
 import { MENU } from './menu';
+import { ReservationsPage } from '../features/reservations';
 import { PlanRoute } from './PlanRoute';
+import { ReservationDetailRoute } from './ReservationRoutes';
 
 const pageFor = (path: string, labelKey: string): ReactNode =>
-  path === '/plan' ? <PlanRoute /> : <ComingSoon titleKey={labelKey} />;
+  path === '/plan' ? <PlanRoute /> : path === '/reservations' ? <ReservationsPage /> : <ComingSoon titleKey={labelKey} />;
 
 export const routes: RouteObject[] = [
   {
@@ -24,6 +26,14 @@ export const routes: RouteObject[] = [
         path: m.path.slice(1),
         element: <RequirePermission code={m.permission}>{pageFor(m.path, m.labelKey)}</RequirePermission>,
       })),
+      {
+        path: 'reservations/:id',
+        element: (
+          <RequirePermission code="RESERVATION_VIEW">
+            <ReservationDetailRoute />
+          </RequirePermission>
+        ),
+      },
       { path: '*', element: <ForbiddenPage /> },
     ],
   },

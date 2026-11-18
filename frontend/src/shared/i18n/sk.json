@@ -122,5 +122,33 @@
     "statusOnlineSynced": "Online – synchronizované {{time}}",
     "statusOffline": "Offline – len na čítanie, údaje z {{time}}",
     "statusOfflineNoData": "Offline – len na čítanie"
+  },
+  "reservations": {
+    "title": "Rezervačné karty",
+    "searchLabel": "Meno alebo číslo karty",
+    "searchPlaceholder": "napr. Ukážková alebo R-2026-0912",
+    "statusLabel": "Stav",
+    "statusAll": "Všetky",
+    "search": "Hľadať",
+    "number": "Číslo karty",
+    "guest": "Hosť",
+    "dates": "Termín",
+    "empty": "Nenašli sa žiadne karty.",
+    "emptyLocal": "Na tomto počítači sa nenašla žiadna uložená karta.",
+    "localOnly": "Bez spojenia sa hľadá len v kartách uložených na tomto PC. Nájdené výsledky nemusia byť úplné.",
+    "pageInfo": "Strana {{page}} z {{pages}}",
+    "detail": "Detail karty",
+    "back": "Späť na zoznam",
+    "guests": "Hostia",
+    "stays": "Pobyty",
+    "noStays": "Karta nemá žiadne pobyty.",
+    "showInPlan": "Zobraziť v pláne",
+    "edit": "Úprava karty",
+    "arrival": "Príchod",
+    "departure": "Odchod",
+    "doNotMove": "Nepresúvať",
+    "save": "Uložiť",
+    "saved": "Karta bola uložená.",
+    "conflict": "Kartu medzitým zmenil niekto iný. Údaje sa obnovili – skontrolujte ich a uložte znova."
   }
 }
