@@ -38,6 +38,7 @@ import sk.therasuite.iam.domain.Permissions;
 import sk.therasuite.shared.AuditedRead;
 import sk.therasuite.shared.AuditedReadResult;
 import sk.therasuite.shared.DataScope;
+import sk.therasuite.shared.api.ConditionalGet;
 import sk.therasuite.shared.application.ApiException;
 
 /**
@@ -74,6 +75,39 @@ public class AccommodationPlanService {
   @AuditedRead(operation = "PLAN_VIEW", scope = DataScope.NAME)
   @Transactional(readOnly = true)
   public AuditedReadResult<Plan> plan(LocalDate from, LocalDate to, PlanFilter filter) {
+    validateRequest(from, to, filter);
+    StayPeriod period = new StayPeriod(from, to);
+    PlanData data =
+        queries.loadPlan(
+            period,
+            filter.buildingIds(),
+            filter.roomIds(),
+            filter.receptionId(),
+            reception -> permissions.has(Permissions.PLAN_VIEW, reception));
+    return assemble(period, data, filter);
+  }
+
+  /**
+   * Odtlačok plánu pre ETag: počítadlo zmien recepcie, rozsah dátumov, filtre a ID používateľa.
+   * Kontroluje parametre aj oprávnenie ako {@link #plan}, ale nič nečíta ani neauditúje.
+   */
+  @Transactional(readOnly = true)
+  public String planEtag(long userId, LocalDate from, LocalDate to, PlanFilter filter) {
+    validateRequest(from, to, filter);
+    return ConditionalGet.etag(
+        "plan",
+        userId,
+        from,
+        to,
+        filter.buildingIds(),
+        filter.roomIds(),
+        filter.receptionId(),
+        filter.freeOnly(),
+        filter.fullyFree(),
+        queries.changeSeqToken(filter.receptionId()));
+  }
+
+  private void validateRequest(LocalDate from, LocalDate to, PlanFilter filter) {
     if (from == null
         || to == null
         || !from.isBefore(to)
@@ -90,15 +124,6 @@ public class AccommodationPlanService {
     } else {
       permissions.require(Permissions.PLAN_VIEW);
     }
-    StayPeriod period = new StayPeriod(from, to);
-    PlanData data =
-        queries.loadPlan(
-            period,
-            filter.buildingIds(),
-            filter.roomIds(),
-            filter.receptionId(),
-            reception -> permissions.has(Permissions.PLAN_VIEW, reception));
-    return assemble(period, data, filter);
   }
 
   /**
