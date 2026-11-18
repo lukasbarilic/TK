@@ -11,6 +11,17 @@
     "allow-config-set-server-url",
     "allow-config-device-id",
     "allow-app-version",
+    "allow-vault-exists",
+    "allow-vault-create",
+    "allow-vault-unlock",
+    "allow-vault-rewrap",
+    "allow-vault-lock",
+    "allow-vault-wipe",
+    "allow-vault-put",
+    "allow-vault-get",
+    "allow-vault-list",
+    "allow-vault-remove",
+    "allow-vault-info",
     "dialog:default"
   ]
 }

@@ -11,7 +11,13 @@
     "businessDayUnknown": "Obchodný deň nie je k dispozícii",
     "logout": "Odhlásiť",
     "loading": "Načítavam…",
-    "comingSoon": "{{title}} – pripravuje sa"
+    "comingSoon": "{{title}} – pripravuje sa",
+    "logoutAndWipe": "Odhlásiť a vymazať údaje z tohto počítača",
+    "wipeTitle": "Vymazať údaje z tohto počítača?",
+    "wipeText": "Používateľ bude odhlásený a offline údaje uložené na tomto počítači sa nenávratne vymažú. Bez pripojenia k serveru sa potom nebude možné prihlásiť.",
+    "wipeConfirm": "Odhlásiť a vymazať",
+    "cancel": "Zrušiť",
+    "profile": "Profil používateľa"
   },
   "plan": {
     "title": "Plán ubytovania",
@@ -53,6 +59,10 @@
     "sessionExpiredTitle": "Relácia vypršala",
     "sessionExpiredHint": "Zadajte heslo a pokračujte tam, kde ste skončili.",
     "forbiddenTitle": "Nemáte oprávnenie",
-    "forbiddenText": "Na túto časť aplikácie nemáte oprávnenie."
+    "forbiddenText": "Na túto časť aplikácie nemáte oprávnenie.",
+    "noVault": "Na tomto počítači ste sa ešte neprihlásili online.",
+    "vaultExpired": "Offline údaje na tomto počítači vypršali. Prihláste sa online.",
+    "vaultThrottled": "Príliš veľa nesprávnych pokusov. Skúste to znova o {{time}}.",
+    "deactivated": "Účet je deaktivovaný. Údaje z tohto počítača boli vymazané."
   }
 }

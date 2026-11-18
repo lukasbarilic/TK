@@ -1,11 +1,11 @@
-import { AppShell as MantineAppShell, Box, Button, NavLink, Select, Stack, Text } from '@mantine/core';
+import { AppShell as MantineAppShell, Box, Button, Group, Menu, Modal, NavLink, Select, Stack, Text } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink as RouterLink, Outlet } from 'react-router-dom';
 import { apiCall } from '../../shared/api/client';
 import { queryKeys } from '../../shared/api/queryKeys';
-import { receptionInScope, useLogout, useMe } from '../../features/auth';
+import { receptionInScope, useLogout, useLogoutAndWipe, useMe } from '../../features/auth';
 import { visibleMenu } from '../menu';
 
 // Oprávnenia, ktoré sa viažu na recepciu; z nich sa určuje „recepcie v rozsahu“.
@@ -15,6 +15,8 @@ export function AppShell() {
   const { t, i18n } = useTranslation();
   const me = useMe().data;
   const logout = useLogout();
+  const wipe = useLogoutAndWipe();
+  const [confirmWipe, setConfirmWipe] = useState(false);
   const [chosen, setChosen] = useState<number | null>(null);
 
   const receptions = useQuery({
@@ -77,12 +79,39 @@ export function AppShell() {
           ))}
         </nav>
         <Box mt="auto">
-          <Text size="sm" fw={500}>{me?.displayName ?? me?.username}</Text>
+          <Menu position="top-start" withinPortal>
+            <Menu.Target>
+              <Button variant="subtle" size="compact-sm" px={0} fw={500} aria-label={t('shell.profile')}>
+                {me?.displayName ?? me?.username}
+              </Button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item color="red" onClick={() => setConfirmWipe(true)}>
+                {t('shell.logoutAndWipe')}
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+          <br />
           <Button variant="subtle" size="compact-sm" px={0} onClick={() => logout.mutate()}>
             {t('shell.logout')}
           </Button>
         </Box>
       </MantineAppShell.Navbar>
+      <Modal opened={confirmWipe} onClose={() => setConfirmWipe(false)} title={t('shell.wipeTitle')}>
+        <Stack>
+          <Text size="sm">{t('shell.wipeText')}</Text>
+          <Group justify="flex-end">
+            <Button variant="default" onClick={() => setConfirmWipe(false)}>{t('shell.cancel')}</Button>
+            <Button
+              color="red"
+              loading={wipe.isPending}
+              onClick={() => me?.username && wipe.mutate(me.username)}
+            >
+              {t('shell.wipeConfirm')}
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
       <MantineAppShell.Main bg="#EEF5FC">
         <Box>
           <Outlet />

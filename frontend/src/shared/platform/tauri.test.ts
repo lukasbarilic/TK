@@ -62,7 +62,44 @@ describe('tauri platforma', () => {
     await vi.waitFor(() => expect(invoke).toHaveBeenCalledWith('live_disconnect'));
   });
 
-  it('trezor zatiaľ nie je implementovaný (F04)', () => {
-    expect(() => createTauriPlatform().vault.lock()).toThrow('nie je implementovaná');
+  it('trezor volá príkazy vault_* s camelCase argumentmi', async () => {
+    invoke.mockResolvedValue(undefined);
+    const { vault } = createTauriPlatform();
+    await vault.create('jana', 'h');
+    await vault.rewrap('a', 'b');
+    await vault.put('ds', 'k', { x: 1 });
+    await vault.remove('ds', ['k']);
+    await vault.wipe('jana');
+    await vault.lock();
+    expect(invoke.mock.calls).toEqual([
+      ['vault_create', { username: 'jana', password: 'h' }],
+      ['vault_rewrap', { oldPassword: 'a', newPassword: 'b' }],
+      ['vault_put', { dataset: 'ds', key: 'k', value: { x: 1 }, meta: null }],
+      ['vault_remove', { dataset: 'ds', keys: ['k'] }],
+      ['vault_wipe', { username: 'jana' }],
+      ['vault_lock', undefined],
+    ]);
+  });
+
+  it('unlock vráti výsledok a chyby jadra sú VaultError', async () => {
+    const { vault } = createTauriPlatform();
+    invoke.mockResolvedValueOnce('wrong-password');
+    expect(await vault.unlock('jana', 'x')).toBe('wrong-password');
+    invoke.mockRejectedValueOnce({ kind: 'throttled', message: 'moc pokusov', until: '2026-11-18T10:00:30Z' });
+    await expect(vault.unlock('jana', 'x')).rejects.toMatchObject({
+      name: 'VaultError',
+      kind: 'throttled',
+      until: '2026-11-18T10:00:30Z',
+    });
+    invoke.mockRejectedValueOnce({ kind: 'locked', message: 'zamknuté' });
+    await expect(vault.get('ds', 'k')).rejects.toMatchObject({ kind: 'locked' });
+  });
+
+  it('info zamknutého trezoru je null', async () => {
+    const { vault } = createTauriPlatform();
+    invoke.mockRejectedValueOnce({ kind: 'locked', message: 'x' });
+    expect(await vault.info()).toBeNull();
+    invoke.mockResolvedValueOnce({ username: 'jana', sizeBytes: 5 });
+    expect(await vault.info()).toEqual({ username: 'jana', sizeBytes: 5 });
   });
 });

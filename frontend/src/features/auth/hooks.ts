@@ -1,6 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../shared/api/queryKeys';
+import { platform } from '../../shared/platform';
 import { changePassword, fetchMe, login, logout } from './authApi';
+import { loginFlow, syncVaultAfterPasswordChange } from './loginFlow';
 import { hasPermission, type Me } from './permissions';
 import { clearSessionExpired } from './session';
 
@@ -16,11 +18,12 @@ export function usePermission(code: string, receptionId?: number): boolean {
 export function useLogin() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (v: { username: string; password: string }) => login(v.username, v.password),
+    mutationFn: (v: { username: string; password: string }) => loginFlow(v.username, v.password),
     meta: { skipSessionExpired: true },
-    onSuccess: async () => {
+    onSuccess: async (res) => {
       clearSessionExpired();
-      await qc.invalidateQueries({ queryKey: queryKeys.me });
+      if (res.offline) qc.setQueryData<Me | null>(queryKeys.me, res.me);
+      else await qc.invalidateQueries({ queryKey: queryKeys.me });
     },
   });
 }
@@ -41,21 +44,53 @@ export function useReauthenticate() {
 export function useChangePassword() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (v: { currentPassword: string; newPassword: string }) =>
-      changePassword(v.currentPassword, v.newPassword),
+    mutationFn: async (v: { currentPassword: string; newPassword: string }) => {
+      const me = qc.getQueryData<Me | null>(queryKeys.me);
+      await changePassword(v.currentPassword, v.newPassword);
+      if (me?.username) await syncVaultAfterPasswordChange(me.username, v.currentPassword, v.newPassword);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.me }),
   });
+}
+
+function clearSession(qc: QueryClient) {
+  clearSessionExpired();
+  qc.removeQueries({ predicate: (q) => q.queryKey[0] !== queryKeys.me[0] });
+  qc.setQueryData<Me | null>(queryKeys.me, null);
 }
 
 export function useLogout() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: logout,
+    mutationFn: async () => {
+      try {
+        await logout();
+      } finally {
+        await platform.vault.lock();
+      }
+    },
     meta: { skipSessionExpired: true },
     onSettled: () => {
-      clearSessionExpired();
-      qc.removeQueries({ predicate: (q) => q.queryKey[0] !== queryKeys.me[0] });
-      qc.setQueryData<Me | null>(queryKeys.me, null);
+      clearSession(qc);
     },
+  });
+}
+
+/** „Odhlásiť a vymazať údaje z tohto počítača“: odhlási (aj bez servera) a zmaže trezor používateľa. */
+export function useLogoutAndWipe() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (username: string) => {
+      try {
+        await logout();
+      } catch {
+        // server nemusí byť dostupný; lokálne údaje sa zmažú tak či tak
+      } finally {
+        await platform.vault.lock();
+        await platform.vault.wipe(username);
+      }
+    },
+    meta: { skipSessionExpired: true },
+    onSettled: () => clearSession(qc),
   });
 }
