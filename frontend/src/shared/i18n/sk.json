@@ -171,6 +171,24 @@
     "statusOffline": "Offline – len na čítanie, údaje z {{time}}",
     "statusOfflineNoData": "Offline – len na čítanie"
   },
+  "movements": {
+    "title": "Príchody a odchody",
+    "arrivals": "Príchody",
+    "departures": "Odchody",
+    "today": "Dnes",
+    "tomorrow": "Zajtra",
+    "dayGroup": "Deň",
+    "print": "Tlačiť",
+    "empty": "Žiadne záznamy.",
+    "noRoom": "bez izby",
+    "room": "Izba",
+    "guest": "Hosť",
+    "card": "Karta",
+    "persons": "Osôb",
+    "stay": "Pobyt",
+    "payer": "Platiteľ",
+    "status": "Stav"
+  },
   "reservations": {
     "title": "Rezervačné karty",
     "searchLabel": "Meno alebo číslo karty",

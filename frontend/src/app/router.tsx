@@ -6,11 +6,12 @@ import { HomeRedirect } from './HomeRedirect';
 import { AppShell } from './layout/AppShell';
 import { MENU } from './menu';
 import { ReservationsPage } from '../features/reservations';
+import { MovementsRoute } from './MovementsRoute';
 import { PlanRoute } from './PlanRoute';
 import { ReservationDetailRoute } from './ReservationRoutes';
 
 const pageFor = (path: string, labelKey: string): ReactNode =>
-  path === '/plan' ? <PlanRoute /> : path === '/reservations' ? <ReservationsPage /> : <ComingSoon titleKey={labelKey} />;
+  path === '/plan' ? <PlanRoute /> : path === '/reservations' ? <ReservationsPage /> : path === '/movements' ? <MovementsRoute /> : <ComingSoon titleKey={labelKey} />;
 
 export const routes: RouteObject[] = [
   {
