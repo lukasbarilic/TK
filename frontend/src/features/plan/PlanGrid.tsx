@@ -1,8 +1,10 @@
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { observeElementRect, useVirtualizer, type Rect } from '@tanstack/react-virtual';
-import { memo, useMemo, useRef } from 'react';
+import { memo, useMemo, useRef, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { colorKeyOf, type BarColors, type ColorKey } from './colors';
-import { DAY_WIDTH, type BarVM, type PlanVM, type Zoom } from './types';
+import { canTouch, isRangeFree, type MovePerms, type Occupied } from './moves';
+import { DAY_WIDTH, type BarVM, type PlanRow, type PlanVM, type Zoom } from './types';
 
 /** Jednoznačný kľúč pásika v mriežke (blokácia sa opakuje na každom lôžku). */
 export const barKey = (bedId: number, barId: string) => `${bedId}:${barId}`;
@@ -26,6 +28,21 @@ export interface BarClick {
   bedId: number;
 }
 
+/** Ťahaný pásik: slúži na vyznačenie, či je cieľ voľný. */
+export interface ActiveDrag {
+  bar: BarVM;
+  stayId: number;
+}
+
+/** Spoločné nastavenie ťahania (jedna stabilná hodnota pre všetky riadky). */
+export interface DndConfig {
+  perms: MovePerms;
+  drag: ActiveDrag | null;
+  /** Lôžka už zabraté pobytmi z odkladiska. */
+  occupied: Occupied[];
+  onBarMenu: (click: BarClick, x: number, y: number) => void;
+}
+
 interface BarViewProps {
   bar: BarVM;
   dayWidth: number;
@@ -34,15 +51,26 @@ interface BarViewProps {
   bedId: number;
   selected: boolean;
   onSelect: (click: BarClick) => void;
+  dnd?: DndConfig;
 }
 
 /** Pásik od polovice dňa príchodu po polovicu dňa odchodu (orezaný na okno plánu). */
-const BarView = memo(function BarView({ bar, dayWidth, colors, roomId, bedId, selected, onSelect }: BarViewProps) {
+const BarView = memo(function BarView({ bar, dayWidth, colors, roomId, bedId, selected, onSelect, dnd }: BarViewProps) {
+  const touch = dnd !== undefined && canTouch(bar, dnd.perms);
+  const { setNodeRef, listeners, attributes, isDragging } = useDraggable({
+    id: `bar:${bedId}:${bar.id}`,
+    data: { kind: 'bar', bar, roomId, bedId },
+    disabled: !touch,
+  });
   const left = (bar.startCol + (bar.clippedStart ? 0 : 0.5)) * dayWidth;
   const right = (bar.endCol + (bar.clippedEnd ? 1 : 0.5)) * dayWidth;
   const held = bar.type === 'HELD_BED';
-  return (
+  const right4 = Math.max(left + 4, right);
+  const button = (
     <button
+      ref={setNodeRef}
+      {...(touch ? listeners : {})}
+      {...(touch ? attributes : {})}
       type="button"
       data-testid="plan-bar"
       data-bar-id={bar.id}
@@ -52,7 +80,17 @@ const BarView = memo(function BarView({ bar, dayWidth, colors, roomId, bedId, se
       aria-pressed={selected}
       aria-label={[bar.label ?? bar.reason ?? bar.type, bar.from, bar.to].join(' ')}
       onClick={() => onSelect({ bar, roomId, bedId })}
+      onContextMenu={
+        touch
+          ? (e) => {
+              e.preventDefault();
+              dnd.onBarMenu({ bar, roomId, bedId }, e.clientX, e.clientY);
+            }
+          : undefined
+      }
       style={{
+        opacity: isDragging ? 0.35 : 1,
+        touchAction: touch ? 'none' : undefined,
         position: 'absolute',
         top: 3,
         height: ROW_HEIGHT - 7,
@@ -67,7 +105,7 @@ const BarView = memo(function BarView({ bar, dayWidth, colors, roomId, bedId, se
         font: 'inherit',
         fontSize: 12,
         lineHeight: `${ROW_HEIGHT - 9}px`,
-        cursor: 'pointer',
+        cursor: touch ? 'grab' : 'pointer',
         color: colors.text,
         background: held ? `${HATCH}, ${colors.fill}` : colors.fill,
         border: `${selected ? 2 : 1}px ${held ? 'dashed' : 'solid'} ${selected ? '#13243A' : colors.border}`,
@@ -78,7 +116,36 @@ const BarView = memo(function BarView({ bar, dayWidth, colors, roomId, bedId, se
       {bar.locked ? ' 🔒' : ''}
     </button>
   );
+  if (!touch || bar.clippedEnd) return button;
+  return (
+    <>
+      {button}
+      <ResizeHandle bar={bar} bedId={bedId} roomId={roomId} left={right4 - 6} />
+    </>
+  );
 });
+
+/** Pravý okraj pásika: ťahaním sa mení koniec pobytu (UC10). Samostatný prvok, aby nespúšťal ťahanie celého pásika. */
+function ResizeHandle({ bar, bedId, roomId, left }: { bar: BarVM; bedId: number; roomId: number; left: number }) {
+  const { setNodeRef, listeners, attributes, transform } = useDraggable({
+    id: `resize:${bedId}:${bar.id}`,
+    data: { kind: 'resize', bar, roomId, bedId },
+  });
+  const style: CSSProperties = {
+    position: 'absolute',
+    top: 3,
+    left,
+    width: 8,
+    height: ROW_HEIGHT - 7,
+    cursor: 'ew-resize',
+    touchAction: 'none',
+    zIndex: 2,
+    background: 'rgba(19,36,58,.25)',
+    borderRadius: 3,
+    transform: transform ? `translate3d(${transform.x}px,0,0)` : undefined,
+  };
+  return <span ref={setNodeRef} {...listeners} {...attributes} role="separator" aria-label="⇔" data-testid="resize-handle" data-bar-id={bar.id} style={style} />;
+}
 
 interface Props {
   vm: PlanVM;
@@ -93,12 +160,14 @@ interface Props {
   onSelectBar: (click: BarClick) => void;
   /** Klik na voľný deň lôžka (UC2); bez nej sú prázdne miesta neaktívne. */
   onFreeCell?: (click: { roomId: number; bedId: number; day: string }) => void;
+  /** Ťahanie (len online a s oprávnením); musí byť stabilná hodnota (useMemo). */
+  dnd?: DndConfig;
 }
 
 /** Je lôžko v daný deň (noc `day`) voľné podľa lokálnych dát? Rozhoduje server, toto je len pomoc. */
 const isFree = (bars: BarVM[], day: string) => !bars.some((b) => b.from <= day && day < b.to);
 
-export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, selectedBarKey, onSelectBar, onFreeCell }: Props) {
+export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, selectedBarKey, onSelectBar, onFreeCell, dnd }: Props) {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const dayWidth = DAY_WIDTH[zoom];
@@ -204,84 +273,21 @@ export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, sele
 
           {virtualizer.getVirtualItems().map((item) => {
             const row = vm.rows[item.index];
-            const isRoom = row.kind === 'room';
             return (
-              <div
-                key={isRoom ? `r${row.roomId}` : `b${row.bedId}`}
-                role="row"
-                data-testid={isRoom ? 'plan-room-row' : 'plan-bed-row'}
-                data-room-id={row.roomId}
-                data-bed-id={isRoom ? undefined : row.bedId}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: LEFT_WIDTH + width,
-                  height: ROW_HEIGHT,
-                  transform: `translateY(${item.start - HEADER_HEIGHT}px)`,
-                  display: 'flex',
-                  zIndex: 1,
-                  borderBottom: '1px solid #E1ECF7',
-                  background: isRoom ? 'rgba(220,235,250,.55)' : undefined,
-                }}
-              >
-                <div
-                  style={{
-                    position: 'sticky',
-                    left: 0,
-                    zIndex: 3,
-                    width: LEFT_WIDTH,
-                    flex: 'none',
-                    boxSizing: 'border-box',
-                    padding: isRoom ? '0 10px' : '0 10px 0 28px',
-                    lineHeight: `${ROW_HEIGHT - 1}px`,
-                    fontSize: 13,
-                    fontWeight: isRoom ? 600 : 400,
-                    color: isRoom ? '#13243A' : '#4A5D75',
-                    background: isRoom ? '#DCEBFA' : '#FFFFFF',
-                    borderRight: '1px solid #C9DCEF',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {isRoom
-                    ? `${row.building} ${row.label}${row.category ? ` · ${row.category}` : ''}`
-                    : row.extra
-                      ? t('plan.extraBed', { n: row.bedLabel })
-                      : t('plan.bed', { n: row.bedLabel })}
-                </div>
-                <div
-                  data-testid={isRoom ? undefined : 'plan-bed-cells'}
-                  onClick={
-                    !isRoom && onFreeCell
-                      ? (e) => {
-                          if (e.target !== e.currentTarget) return; // klik na pásik rieši pásik
-                          const col = Math.floor((e.clientX - e.currentTarget.getBoundingClientRect().left) / dayWidth);
-                          const day = vm.days[col];
-                          if (day && isFree(row.bars, day)) {
-                            onFreeCell({ roomId: row.roomId, bedId: row.bedId, day });
-                          }
-                        }
-                      : undefined
-                  }
-                  style={{ position: 'relative', width, flex: 'none', backgroundImage: isRoom ? undefined : gridLines, cursor: !isRoom && onFreeCell ? 'copy' : undefined }}
-                >
-                  {!isRoom &&
-                    row.bars.map((bar) => (
-                      <BarView
-                        key={bar.id}
-                        bar={bar}
-                        dayWidth={dayWidth}
-                        colors={colors[colorKeyOf(bar)]}
-                        roomId={row.roomId}
-                        bedId={row.bedId}
-                        selected={selectedBarKey === barKey(row.bedId, bar.id)}
-                        onSelect={onSelectBar}
-                      />
-                    ))}
-                </div>
-              </div>
+              <PlanRowView
+                key={row.kind === 'room' ? `r${row.roomId}` : `b${row.bedId}`}
+                row={row}
+                top={item.start - HEADER_HEIGHT}
+                days={vm.days}
+                dayWidth={dayWidth}
+                width={width}
+                gridLines={gridLines}
+                colors={colors}
+                selectedBarId={row.kind === 'bed' && selectedBarKey?.startsWith(`${row.bedId}:`) ? selectedBarKey.slice(String(row.bedId).length + 1) : undefined}
+                onSelectBar={onSelectBar}
+                onFreeCell={onFreeCell}
+                dnd={dnd}
+              />
             );
           })}
         </div>
@@ -289,3 +295,123 @@ export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, sele
     </div>
   );
 }
+
+interface RowProps {
+  row: PlanRow;
+  top: number;
+  days: string[];
+  dayWidth: number;
+  width: number;
+  gridLines: string;
+  colors: Record<ColorKey, BarColors>;
+  selectedBarId?: string;
+  onSelectBar: (click: BarClick) => void;
+  onFreeCell?: Props['onFreeCell'];
+  dnd?: DndConfig;
+}
+
+/** Riadok mriežky: `memo`, takže zmena v inom riadku (ťahanie, výber) ho neprekreslí. */
+const PlanRowView = memo(function PlanRowView({ row, top, days, dayWidth, width, gridLines, colors, selectedBarId, onSelectBar, onFreeCell, dnd }: RowProps) {
+  const { t } = useTranslation();
+  const isRoom = row.kind === 'room';
+  const bedId = row.kind === 'bed' ? row.bedId : 0;
+  const { setNodeRef, isOver } = useDroppable({ id: `bed:${bedId}`, data: { kind: 'bed', roomId: row.roomId, bedId }, disabled: isRoom || !dnd });
+
+  // Vyznačenie cieľa počas ťahania: podľa lokálnych dát voľné (zelená) alebo obsadené (červená)
+  let hint: { left: number; width: number; free: boolean } | null = null;
+  if (row.kind === 'bed' && dnd?.drag && isOver) {
+    const { bar, stayId } = dnd.drag;
+    const free = isRangeFree(row.bars, bar.from, bar.to, stayId, dnd.occupied, row.bedId);
+    const start = Math.max(0, days.findIndex((d) => d >= bar.from));
+    const endIdx = days.findIndex((d) => d >= bar.to);
+    const end = endIdx < 0 ? days.length : endIdx;
+    hint = { left: start * dayWidth, width: Math.max(dayWidth, (end - start) * dayWidth), free };
+  }
+
+  return (
+    <div
+      role="row"
+      data-testid={isRoom ? 'plan-room-row' : 'plan-bed-row'}
+      data-room-id={row.roomId}
+      data-bed-id={isRoom ? undefined : row.bedId}
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: LEFT_WIDTH + width,
+        height: ROW_HEIGHT,
+        transform: `translateY(${top}px)`,
+        display: 'flex',
+        zIndex: 1,
+        borderBottom: '1px solid #E1ECF7',
+        background: isRoom ? 'rgba(220,235,250,.55)' : undefined,
+      }}
+    >
+      <div
+        style={{
+          position: 'sticky',
+          left: 0,
+          zIndex: 3,
+          width: LEFT_WIDTH,
+          flex: 'none',
+          boxSizing: 'border-box',
+          padding: isRoom ? '0 10px' : '0 10px 0 28px',
+          lineHeight: `${ROW_HEIGHT - 1}px`,
+          fontSize: 13,
+          fontWeight: isRoom ? 600 : 400,
+          color: isRoom ? '#13243A' : '#4A5D75',
+          background: isRoom ? '#DCEBFA' : '#FFFFFF',
+          borderRight: '1px solid #C9DCEF',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}
+      >
+        {isRoom
+          ? `${row.building} ${row.label}${row.category ? ` · ${row.category}` : ''}`
+          : row.extra
+            ? t('plan.extraBed', { n: row.bedLabel })
+            : t('plan.bed', { n: row.bedLabel })}
+      </div>
+      <div
+        ref={isRoom ? undefined : setNodeRef}
+        data-testid={isRoom ? undefined : 'plan-bed-cells'}
+        onClick={
+          row.kind === 'bed' && onFreeCell
+            ? (e) => {
+                if (e.target !== e.currentTarget) return; // klik na pásik rieši pásik
+                const col = Math.floor((e.clientX - e.currentTarget.getBoundingClientRect().left) / dayWidth);
+                const day = days[col];
+                if (day && isFree(row.bars, day)) {
+                  onFreeCell({ roomId: row.roomId, bedId: row.bedId, day });
+                }
+              }
+            : undefined
+        }
+        style={{ position: 'relative', width, flex: 'none', backgroundImage: isRoom ? undefined : gridLines, cursor: !isRoom && onFreeCell ? 'copy' : undefined }}
+      >
+        {hint && (
+          <div
+            data-testid="drop-hint"
+            data-free={hint.free}
+            style={{ position: 'absolute', top: 1, bottom: 1, left: hint.left, width: hint.width, pointerEvents: 'none', borderRadius: 6, background: hint.free ? 'rgba(46,160,67,.28)' : 'rgba(207,34,46,.28)', outline: `2px solid ${hint.free ? '#2EA043' : '#CF222E'}` }}
+          />
+        )}
+        {row.kind === 'bed' &&
+          row.bars.map((bar) => (
+            <BarView
+              key={bar.id}
+              bar={bar}
+              dayWidth={dayWidth}
+              colors={colors[colorKeyOf(bar)]}
+              roomId={row.roomId}
+              bedId={row.bedId}
+              selected={selectedBarId === bar.id}
+              onSelect={onSelectBar}
+              dnd={dnd}
+            />
+          ))}
+      </div>
+    </div>
+  );
+});

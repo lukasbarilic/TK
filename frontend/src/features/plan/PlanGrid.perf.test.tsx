@@ -30,4 +30,18 @@ describe('PlanGrid – výkon', () => {
     console.info(`[perf] buildPlanVM ${(t1 - t0).toFixed(1)} ms, vykreslenie ${(t2 - t1).toFixed(1)} ms, riadkov v DOM ${rendered}/${vm.rows.length}`);
     expect(t2 - t0).toBeLessThan(2000);
   });
+
+  it('200 izieb: so zapnutým ťahaním sa vykreslí len viditeľný výsek a pásiky sú ťahateľné', () => {
+    const vm = buildPlanVM(generatePlan(200, 31), { receptionId: 2, buildingIds: [], from: '2026-11-17', to: '2026-12-17', freeOnly: false, fullyFree: false });
+    const dnd = { perms: { move: true, moveLocked: false, backdate: true }, drag: null, occupied: [], onBarMenu: () => {} };
+    const t0 = performance.now();
+    renderWithProviders(
+      <PlanGrid vm={vm} zoom="normal" colors={resolveColors(null)} dataFrom="2026-11-17" dataTo="2026-12-17" receptionId={2} onSelectBar={() => {}} dnd={dnd} />,
+    );
+    const ms = performance.now() - t0;
+    expect(screen.getAllByTestId(/plan-(room|bed)-row/).length).toBeLessThan(60);
+    expect(screen.getAllByTestId('resize-handle').length).toBeGreaterThan(0);
+    console.info(`[perf] vykreslenie s ťahaním ${ms.toFixed(1)} ms`);
+    expect(ms).toBeLessThan(2000);
+  });
 });
