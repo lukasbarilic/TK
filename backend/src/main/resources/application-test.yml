@@ -3,3 +3,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+app:
+  audit:
+    partitions:
+      cron: "-" # plánovač sa v testoch nespúšťa, metóda sa volá priamo
