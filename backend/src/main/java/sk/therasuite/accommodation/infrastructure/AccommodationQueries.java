@@ -456,6 +456,26 @@ public class AccommodationQueries {
    * s výhradným užívaním). Izby recepcií, pre ktoré {@code receptionAllowed} vráti false, sa
    * zahodia ešte pred načítaním pobytov. Prázdne filtre ({@code null}) nič neobmedzujú.
    */
+  /**
+   * Počítadlo zmien: pre danú recepciu jej {@code seq}, inak zoznam dvojíc recepcia:seq všetkých
+   * recepcií (plán bez filtra recepcie pokrýva viac recepcií).
+   */
+  public String changeSeqToken(Long receptionId) {
+    if (receptionId != null) {
+      List<Long> seq =
+          jdbc.queryForList(
+              "select seq from reception_change_seq where reception_id = ?",
+              Long.class,
+              receptionId);
+      return seq.isEmpty() ? "0" : String.valueOf(seq.getFirst());
+    }
+    return String.join(
+        ",",
+        jdbc.query(
+            "select reception_id || ':' || seq from reception_change_seq order by reception_id",
+            (rs, i) -> rs.getString(1)));
+  }
+
   public PlanData loadPlan(
       StayPeriod period,
       List<Long> buildingIds,

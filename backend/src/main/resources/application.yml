@@ -45,3 +45,16 @@ springdoc:
 # Časové pásmo inštalácie (HLD kap. 9); určuje prvý obchodný deň
 organization:
   timezone: Europe/Bratislava
+
+# Konfigurácia desktopového klienta (GET /api/client-config)
+app:
+  client:
+    api-version: 1
+    min-client-version: 1.0.0
+    idle-timeout-sec: 1800
+    offline:
+      plan-days-back: 7
+      plan-days-ahead: 60
+      sync-interval-sec: 300
+      # prázdne = bez obmedzenia veku lokálnych dát
+      max-age-days:
