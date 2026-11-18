@@ -191,16 +191,6 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [stored, view?.from, view?.to, receptionId, filters.buildingIds, filters.freeOnly, filters.fullyFree, showExtraBeds],
   );
-  // odkaz z karty (`?roomId`): po zobrazení plánu sa izba odroluje do pohľadu
-  const focusRoom = focus?.roomId;
-  const scrolledRoom = useRef<number | undefined>(undefined);
-  useEffect(() => {
-    if (focusRoom === undefined || !vm || scrolledRoom.current === focusRoom) return;
-    const el = document.querySelector(`[data-room-id="${focusRoom}"]`);
-    if (!el) return;
-    scrolledRoom.current = focusRoom;
-    el.scrollIntoView({ block: 'center' });
-  }, [focusRoom, vm]);
   const palette = useMemo(() => resolveColors(colorPref), [colorPref]);
 
   const buildings = useMemo(() => {
@@ -478,6 +468,7 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
               onSelectBar={select}
               onFreeCell={canCheckIn ? setFreeCell : undefined}
               dnd={dnd}
+              focusRoomId={focus?.roomId}
             />
             {vm.rows.length === 0 && <Text c="dimmed" mt="sm" data-testid="plan-no-rooms">{t('plan.noRooms')}</Text>}
           </div>
