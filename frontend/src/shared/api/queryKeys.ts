@@ -5,6 +5,9 @@ export const queryKeys = {
   businessDay: (receptionId: number) => ['business-day', receptionId] as const,
   clientConfig: ['client-config'] as const,
   adminUsers: ['admin', 'users'] as const,
+  auditEvents: (filter: object, page: number) => ['audit', 'events', filter, page] as const,
+  auditEvent: (id: number) => ['audit', 'event', id] as const,
+  auditAccess: (clientId: number, page: number) => ['audit', 'access', clientId, page] as const,
   plan: ['plan'] as const,
   preference: (key: string) => ['preference', key] as const,
 };
