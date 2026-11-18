@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { queryKeys } from '../../shared/api/queryKeys';
 import type { components } from '../../shared/api/schema';
 import { platform } from '../../shared/platform';
 import {
@@ -38,7 +39,10 @@ export function ConnectionRuntime() {
     });
     const touch = () => connection.touch();
     ACTIVITY_EVENTS.forEach((e) => window.addEventListener(e, touch, { passive: true }));
-    setDataChangedHandler(() => void qc.invalidateQueries());
+    setDataChangedHandler((scope) =>
+      // po čiastočnej obnove (`plan-changed`) si plán dotknuté izby obnoví sám (features/plan)
+      void qc.invalidateQueries(scope === 'rooms' ? { predicate: (q) => q.queryKey[0] !== queryKeys.plan[0] } : undefined),
+    );
     const stopSync = startSyncRuntime({
       connection,
       engine: syncEngine,

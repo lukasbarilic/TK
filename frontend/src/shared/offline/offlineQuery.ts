@@ -76,3 +76,13 @@ export async function offlineQuery<T>(
   }
   return { data: res.data, source: 'server', syncedAt, empty: false };
 }
+
+/** Uloží hodnotu len lokálne do trezora (napr. nastavenie zmenené bez spojenia); chyby trezora sa ignorujú. */
+export async function putLocal(ds: string, key: string, value: unknown, deps: Deps = defaultDeps()): Promise<void> {
+  try {
+    const prev = await deps.vault.get<unknown>(ds, key);
+    await deps.vault.put(ds, key, value, { etag: prev?.meta.etag, syncedAt: deps.now().toISOString() });
+  } catch {
+    // zamknutý trezor: nastavenie sa len nezapamätá
+  }
+}

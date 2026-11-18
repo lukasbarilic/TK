@@ -10,7 +10,7 @@ export function renderWithProviders(
   client: QueryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
 ) {
   return render(
-    <MantineProvider theme={theme}>
+    <MantineProvider theme={theme} env="test">
       <QueryClientProvider client={client}>{ui}</QueryClientProvider>
     </MantineProvider>,
   );

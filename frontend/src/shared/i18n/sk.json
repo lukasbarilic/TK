@@ -21,7 +21,45 @@
   },
   "plan": {
     "title": "Plán ubytovania",
-    "comingSoon": "Plán ubytovania – pripravuje sa"
+    "roomsColumn": "Izba / lôžko",
+    "bed": "Lôžko {{n}}",
+    "extraBed": "Prístelka {{n}}",
+    "noData": "Údaje nie sú k dispozícii",
+    "prevWeek": "Predchádzajúci týždeň",
+    "nextWeek": "Nasledujúci týždeň",
+    "today": "Dnes",
+    "buildings": "Budovy",
+    "freeOnly": "Len voľné izby",
+    "fullyFree": "Len celkom prázdne izby",
+    "zoom": {
+      "label": "Priblíženie",
+      "narrow": "Úzke",
+      "normal": "Stredné",
+      "wide": "Široké"
+    },
+    "readOnly": "Plán je len na čítanie – zobrazujú sa údaje uložené na tomto počítači.",
+    "noReception": "Nemáte oprávnenie na plán žiadnej recepcie.",
+    "noRooms": "Filtrom nevyhovuje žiadna izba.",
+    "status": {
+      "RESERVED": "Rezervované",
+      "CHECKED_IN": "Ubytovaný",
+      "CHECKED_OUT": "Odhlásený"
+    },
+    "panel": {
+      "title": "Detail pobytu",
+      "close": "Zavrieť",
+      "place": "Izba {{room}}, lôžko {{bed}}",
+      "card": "Rezervačná karta",
+      "cardError": "Kartu sa nepodarilo načítať.",
+      "primary": "hlavný hosť",
+      "locked": "Pobyt je uzamknutý.",
+      "heldHint": "Lôžko je držané pre pobyt na tej istej izbe.",
+      "type": {
+        "STAY": "Pobyt",
+        "HELD_BED": "Držané lôžko",
+        "ROOM_BLOCK": "Blokácia izby"
+      }
+    }
   },
   "errors": {
     "forbidden": "Na túto akciu nemáte oprávnenie.",

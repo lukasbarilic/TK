@@ -9,6 +9,8 @@ export const DS = {
   guestList: 'guest-list',
   /** Pomocná sada: ETag a zoznam ID kariet z hromadného volania B03 (kľúč = `<receptionId>`). */
   reservationSync: 'reservation-sync',
+  /** Nastavenia používateľa (B06); kľúč = kľúč nastavenia, napr. `plan.defaultView`. */
+  preferences: 'preferences',
 } as const;
 
 export const SESSION_KEYS = { me: 'me', clientConfig: 'client-config' } as const;
