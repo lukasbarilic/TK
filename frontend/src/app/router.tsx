@@ -11,9 +11,10 @@ import { GuestListRoute } from './GuestListRoute';
 import { MovementsRoute } from './MovementsRoute';
 import { PlanRoute } from './PlanRoute';
 import { ReservationDetailRoute } from './ReservationRoutes';
+import { UsersRoute } from './UsersRoute';
 
 const pageFor = (path: string, labelKey: string): ReactNode =>
-  path === '/plan' ? <PlanRoute /> : path === '/reservations' ? <ReservationsPage /> : path === '/movements' ? <MovementsRoute /> : path === '/business-day' ? <BusinessDayRoute /> : path === '/guests' ? <GuestListRoute /> : <ComingSoon titleKey={labelKey} />;
+  path === '/plan' ? <PlanRoute /> : path === '/reservations' ? <ReservationsPage /> : path === '/movements' ? <MovementsRoute /> : path === '/business-day' ? <BusinessDayRoute /> : path === '/guests' ? <GuestListRoute /> : path === '/admin/users' ? <UsersRoute /> : <ComingSoon titleKey={labelKey} />;
 
 export const routes: RouteObject[] = [
   {
