@@ -175,6 +175,15 @@ pub fn vault_remove(state: State<'_, AppState>, dataset: String, keys: Vec<Strin
 }
 
 #[tauri::command]
+pub fn vault_set_sync_state(
+    state: State<'_, AppState>,
+    last_full_sync_at: String,
+    max_age_days: Option<i64>,
+) -> Result<(), VaultError> {
+    state.vault.set_sync_state(&last_full_sync_at, max_age_days)
+}
+
+#[tauri::command]
 pub fn vault_info(state: State<'_, AppState>) -> Result<VaultInfo, VaultError> {
     state.vault.info()
 }

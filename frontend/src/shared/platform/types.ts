@@ -39,6 +39,8 @@ export interface Vault {
   list(dataset: string): Promise<string[]>;
   remove(dataset: string, keys: string[]): Promise<void>;
   info(): Promise<{ username: string; lastFullSyncAt?: string; sizeBytes: number } | null>;
+  /** Zapíše čas poslednej úplnej synchronizácie a platnosť offline dát (`offline.maxAgeDays`, DLD kap. 4.2). */
+  setSyncState(lastFullSyncAt: string, maxAgeDays: number | null): Promise<void>;
 }
 
 export interface Platform {

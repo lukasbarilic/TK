@@ -70,6 +70,7 @@ describe('tauri platforma', () => {
     await vault.put('ds', 'k', { x: 1 });
     await vault.remove('ds', ['k']);
     await vault.wipe('jana');
+    await vault.setSyncState('2026-11-18T10:00:00Z', 7);
     await vault.lock();
     expect(invoke.mock.calls).toEqual([
       ['vault_create', { username: 'jana', password: 'h' }],
@@ -77,6 +78,7 @@ describe('tauri platforma', () => {
       ['vault_put', { dataset: 'ds', key: 'k', value: { x: 1 }, meta: null }],
       ['vault_remove', { dataset: 'ds', keys: ['k'] }],
       ['vault_wipe', { username: 'jana' }],
+      ['vault_set_sync_state', { lastFullSyncAt: '2026-11-18T10:00:00Z', maxAgeDays: 7 }],
       ['vault_lock', undefined],
     ]);
   });

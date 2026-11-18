@@ -1,6 +1,6 @@
 import { platform } from '../platform';
 import type { HttpResponse, Platform } from '../platform/types';
-import { toApiError } from './errors';
+import { isNetError, toApiError } from './errors';
 import type { paths } from './schema';
 
 type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete';
@@ -51,6 +51,16 @@ export interface ApiResult<T> {
   headers: Record<string, string>;
 }
 
+/** Pozorovateľ výsledkov požiadaviek (stav spojenia, DLD kap. 6): odpoveď servera = dostupný, sieťová chyba = výpadok. */
+export interface ApiObserver {
+  onResponse(): void;
+  onNetworkError(): void;
+}
+let observer: ApiObserver | null = null;
+export function setApiObserver(o: ApiObserver | null): void {
+  observer = o;
+}
+
 function fillPath(template: string, params: Record<string, unknown> | undefined): string {
   return template.replace(/\{(\w+)\}/g, (_, name: string) => {
     const v = params?.[name];
@@ -76,14 +86,23 @@ export async function apiCall<P extends keyof paths & string, M extends HttpMeth
     headers?: Record<string, string>;
     timeoutMs?: number;
   };
-  const res: HttpResponse = await impl.http({
-    method: method.toUpperCase() as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
-    path: fillPath(path, o.path),
-    query: o.query,
-    body: o.body,
-    headers: o.headers,
-    timeoutMs: o.timeoutMs,
-  });
+  let res: HttpResponse;
+  try {
+    res = await impl.http({
+      method: method.toUpperCase() as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+      path: fillPath(path, o.path),
+      query: o.query,
+      body: o.body,
+      headers: o.headers,
+      timeoutMs: o.timeoutMs,
+    });
+  } catch (e) {
+    if (isNetError(e) && e.kind !== 'config') observer?.onNetworkError();
+    throw e;
+  }
+  // 502–504 = server (za proxy) nedostupný, nie odpoveď aplikácie
+  if (res.status >= 502 && res.status <= 504) observer?.onNetworkError();
+  else observer?.onResponse();
   if ((res.status < 200 || res.status >= 300) && res.status !== 304) {
     throw toApiError(res.status, res.json, res.headers);
   }
