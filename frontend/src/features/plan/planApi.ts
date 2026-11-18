@@ -62,8 +62,10 @@ export async function loadPlan(
   win: { from: string; to: string },
   online: boolean,
 ): Promise<OfflineResult<StoredPlan>> {
-  const from = view.from < win.from ? view.from : win.from;
-  const to = view.to > win.to ? view.to : win.to;
+  // rozsah mimo okna (napr. odkaz z karty na vzdialený dátum) sa načíta samostatne, nie spolu s celým okolím
+  const disjoint = view.to < win.from || view.from > win.to;
+  const from = disjoint || view.from < win.from ? view.from : win.from;
+  const to = disjoint || view.to > win.to ? view.to : win.to;
   if (online && (from !== win.from || to !== win.to)) {
     const plan = (await apiCall('get', '/api/accommodation-plan', { query: { receptionId, from, to } })).data;
     return { data: { from, to, plan }, source: 'server', syncedAt: new Date().toISOString(), empty: false };

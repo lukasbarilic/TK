@@ -9,7 +9,7 @@ import { DataAge, useConnection } from '../../shared/offline';
 import { hasPermissionCode, receptionsInScope } from '../../shared/offline/scope';
 import { ApiError } from '../../shared/api/errors';
 import { ConfirmWarningsDialog } from '../../shared/ui/ConfirmWarningsDialog';
-import { addDays, diffDays } from '../../shared/time';
+import { addDays } from '../../shared/time';
 import { BarMenu, type MenuAction } from './BarMenu';
 import { MoveFromDialog } from './MoveFromDialog';
 import {
@@ -44,6 +44,7 @@ import {
 } from './planApi';
 import { barKey, PlanGrid, type ActiveDrag, type BarClick, type DndConfig } from './PlanGrid';
 import { StayPanel } from './StayPanel';
+import { focusOffset } from './focus';
 import { DAY_WIDTH, ZOOMS, type BarVM, type DefaultView, type PlanFilters } from './types';
 import { planDataKey, usePlanLive } from './usePlanLive';
 
@@ -125,22 +126,25 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
   });
   const config = useQuery({ queryKey: [...queryKeys.plan, 'config'], queryFn: loadClientConfig });
   const businessDate = day.data?.data?.businessDate;
-  // odkaz z karty (`?date`): rozsah plánu sa rozšíri tak, aby obsahoval požadovaný dátum
+  // odkaz z karty (`?date`): zobrazený rozsah sa posunie na požadovaný dátum; uložený pohľad sa nemení
   const focusDate = focus?.date;
   const focused = useRef(false);
+  const [offset, setOffset] = useState(0);
   useEffect(() => {
     if (!focusDate || !businessDate || focused.current) return;
     focused.current = true;
-    const diff = diffDays(businessDate, focusDate);
-    setFilters((f) => ({ ...f, daysBack: Math.min(31, Math.max(f.daysBack, 1 - diff)), daysAhead: Math.min(60, Math.max(f.daysAhead, diff + 7)) }));
-  }, [focusDate, businessDate]);
+    setOffset(focusOffset(businessDate, focusDate, filters.daysBack, filters.daysAhead));
+  }, [focusDate, businessDate, filters.daysBack, filters.daysAhead]);
   const win = useMemo(
     () => (businessDate && !config.isPending ? syncWindow(businessDate, config.data?.data) : undefined),
     [businessDate, config.isPending, config.data],
   );
   const range = useMemo(
-    () => (businessDate ? { from: addDays(businessDate, -filters.daysBack), to: addDays(businessDate, filters.daysAhead) } : undefined),
-    [businessDate, filters.daysBack, filters.daysAhead],
+    () =>
+      businessDate
+        ? { from: addDays(businessDate, offset - filters.daysBack), to: addDays(businessDate, offset + filters.daysAhead) }
+        : undefined,
+    [businessDate, offset, filters.daysBack, filters.daysAhead],
   );
   const plan = useQuery({
     queryKey: [...planDataKey(receptionId ?? 0), range?.from, range?.to, win?.from, win?.to],
@@ -379,7 +383,7 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
             {range ? `${range.from} – ${range.to}` : '–'}
           </Text>
           <Button variant="default" size="sm" aria-label={t('plan.nextWeek')} onClick={() => shift(7)} disabled={!range}>›</Button>
-          <Button variant="default" size="sm" onClick={() => patch({ daysBack: 1, daysAhead: 13 })}>{t('plan.today')}</Button>
+          <Button variant="default" size="sm" onClick={() => { setOffset(0); patch({ daysBack: 1, daysAhead: 13 }); }}>{t('plan.today')}</Button>
         </Group>
         {buildings.length > 1 && (
           <Group gap={6} role="group" aria-label={t('plan.buildings')}>
