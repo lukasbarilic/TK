@@ -2,10 +2,15 @@ package sk.therasuite.reservation.application;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -250,11 +255,57 @@ public class ReservationService {
             () -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Karta neexistuje."));
   }
 
+  /**
+   * Detail viacerých kariet naraz (offline režim): tri dotazy bez ohľadu na počet kariet.
+   * Neexistujúce ID sa vynechajú, výsledok je zoradený podľa ID.
+   */
+  @AuditedRead(operation = "RESERVATION_VIEW", scope = DataScope.CONTACT)
+  @Transactional(readOnly = true)
+  public AuditedReadResult<List<Detail>> getAll(Collection<Long> ids) {
+    if (ids.isEmpty()) {
+      return new AuditedReadResult<>(List.of(), List.of());
+    }
+    List<Reservation> found =
+        reservations.findAllById(ids).stream()
+            .sorted(Comparator.comparing(Reservation::getId))
+            .toList();
+    Map<Long, List<ReservationGuest>> guestsByCard =
+        guests
+            .findByReservationIdInOrderById(found.stream().map(Reservation::getId).toList())
+            .stream()
+            .collect(Collectors.groupingBy(ReservationGuest::getReservationId));
+    Map<Long, Client> clientsById =
+        clients
+            .findAllById(
+                guestsByCard.values().stream()
+                    .flatMap(List::stream)
+                    .map(ReservationGuest::getClientId)
+                    .collect(Collectors.toSet()))
+            .stream()
+            .collect(Collectors.toMap(Client::getId, Function.identity()));
+    List<Detail> details =
+        found.stream()
+            .map(r -> detail(r, guestsByCard.getOrDefault(r.getId(), List.of()), clientsById::get))
+            .toList();
+    return new AuditedReadResult<>(
+        details,
+        details.stream()
+            .flatMap(d -> d.guests().stream())
+            .map(GuestView::clientId)
+            .distinct()
+            .toList());
+  }
+
   private Detail detail(Reservation r) {
+    return detail(r, guests.findByReservationIdOrderById(r.getId()), clients::getReferenceById);
+  }
+
+  private Detail detail(
+      Reservation r, List<ReservationGuest> reservationGuests, Function<Long, Client> client) {
     List<GuestView> views =
-        guests.findByReservationIdOrderById(r.getId()).stream()
+        reservationGuests.stream()
             .map(g -> {
-              Client c = clients.getReferenceById(g.getClientId());
+              Client c = client.apply(g.getClientId());
               return new GuestView(
                   g.getId(),
                   c.getId(),
