@@ -1,0 +1,35 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-17T22:45:00Z" },
+  "title": "TheraSuite – návrh obrazoviek",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Prihlasenie.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 900, "title": "Prihlásenie (online aj offline)", "expand": "fill", "is_interactive": true },
+    "Main.dc.html": { "x": 1520, "y": 0, "w": 1440, "h": 900, "title": "Plán ubytovania", "expand": "fill", "is_interactive": true },
+    "Ubytovat.dc.html": { "x": 3040, "y": 0, "w": 1440, "h": 900, "title": "Ubytovanie – výber lôžka a upozornenie", "expand": "fill", "is_interactive": true },
+    "Karta.dc.html": { "x": 0, "y": 1300, "w": 1440, "h": 900, "title": "Rezervačná karta", "expand": "fill" },
+    "Prichody.dc.html": { "x": 1520, "y": 1300, "w": 1440, "h": 900, "title": "Príchody a odchody", "expand": "fill", "is_interactive": true },
+    "Uzavierka.dc.html": { "x": 3040, "y": 1300, "w": 1440, "h": 900, "title": "Nočná uzávierka", "expand": "fill" },
+    "Lekar.dc.html": { "x": 0, "y": 2600, "w": 1440, "h": 900, "title": "Zoznam hostí pre lekára", "expand": "fill" },
+    "Pouzivatelia.dc.html": { "x": 1520, "y": 2600, "w": 1440, "h": 900, "title": "Používatelia", "expand": "fill" },
+    "Audit.dc.html": { "x": 3040, "y": 2600, "w": 1440, "h": 900, "title": "Audit", "expand": "fill" }
+  },
+  "order": [
+    "Main.dc.html",
+    "Prihlasenie.dc.html",
+    "Ubytovat.dc.html",
+    "Karta.dc.html",
+    "Prichody.dc.html",
+    "Uzavierka.dc.html",
+    "Lekar.dc.html",
+    "Pouzivatelia.dc.html",
+    "Audit.dc.html"
+  ],
+  "notes": {
+    "row1": { "x": 0, "y": -260, "text": "Prihlásenie a plán ubytovania", "kind": "title1", "maxW": 4480 },
+    "row2": { "x": 0, "y": 1040, "text": "Recepcia", "kind": "title1", "maxW": 4480 },
+    "row3": { "x": 0, "y": 2340, "text": "Lekár, administrácia a audit", "kind": "title1", "maxW": 4480 }
+  },
+  "designSystems": []
+}

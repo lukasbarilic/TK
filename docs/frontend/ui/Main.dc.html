@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<title>TheraSuite – Plán ubytovania</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1E5FA8}a:hover{color:#154A85}
+button:disabled{cursor:not-allowed;opacity:.55}
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-wrap: wrap; background: #EEF5FC; color: #13243A; font-family: Inter, system-ui, sans-serif; font-size: 14px">
+
+  <nav aria-label="Hlavné menu" style="flex: 1 1 232px; max-width: 260px; box-sizing: border-box; background: #DCEBFA; border-right: 1px solid #C9DCEF; padding: 20px 14px; display: flex; flex-direction: column; gap: 4px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 10px 20px">
+      <div style="width: 32px; height: 32px; border-radius: 9px; background: #1E5FA8; display: flex; align-items: center; justify-content: center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 14c3-3 6 3 9 0s6 3 9 0"></path><path d="M3 9c3-3 6 3 9 0s6 3 9 0"></path></svg>
+      </div>
+      <div style="display: flex; flex-direction: column; line-height: 1.15"><span style="font-weight: 700; font-size: 17px; letter-spacing: -0.2px">TheraSuite</span><span style="font-size: 11px; color: #4A5D75; letter-spacing: 0.2px">by N-teq</span></div>
+    </div>
+    <a href="Main.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; background: #FFFFFF; color: #1E5FA8; font-weight: 600; text-decoration: none; box-shadow: 0 1px 2px rgba(19,36,58,.08)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M9 4v16"></path></svg>Plán ubytovania</a>
+    <a href="Karta.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #24374F; text-decoration: none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M8 8h8M8 12h8M8 16h5"></path></svg>Rezervačné karty</a>
+    <a href="Prichody.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #24374F; text-decoration: none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 12h12M12 6l6 6-6 6M20 4v16"></path></svg>Príchody a odchody</a>
+    <a href="Uzavierka.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #24374F; text-decoration: none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg>Nočná uzávierka</a>
+    <a href="Lekar.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #24374F; text-decoration: none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3v6a4 4 0 0 0 8 0V3M10 13v3a4 4 0 0 0 8 0v-2"></path><circle cx="18" cy="12" r="2"></circle></svg>Zoznam hostí</a>
+    <div style="height: 1px; background: #C2D7EE; margin: 12px 8px"></div>
+    <a href="Pouzivatelia.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #24374F; text-decoration: none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.5a3.5 3.5 0 0 1 0 7M18 14c2 .8 3 2.8 3 6"></path></svg>Používatelia</a>
+    <a href="Audit.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #24374F; text-decoration: none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"></path><path d="M8.5 12l2.5 2.5 4.5-5"></path></svg>Audit</a>
+    <div style="flex-grow: 1"></div>
+    <div style="padding: 12px; border-radius: 10px; background: #EAF3FC; font-size: 12px; color: #4A5D75; line-height: 1.5">Verzia 0.1.0<br>Server: therasuite.kupele.local</div>
+  </nav>
+
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+
+    <sc-if value="{{ offline }}" hint-placeholder-val="{{ false }}">
+      <div role="status" style="display: flex; align-items: center; gap: 12px; padding: 10px 24px; background: #FFF1E0; border-bottom: 1px solid #F2C79A; color: #7A3705; font-weight: 500">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0M3 3l18 18"></path></svg>
+        Offline – zobrazujú sa údaje uložené na tomto počítači zo 17. 11. o 22:47. Zmeny nie je možné ukladať, kým sa spojenie neobnoví.
+      </div>
+    </sc-if>
+
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 14px 24px; background: #FFFFFF; border-bottom: 1px solid #C9DCEF">
+      <h1 style="margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.3px">Plán ubytovania</h1>
+      <div style="flex-grow: 1"></div>
+      <label style="display: flex; align-items: center; gap: 8px; color: #4A5D75; font-size: 13px">Recepcia
+        <select style="font: inherit; font-size: 14px; color: #13243A; padding: 7px 10px; border: 1px solid #B9CFE6; border-radius: 8px; background: #F5F9FE">
+          <option>Hlavná budova</option>
+          <option>Vily</option>
+        </select>
+      </label>
+      <div style="display: flex; flex-direction: column; padding: 4px 12px; border-radius: 8px; background: #EAF3FC; line-height: 1.25">
+        <span style="font-size: 11px; color: #4A5D75">Obchodný deň</span>
+        <span style="font-weight: 600">ut 17. 11. 2026</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 500; {{ pillStyle }}">
+        <span style="width: 8px; height: 8px; border-radius: 50%; {{ dotStyle }}"></span>{{ pillText }}
+      </div>
+      <button type="button" aria-label="Používateľ: Recepčná Hlavná" style="display: flex; align-items: center; gap: 8px; padding: 4px 10px 4px 4px; border: 1px solid #C9DCEF; border-radius: 999px; background: #FFFFFF; font: inherit; color: #13243A; cursor: pointer">
+        <span style="width: 30px; height: 30px; border-radius: 50%; background: #1E5FA8; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600">RH</span>Recepčná Hlavná
+      </button>
+    </header>
+
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 14px 24px">
+      <div style="display: flex; align-items: center; gap: 4px">
+        <button type="button" aria-label="Predchádzajúci týždeň" style="width: 36px; height: 36px; border: 1px solid #B9CFE6; border-radius: 8px; background: #FFFFFF; color: #13243A; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button>
+        <div style="padding: 8px 14px; border: 1px solid #B9CFE6; border-radius: 8px; background: #FFFFFF; font-weight: 600">16. 11. – 29. 11. 2026</div>
+        <button type="button" aria-label="Nasledujúci týždeň" style="width: 36px; height: 36px; border: 1px solid #B9CFE6; border-radius: 8px; background: #FFFFFF; color: #13243A; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+        <button type="button" style="height: 36px; padding: 0 14px; border: 1px solid #B9CFE6; border-radius: 8px; background: #FFFFFF; font: inherit; font-weight: 500; color: #1E5FA8; cursor: pointer">Dnes</button>
+      </div>
+      <div role="group" aria-label="Budovy" style="display: flex; gap: 6px">
+        <button type="button" aria-pressed="true" style="height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid #1E5FA8; background: #D3E6FA; color: #154A85; font: inherit; font-weight: 600; cursor: pointer">Alfa</button>
+        <button type="button" aria-pressed="true" style="height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid #1E5FA8; background: #D3E6FA; color: #154A85; font: inherit; font-weight: 600; cursor: pointer">Beta</button>
+        <button type="button" aria-pressed="false" style="height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid #B9CFE6; background: #FFFFFF; color: #24374F; font: inherit; cursor: pointer">Vila Gama</button>
+      </div>
+      <label style="display: flex; align-items: center; gap: 6px; color: #24374F"><input type="checkbox">Len voľné</label>
+      <label style="display: flex; align-items: center; gap: 6px; color: #24374F"><input type="checkbox">Úplne voľné izby</label>
+      <div style="flex-grow: 1"></div>
+      <div role="group" aria-label="Priblíženie" style="display: flex; border: 1px solid #B9CFE6; border-radius: 8px; overflow: hidden; background: #FFFFFF">
+        <button type="button" style="height: 34px; padding: 0 12px; border: 0; background: #FFFFFF; font: inherit; color: #24374F; cursor: pointer">31 dní</button>
+        <button type="button" style="height: 34px; padding: 0 12px; border: 0; border-left: 1px solid #B9CFE6; background: #D3E6FA; font: inherit; font-weight: 600; color: #154A85; cursor: pointer">14 dní</button>
+        <button type="button" style="height: 34px; padding: 0 12px; border: 0; border-left: 1px solid #B9CFE6; background: #FFFFFF; font: inherit; color: #24374F; cursor: pointer">7 dní</button>
+      </div>
+      <button type="button" style="height: 36px; padding: 0 14px; border: 1px dashed #5B8FC9; border-radius: 8px; background: #F5F9FE; font: inherit; color: #154A85; cursor: pointer">Odkladisko (0)</button>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; padding: 0 24px 24px; align-items: flex-start">
+
+      <section aria-label="Mriežka plánu" style="flex: 999 1 640px; min-width: 0; background: #FFFFFF; border: 1px solid #C9DCEF; border-radius: 12px; overflow: hidden">
+        <div style="overflow-x: auto">
+          <div style="width: 852px">
+            <div style="display: flex; border-bottom: 1px solid #C9DCEF; background: #F5F9FE">
+              <div style="width: 180px; flex-shrink: 0; box-sizing: border-box; padding: 10px 12px; font-size: 12px; font-weight: 600; color: #4A5D75">Izba / lôžko</div>
+              <sc-for list="{{ days }}" as="d" hint-placeholder-count="14">
+                <div style="width: 48px; flex-shrink: 0; box-sizing: border-box; text-align: center; padding: 6px 0; font-size: 12px; line-height: 1.3; {{ d.headStyle }}">
+                  <div>{{ d.dow }}</div>
+                  <div style="font-weight: 600; font-size: 14px">{{ d.num }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <sc-for list="{{ rows }}" as="r" hint-placeholder-count="12">
+              <div style="display: flex; {{ r.rowStyle }}">
+                <div style="width: 180px; flex-shrink: 0; box-sizing: border-box; padding: 0 12px; height: 36px; display: flex; align-items: center; gap: 8px; border-right: 1px solid #DCE8F4">
+                  <span style="width: 64px; font-weight: 600; {{ r.roomStyle }}">{{ r.room }}</span>
+                  <span style="font-size: 12px; color: #4A5D75">{{ r.bedLabel }}</span>
+                </div>
+                <div style="position: relative; width: 672px; height: 36px; display: flex">
+                  <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="14">
+                    <div style="width: 48px; height: 36px; box-sizing: border-box; border-right: 1px solid #EEF3F8; {{ c.style }}"></div>
+                  </sc-for>
+                  <sc-for list="{{ r.bars }}" as="b" hint-placeholder-count="1">
+                    <button type="button" onClick="{{ b.pick }}" title="{{ b.title }}" style="position: absolute; top: 5px; height: 26px; box-sizing: border-box; border-radius: 6px; padding: 0 8px; font: inherit; font-size: 12px; font-weight: 600; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; display: flex; align-items: center; gap: 4px; {{ b.style }}">
+                      <sc-if value="{{ b.locked }}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></sc-if>{{ b.label }}
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 12px 16px; border-top: 1px solid #C9DCEF; background: #F5F9FE; font-size: 12px; color: #4A5D75">
+          <span style="display: flex; align-items: center; gap: 6px"><span style="width: 18px; height: 10px; border-radius: 3px; background: #1E5FA8"></span>Ubytovaný</span>
+          <span style="display: flex; align-items: center; gap: 6px"><span style="width: 18px; height: 10px; border-radius: 3px; background: #CFE3F7; border: 1px solid #5B8FC9"></span>Rezervovaný</span>
+          <span style="display: flex; align-items: center; gap: 6px"><span style="width: 18px; height: 10px; border-radius: 3px; background: repeating-linear-gradient(135deg,#A9C7E6 0 3px,#E6F0FA 3px 6px)"></span>Držané lôžko</span>
+          <span style="display: flex; align-items: center; gap: 6px"><span style="width: 18px; height: 10px; border-radius: 3px; background: repeating-linear-gradient(135deg,#B7C0CA 0 3px,#E9EDF1 3px 6px)"></span>Blokácia</span>
+          <span style="display: flex; align-items: center; gap: 6px"><span style="width: 3px; height: 14px; background: #1E5FA8"></span>Obchodný deň recepcie</span>
+          <span style="display: flex; align-items: center; gap: 6px"><span style="width: 18px; height: 10px; border-radius: 3px; background: #E4EEF8"></span>Víkend</span>
+        </div>
+      </section>
+
+      <aside aria-label="Detail" style="flex: 1 1 300px; max-width: 340px; box-sizing: border-box; background: #FFFFFF; border: 1px solid #C9DCEF; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span style="align-self: flex-start; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; {{ sel.badgeStyle }}">{{ sel.status }}</span>
+          <h2 style="margin: 0; font-size: 20px; letter-spacing: -0.3px">{{ sel.title }}</h2>
+          <span style="color: #4A5D75">{{ sel.subtitle }}</span>
+        </div>
+        <dl style="margin: 0; display: grid; grid-template-columns: 110px 1fr; gap: 10px 12px; font-size: 13px">
+          <sc-for list="{{ sel.facts }}" as="f" hint-placeholder-count="5">
+            <dt style="color: #4A5D75">{{ f.k }}</dt>
+            <dd style="margin: 0; font-weight: 500">{{ f.v }}</dd>
+          </sc-for>
+        </dl>
+        <sc-if value="{{ sel.isStay }}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <a href="Karta.dc.html" style="display: flex; align-items: center; justify-content: center; height: 40px; border-radius: 8px; border: 1px solid #1E5FA8; color: #1E5FA8; font-weight: 600; text-decoration: none">Otvoriť rezervačnú kartu</a>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+              <button type="button" disabled="{{ offline }}" title="{{ writeHint }}" style="height: 40px; border-radius: 8px; border: 0; background: #1E5FA8; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Presťahovať</button>
+              <button type="button" disabled="{{ offline }}" title="{{ writeHint }}" style="height: 40px; border-radius: 8px; border: 1px solid #B9CFE6; background: #FFFFFF; color: #13243A; font: inherit; font-weight: 500; cursor: pointer">Zmeniť dĺžku</button>
+              <button type="button" disabled="{{ offline }}" title="{{ writeHint }}" style="height: 40px; border-radius: 8px; border: 1px solid #B9CFE6; background: #FFFFFF; color: #13243A; font: inherit; font-weight: 500; cursor: pointer">Vymeniť s…</button>
+              <button type="button" disabled="{{ offline }}" title="{{ writeHint }}" style="height: 40px; border-radius: 8px; border: 1px solid #E8B9A0; background: #FFFFFF; color: #9A3B0B; font: inherit; font-weight: 500; cursor: pointer">Zrušiť ubytovanie</button>
+            </div>
+          </div>
+        </sc-if>
+        <p style="margin: 0; padding: 12px; border-radius: 8px; background: #EAF3FC; color: #24374F; font-size: 12px; line-height: 1.5">{{ hint }}</p>
+      </aside>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"offline":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 's820' };
+  }
+  renderVals() {
+    const offline = this.props.offline ?? false;
+    const DW = 48, FIRST = 16, N = 14, BUS = 17;
+    const dows = ['po', 'ut', 'st', 'št', 'pi', 'so', 'ne'];
+    const isWeekend = (d) => { const i = (d - FIRST) % 7; return i === 5 || i === 6; };
+    const days = [];
+    for (let i = 0; i < N; i++) {
+      const d = FIRST + i;
+      let headStyle = 'color: #24374F;';
+      if (isWeekend(d)) headStyle = 'color: #24374F; background: #E4EEF8;';
+      if (d === BUS) headStyle = 'color: #FFFFFF; background: #1E5FA8;';
+      days.push({ dow: dows[i % 7], num: d + '.', headStyle });
+    }
+    const rooms = [
+      { room: 'ALF 101', cat: 'K2', beds: [
+        { b: 'lôžko 1', bars: [{ id: 's812', t: 'CHECKED_IN', f: 10, to: 20, name: 'Testovský A.', card: 'R-2026-0128', flags: 'Skorý príchod' }] },
+        { b: 'lôžko 2', bars: [{ id: 'h812', t: 'HELD_BED', f: 10, to: 20, name: 'Testovský A.', card: 'R-2026-0128' }] },
+        { b: 'prístelka', bars: [] } ] },
+      { room: 'ALF 102', cat: 'K2', beds: [
+        { b: 'lôžko 1', bars: [{ id: 's820', t: 'RESERVED', f: 17, to: 24, name: 'Ukážková M.', card: 'R-2026-0140' }] },
+        { b: 'lôžko 2', bars: [{ id: 's821', t: 'RESERVED', f: 17, to: 24, name: 'Ukážkový P.', card: 'R-2026-0140' }] } ] },
+      { room: 'ALF 103', cat: 'K1', beds: [
+        { b: 'lôžko 1', bars: [{ id: 'k5', t: 'ROOM_BLOCK', f: 20, to: 26, name: 'Maľovanie' }] } ] },
+      { room: 'ALF 104', cat: 'K2', beds: [
+        { b: 'lôžko 1', bars: [
+          { id: 's801', t: 'CHECKED_IN', f: 12, to: 18, name: 'Demová J.', card: 'R-2026-0119' },
+          { id: 's830', t: 'RESERVED', f: 18, to: 28, name: 'Príkladný R.', card: 'R-2026-0146' } ] },
+        { b: 'lôžko 2', bars: [] } ] },
+      { room: 'BETA 201', cat: 'K3', beds: [
+        { b: 'lôžko 1', bars: [{ id: 's790', t: 'CHECKED_IN', f: 14, to: 27, name: 'Vzorová E.', card: 'R-2026-0111', locked: true }] },
+        { b: 'lôžko 2', bars: [{ id: 's791', t: 'CHECKED_IN', f: 14, to: 27, name: 'Vzorový K.', card: 'R-2026-0111', locked: true }] } ] },
+      { room: 'BETA 202', cat: 'K1', beds: [
+        { b: 'lôžko 1', bars: [
+          { id: 's770', t: 'CHECKED_IN', f: 9, to: 17, name: 'Fiktívny L.', card: 'R-2026-0102' },
+          { id: 's840', t: 'RESERVED', f: 19, to: 32, name: 'Skúšobná T.', card: 'R-2026-0151' } ] } ] },
+      { room: 'BETA 203', cat: 'K2', beds: [ { b: 'lôžko 1', bars: [] }, { b: 'lôžko 2', bars: [] } ] }
+    ];
+    const typeStyle = {
+      CHECKED_IN: 'background: #1E5FA8; color: #FFFFFF; border: 1px solid #154A85;',
+      RESERVED: 'background: #CFE3F7; color: #13243A; border: 1px solid #5B8FC9;',
+      HELD_BED: 'background: repeating-linear-gradient(135deg,#BCD4EC 0 6px,#E6F0FA 6px 12px); color: #24374F; border: 1px solid #A9C7E6; font-weight: 500;',
+      ROOM_BLOCK: 'background: repeating-linear-gradient(135deg,#C3CBD4 0 6px,#E9EDF1 6px 12px); color: #24374F; border: 1px solid #AEB8C3;'
+    };
+    const statusText = { CHECKED_IN: 'Ubytovaný', RESERVED: 'Rezervovaný', HELD_BED: 'Držané lôžko', ROOM_BLOCK: 'Blokácia izby' };
+    const badge = {
+      CHECKED_IN: 'background: #1E5FA8; color: #FFFFFF;',
+      RESERVED: 'background: #CFE3F7; color: #154A85;',
+      HELD_BED: 'background: #E6F0FA; color: #24374F;',
+      ROOM_BLOCK: 'background: #E9EDF1; color: #24374F;'
+    };
+    const fmt = (d) => d > 30 ? (d - 30) + '. 12.' : d + '. 11.';
+    const all = {};
+    const rows = [];
+    rooms.forEach((rm) => {
+      rm.beds.forEach((bed, bi) => {
+        const cells = [];
+        for (let i = 0; i < N; i++) {
+          const d = FIRST + i;
+          let style = '';
+          if (isWeekend(d)) style = 'background: #F0F5FB;';
+          if (d === BUS) style = 'background: #EAF3FC; border-left: 2px solid #1E5FA8;';
+          cells.push({ style });
+        }
+        const bars = bed.bars.map((b) => {
+          all[b.id] = Object.assign({ room: rm.room, bed: bed.b, cat: rm.cat }, b);
+          let x1 = (b.f - FIRST + 0.5) * DW, x2 = (b.to - FIRST + 0.5) * DW;
+          const clipL = x1 < 0, clipR = x2 > N * DW;
+          x1 = Math.max(x1, 0); x2 = Math.min(x2, N * DW);
+          const selected = this.state.sel === b.id;
+          let style = 'left: ' + (x1 + 1) + 'px; width: ' + Math.max(x2 - x1 - 2, 10) + 'px; ' + typeStyle[b.t];
+          if (clipL) style += ' border-top-left-radius: 0; border-bottom-left-radius: 0;';
+          if (clipR) style += ' border-top-right-radius: 0; border-bottom-right-radius: 0;';
+          if (selected) style += ' outline: 3px solid #E07B22; outline-offset: 1px; z-index: 2;';
+          const label = b.t === 'HELD_BED' ? 'držané' : b.name;
+          return {
+            label, locked: !!b.locked, style,
+            title: statusText[b.t] + ': ' + (b.name || '') + ', ' + fmt(b.f) + ' – ' + fmt(b.to),
+            pick: () => this.setState({ sel: b.id })
+          };
+        });
+        rows.push({
+          room: bi === 0 ? rm.room : '',
+          roomStyle: '',
+          bedLabel: bed.b,
+          rowStyle: bi === 0 ? 'border-top: 1px solid #C9DCEF;' : 'border-top: 1px solid #EEF3F8;',
+          cells, bars
+        });
+      });
+    });
+    const s = all[this.state.sel] || all['s820'];
+    const nights = s.to - s.f;
+    let sel;
+    if (s.t === 'ROOM_BLOCK') {
+      sel = { title: 'Blokácia: ' + s.name, subtitle: 'Izba ' + s.room, isStay: false,
+        facts: [ { k: 'Obdobie', v: fmt(s.f) + ' – ' + fmt(s.to) + ' 2026' }, { k: 'Dôvod', v: s.name }, { k: 'Založila', v: 'Vedúca recepcie' } ] };
+    } else if (s.t === 'HELD_BED') {
+      sel = { title: 'Držané lôžko', subtitle: 'Izba ' + s.room + ', ' + s.bed, isStay: false,
+        facts: [ { k: 'Pre hosťa', v: s.name }, { k: 'Karta', v: s.card }, { k: 'Obdobie', v: fmt(s.f) + ' – ' + fmt(s.to) + ' 2026' }, { k: 'Dôvod', v: 'Výhradné užívanie izby' } ] };
+    } else {
+      sel = { title: s.name, subtitle: 'Karta ' + s.card, isStay: true,
+        facts: [
+          { k: 'Obdobie', v: fmt(s.f) + ' – ' + fmt(s.to) + ' 2026 (' + nights + ' nocí)' },
+          { k: 'Izba', v: s.room + ', ' + s.bed + ' (' + s.cat + ')' },
+          { k: 'Platiteľ', v: 'Zdravotná poisťovňa Demo' },
+          { k: 'Lekár', v: 'MUDr. Ukážkový' },
+          { k: 'Príznaky', v: s.flags || (s.locked ? 'Zamknutý pobyt' : '–') }
+        ] };
+    }
+    sel.status = statusText[s.t];
+    sel.badgeStyle = badge[s.t];
+    return {
+      offline, days, rows, sel,
+      writeHint: offline ? 'Nedostupné bez spojenia so serverom' : '',
+      hint: offline
+        ? 'Údaje sú z lokálnej kópie. Plán sa po obnovení spojenia sám aktualizuje.'
+        : 'Tip: pásik môžete potiahnuť na iné lôžko alebo potiahnuť jeho pravý okraj a zmeniť koniec pobytu. Zmeny ostatných recepčných sa zobrazia hneď.',
+      pillText: offline ? 'Offline · údaje z 22:47' : 'Online · synchronizované 23:41',
+      pillStyle: offline ? 'background: #FFF1E0; color: #7A3705;' : 'background: #DDF2F0; color: #0B5C5C;',
+      dotStyle: offline ? 'background: #D2691E;' : 'background: #13897F;'
+    };
+  }
+}
+</script>
+</body>
+</html>

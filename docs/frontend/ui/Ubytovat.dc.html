@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<title>TheraSuite – Ubytovanie klienta</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1E5FA8}a:hover{color:#154A85}
+</style>
+</helmet>
+<div style="position: relative; min-height: 900px; background: #EEF5FC; color: #13243A; font-family: Inter, system-ui, sans-serif; font-size: 14px; overflow: hidden">
+
+  <div aria-hidden="true" style="display: flex; min-height: 900px">
+    <div style="width: 232px; background: #DCEBFA; border-right: 1px solid #C9DCEF"></div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column">
+      <div style="height: 64px; background: #FFFFFF; border-bottom: 1px solid #C9DCEF"></div>
+      <div style="margin: 24px; flex-grow: 1; background: #FFFFFF; border: 1px solid #C9DCEF; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; padding: 50px 16px 16px">
+        <div style="height: 26px; width: 40%; margin-left: 22%; border-radius: 6px; background: #1E5FA8"></div>
+        <div style="height: 26px; width: 30%; margin-left: 38%; border-radius: 6px; background: #CFE3F7"></div>
+        <div style="height: 26px; width: 52%; margin-left: 12%; border-radius: 6px; background: #1E5FA8"></div>
+        <div style="height: 26px; width: 25%; margin-left: 50%; border-radius: 6px; background: #CFE3F7"></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position: absolute; inset: 0; background: rgba(19,36,58,.38); display: flex; align-items: center; justify-content: center; padding: 24px">
+    <div role="dialog" aria-modal="true" aria-labelledby="dlg-title" style="width: 100%; max-width: 720px; background: #FFFFFF; border-radius: 16px; box-shadow: 0 20px 48px rgba(19,36,58,.25); display: flex; flex-direction: column; overflow: hidden">
+      <div style="display: flex; align-items: flex-start; gap: 16px; padding: 22px 24px 16px; border-bottom: 1px solid #E3EDF7">
+        <div style="flex-grow: 1">
+          <h2 id="dlg-title" style="margin: 0 0 4px; font-size: 20px; letter-spacing: -0.3px">Ubytovať kartu R-2026-0140</h2>
+          <div style="color: #4A5D75">Ukážková M., Ukážkový P. · 17. 11. – 24. 11. 2026 (7 nocí) · kategória K2</div>
+        </div>
+        <a href="Main.dc.html" aria-label="Zavrieť" style="width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #24374F; text-decoration: none; background: #F0F5FB"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+      </div>
+
+      <sc-if value="{{ isSelect }}" hint-placeholder-val="{{ true }}">
+        <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+            <span style="font-weight: 600">Voľné izby</span>
+            <div style="flex-grow: 1"></div>
+            <label style="display: flex; align-items: center; gap: 6px"><input type="radio" name="cat" checked>Len kategória K2</label>
+            <label style="display: flex; align-items: center; gap: 6px"><input type="radio" name="cat">Všetky kategórie</label>
+          </div>
+          <div role="radiogroup" aria-label="Voľné lôžka" style="display: flex; flex-direction: column; border: 1px solid #C9DCEF; border-radius: 10px; overflow: hidden">
+            <sc-for list="{{ rooms }}" as="r" hint-placeholder-count="4">
+              <button type="button" role="radio" aria-checked="{{ r.checked }}" onClick="{{ r.pick }}" style="display: flex; align-items: center; gap: 14px; padding: 12px 16px; border: 0; border-top: 1px solid #E3EDF7; font: inherit; text-align: left; cursor: pointer; color: #13243A; {{ r.style }}">
+                <span style="width: 18px; height: 18px; border-radius: 50%; box-sizing: border-box; flex-shrink: 0; {{ r.dot }}"></span>
+                <span style="width: 90px; font-weight: 600">{{ r.room }}</span>
+                <span style="width: 70px; color: #4A5D75">{{ r.cat }}</span>
+                <span style="flex-grow: 1">{{ r.beds }}</span>
+                <span style="font-size: 12px; color: #4A5D75">{{ r.note }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="display: flex; gap: 10px; padding: 10px 12px; border-radius: 8px; background: #EAF3FC; font-size: 13px; color: #24374F">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1E5FA8" stroke-width="2" aria-hidden="true" style="flex-shrink: 0"><circle cx="12" cy="12" r="9"></circle><path d="M12 8h.01M11 12h1v5h1"></path></svg>
+            Váš limit ubytovania je 365 nocí. Hostia karty sa ubytujú na lôžka vybranej izby v poradí podľa karty.
+          </div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px; border-top: 1px solid #E3EDF7; background: #F7FAFE">
+          <a href="Main.dc.html" style="display: flex; align-items: center; height: 42px; padding: 0 18px; border-radius: 8px; border: 1px solid #B9CFE6; color: #13243A; text-decoration: none; font-weight: 500">Zrušiť</a>
+          <button type="button" onClick="{{ next }}" style="height: 42px; padding: 0 20px; border-radius: 8px; border: 0; background: #1E5FA8; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Ubytovať do {{ chosen }}</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isWarn }}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 20px 24px; display: flex; flex-direction: column; gap: 14px">
+          <div role="alert" style="display: flex; gap: 12px; padding: 16px; border-radius: 10px; background: #FFF1E0; border: 1px solid #F2C79A; color: #5E2A03">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B4540A" stroke-width="2" aria-hidden="true" style="flex-shrink: 0"><path d="M12 3l10 18H2z"></path><path d="M12 10v4M12 17.5h.01"></path></svg>
+            <div style="display: flex; flex-direction: column; gap: 6px; line-height: 1.45">
+              <strong>Ubytovanie potrebuje potvrdenie</strong>
+              <span>Ubytovaním do izby {{ chosen }} sa uvoľní držané lôžko hosťa Testovský A. (výhradné užívanie izby od 10. 11.).</span>
+              <span style="font-size: 12px; color: #7A3705">Kód upozornenia: RELEASES_HELD_BED · potvrdenie sa zapíše do auditu</span>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px; border-top: 1px solid #E3EDF7; background: #F7FAFE">
+          <button type="button" onClick="{{ back }}" style="height: 42px; padding: 0 18px; border-radius: 8px; border: 1px solid #B9CFE6; background: #FFFFFF; font: inherit; font-weight: 500; color: #13243A; cursor: pointer">Späť na výber</button>
+          <a href="Main.dc.html" style="display: flex; align-items: center; height: 42px; padding: 0 20px; border-radius: 8px; background: #B4540A; color: #FFFFFF; text-decoration: none; font-weight: 600">Potvrdiť a ubytovať</a>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { step: 'select', room: 'ALF 101' };
+  }
+  renderVals() {
+    const list = [
+      { room: 'ALF 101', cat: 'K2', beds: 'prístelka + lôžko 2 (držané)', note: 'uvoľní držané lôžko' },
+      { room: 'ALF 205', cat: 'K2', beds: '2 voľné lôžka', note: 'celé obdobie voľné' },
+      { room: 'BETA 203', cat: 'K2', beds: '2 voľné lôžka', note: 'celé obdobie voľné' },
+      { room: 'ALF 104', cat: 'K2', beds: 'lôžko 2', note: 'izbu zdieľa iný hosť' }
+    ];
+    const rooms = list.map((r) => {
+      const on = this.state.room === r.room;
+      return Object.assign({}, r, {
+        checked: on ? 'true' : 'false',
+        style: on ? 'background: #EAF3FC;' : 'background: #FFFFFF;',
+        dot: on ? 'border: 6px solid #1E5FA8; background: #FFFFFF;' : 'border: 2px solid #8FAFD1; background: #FFFFFF;',
+        pick: () => this.setState({ room: r.room })
+      });
+    });
+    return {
+      rooms,
+      chosen: this.state.room,
+      isSelect: this.state.step === 'select',
+      isWarn: this.state.step === 'warn',
+      next: () => this.setState({ step: this.state.room === 'ALF 101' ? 'warn' : 'select' }),
+      back: () => this.setState({ step: 'select' })
+    };
+  }
+}
+</script>
+</body>
+</html>

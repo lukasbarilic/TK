@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<title>TheraSuite – Používatelia</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1E5FA8}a:hover{color:#154A85}
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-wrap: wrap; background: #EEF5FC; color: #13243A; font-family: Inter, system-ui, sans-serif; font-size: 14px">
+
+  <nav aria-label="Hlavné menu" style="flex: 1 1 232px; max-width: 260px; box-sizing: border-box; background: #DCEBFA; border-right: 1px solid #C9DCEF; padding: 20px 14px; display: flex; flex-direction: column; gap: 4px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 10px 20px">
+      <div style="width: 32px; height: 32px; border-radius: 9px; background: #1E5FA8; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 14c3-3 6 3 9 0s6 3 9 0"></path><path d="M3 9c3-3 6 3 9 0s6 3 9 0"></path></svg></div>
+      <div style="display: flex; flex-direction: column; line-height: 1.15"><span style="font-weight: 700; font-size: 17px; letter-spacing: -0.2px">TheraSuite</span><span style="font-size: 11px; color: #4A5D75; letter-spacing: 0.2px">by N-teq</span></div>
+    </div>
+    <a href="Pouzivatelia.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; background: #FFFFFF; color: #1E5FA8; font-weight: 600; text-decoration: none; box-shadow: 0 1px 2px rgba(19,36,58,.08)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.5a3.5 3.5 0 0 1 0 7M18 14c2 .8 3 2.8 3 6"></path></svg>Používatelia</a>
+    <a href="Audit.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #24374F; text-decoration: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"></path><path d="M8.5 12l2.5 2.5 4.5-5"></path></svg>Audit</a>
+    <div style="flex-grow: 1"></div>
+    <div style="padding: 12px; border-radius: 10px; background: #EAF3FC; font-size: 12px; color: #4A5D75; line-height: 1.5">Administrácia funguje len online.</div>
+  </nav>
+
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 14px 24px; background: #FFFFFF; border-bottom: 1px solid #C9DCEF">
+      <h1 style="margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.3px">Používatelia</h1>
+      <label style="flex: 1 1 260px; max-width: 380px; display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; border: 1px solid #B9CFE6; border-radius: 8px; background: #F5F9FE; color: #4A5D75">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+        <input type="search" aria-label="Hľadať používateľa" placeholder="Meno alebo prihlasovacie meno" style="flex-grow: 1; border: 0; background: transparent; font: inherit; color: #13243A; outline: none">
+      </label>
+      <div style="flex-grow: 1"></div>
+      <button type="button" style="height: 40px; padding: 0 18px; border: 0; border-radius: 8px; background: #1E5FA8; font: inherit; font-weight: 600; color: #FFFFFF; cursor: pointer">+ Nový používateľ</button>
+    </header>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; padding: 20px 24px; align-items: flex-start">
+      <section style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #C9DCEF; border-radius: 12px; overflow-x: auto">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px">
+          <thead>
+            <tr style="background: #F5F9FE; color: #4A5D75; text-align: left">
+              <th style="padding: 12px 20px; font-weight: 600">Používateľ</th>
+              <th style="padding: 12px; font-weight: 600">Roly</th>
+              <th style="padding: 12px; font-weight: 600">Stav</th>
+              <th style="padding: 12px 20px 12px 12px; font-weight: 600">Posledné prihlásenie</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-top: 1px solid #E3EDF7; background: #EAF3FC">
+              <td style="padding: 12px 20px"><div style="font-weight: 600">Recepčná Hlavná</div><div style="color: #4A5D75">recepcna.hlavna</div></td>
+              <td style="padding: 12px">Recepčná · Hlavná budova</td>
+              <td style="padding: 12px"><span style="padding: 3px 10px; border-radius: 999px; background: #DDF2F0; color: #0B5C5C; font-weight: 600; font-size: 12px">Aktívny</span></td>
+              <td style="padding: 12px 20px 12px 12px">17. 11. 23:41</td>
+            </tr>
+            <tr style="border-top: 1px solid #E3EDF7">
+              <td style="padding: 12px 20px"><div style="font-weight: 600">Vedúca Recepcie</div><div style="color: #4A5D75">veduca</div></td>
+              <td style="padding: 12px">Vedúca recepcie · všetky recepcie</td>
+              <td style="padding: 12px"><span style="padding: 3px 10px; border-radius: 999px; background: #DDF2F0; color: #0B5C5C; font-weight: 600; font-size: 12px">Aktívny</span></td>
+              <td style="padding: 12px 20px 12px 12px">17. 11. 18:02</td>
+            </tr>
+            <tr style="border-top: 1px solid #E3EDF7">
+              <td style="padding: 12px 20px"><div style="font-weight: 600">Recepčná Vily</div><div style="color: #4A5D75">recepcna.vily</div></td>
+              <td style="padding: 12px">Recepčná · Vily</td>
+              <td style="padding: 12px"><span style="padding: 3px 10px; border-radius: 999px; background: #FFF1E0; color: #7A3705; font-weight: 600; font-size: 12px">Zamknutý</span></td>
+              <td style="padding: 12px 20px 12px 12px">16. 11. 07:55</td>
+            </tr>
+            <tr style="border-top: 1px solid #E3EDF7">
+              <td style="padding: 12px 20px"><div style="font-weight: 600">MUDr. Ukážkový</div><div style="color: #4A5D75">mudr.ukazkovy</div></td>
+              <td style="padding: 12px">Lekár</td>
+              <td style="padding: 12px"><span style="padding: 3px 10px; border-radius: 999px; background: #DDF2F0; color: #0B5C5C; font-weight: 600; font-size: 12px">Aktívny</span></td>
+              <td style="padding: 12px 20px 12px 12px">17. 11. 08:10</td>
+            </tr>
+            <tr style="border-top: 1px solid #E3EDF7">
+              <td style="padding: 12px 20px"><div style="font-weight: 600">Audítor Demo</div><div style="color: #4A5D75">auditor</div></td>
+              <td style="padding: 12px">Audítor</td>
+              <td style="padding: 12px"><span style="padding: 3px 10px; border-radius: 999px; background: #DDF2F0; color: #0B5C5C; font-weight: 600; font-size: 12px">Aktívny</span></td>
+              <td style="padding: 12px 20px 12px 12px">12. 11. 10:30</td>
+            </tr>
+            <tr style="border-top: 1px solid #E3EDF7">
+              <td style="padding: 12px 20px"><div style="font-weight: 600">Nočná Recepčná</div><div style="color: #4A5D75">recepcna.noc</div></td>
+              <td style="padding: 12px">Recepčná · Hlavná budova</td>
+              <td style="padding: 12px"><span style="padding: 3px 10px; border-radius: 999px; background: #E9EDF1; color: #3D4B5C; font-weight: 600; font-size: 12px">Deaktivovaný</span></td>
+              <td style="padding: 12px 20px 12px 12px">30. 9. 06:12</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <aside aria-label="Úprava používateľa" style="flex: 1 1 340px; max-width: 400px; box-sizing: border-box; background: #FFFFFF; border: 1px solid #C9DCEF; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+        <div>
+          <h2 style="margin: 0 0 4px; font-size: 18px">Recepčná Hlavná</h2>
+          <div style="color: #4A5D75">recepcna.hlavna · založený 12. 11. 2026</div>
+        </div>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500">Zobrazované meno
+          <input type="text" value="Recepčná Hlavná" style="font: inherit; font-weight: 400; height: 40px; padding: 0 12px; border: 1px solid #B9CFE6; border-radius: 8px; background: #F5F9FE; color: #13243A">
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500">E-mail
+          <input type="email" value="recepcia@example.invalid" style="font: inherit; font-weight: 400; height: 40px; padding: 0 12px; border: 1px solid #B9CFE6; border-radius: 8px; background: #F5F9FE; color: #13243A">
+        </label>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: center"><span style="font-weight: 600; flex-grow: 1">Roly</span><button type="button" style="border: 0; background: transparent; font: inherit; font-weight: 600; color: #1E5FA8; cursor: pointer; padding: 6px 4px">+ Pridať rolu</button></div>
+          <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid #C9DCEF; border-radius: 10px; background: #F5F9FE">
+            <div style="flex-grow: 1"><div style="font-weight: 600">Recepčná</div><div style="font-size: 12px; color: #4A5D75">Recepcia: Hlavná budova · platí od 12. 11. 2026</div></div>
+            <button type="button" aria-label="Odobrať rolu Recepčná" style="width: 32px; height: 32px; border: 0; border-radius: 8px; background: transparent; color: #4A5D75; cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 10px; background: #EAF3FC; border: 1px solid #B9CFE6">
+          <span style="font-size: 12px; color: #4A5D75">Jednorazové heslo po resete (zobrazí sa len raz)</span>
+          <div style="display: flex; align-items: center; gap: 10px"><code style="font-size: 16px; font-weight: 600; letter-spacing: 1px; flex-grow: 1">DEMO-0000-HESLO</code><button type="button" style="height: 32px; padding: 0 12px; border: 1px solid #B9CFE6; border-radius: 8px; background: #FFFFFF; font: inherit; color: #1E5FA8; cursor: pointer">Kopírovať</button></div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+          <button type="button" style="height: 40px; border: 1px solid #B9CFE6; border-radius: 8px; background: #FFFFFF; font: inherit; color: #13243A; cursor: pointer">Resetovať heslo</button>
+          <button type="button" style="height: 40px; border: 1px solid #E8B9A0; border-radius: 8px; background: #FFFFFF; font: inherit; color: #9A3B0B; cursor: pointer">Deaktivovať</button>
+        </div>
+        <button type="button" style="height: 42px; border: 0; border-radius: 8px; background: #1E5FA8; font: inherit; font-weight: 600; color: #FFFFFF; cursor: pointer">Uložiť zmeny</button>
+      </aside>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
