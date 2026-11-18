@@ -171,6 +171,28 @@
     "statusOffline": "Offline – len na čítanie, údaje z {{time}}",
     "statusOfflineNoData": "Offline – len na čítanie"
   },
+  "businessDay": {
+    "title": "Nočná uzávierka",
+    "offline": "Nočná uzávierka je nedostupná bez spojenia so serverom. Vráťte sa, keď bude spojenie obnovené.",
+    "closing": "Uzatvára sa obchodný deň",
+    "blockingCount": "Blokujúce zistenia",
+    "infoCount": "Na vedomie",
+    "blockingTitle": "Blokuje uzávierku",
+    "infoTitle": "Na vedomie",
+    "noFindings": "Žiadne zistenia.",
+    "noReception": "Nemáte oprávnenie na uzávierku žiadnej recepcie.",
+    "openCard": "Otvoriť kartu",
+    "openPlan": "Plán",
+    "irreversible": "Po uzávierke sa otvorí nasledujúci obchodný deň a ostatným recepčným sa plán obnoví. Uzávierka sa nedá vrátiť späť.",
+    "recheck": "Znova skontrolovať",
+    "close": "Uzavrieť deň",
+    "resolveFirst": "Najprv vyriešte blokujúce zistenia",
+    "confirmTitle": "Uzavrieť obchodný deň",
+    "confirmText": "Naozaj uzavrieť obchodný deň {{date}}? Uzávierka sa nedá vrátiť späť.",
+    "confirmButton": "Uzavrieť deň",
+    "conflict": "Deň medzitým uzavrel niekto iný. Údaje sme obnovili, skontrolujte aktuálny obchodný deň.",
+    "done": "Deň je uzavretý. Nový obchodný deň: {{date}}."
+  },
   "movements": {
     "title": "Príchody a odchody",
     "arrivals": "Príchody",
