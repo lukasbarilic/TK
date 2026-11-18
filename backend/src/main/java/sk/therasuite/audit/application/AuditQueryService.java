@@ -59,7 +59,8 @@ public class AuditQueryService {
                     a.username(),
                     a.roles(),
                     a.operation(),
-                    a.dataScope()))
+                    a.dataScope(),
+                    a.source()))
             .toList();
     return new PageView<>(
         content, safePage, safeSize, repository.countAccesses(clientId, from, to));
