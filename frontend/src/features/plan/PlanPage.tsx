@@ -1,11 +1,11 @@
 import { Alert, Group, NativeSelect, Paper, Switch, Text, Title, Button, Loader } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { components } from '../../shared/api/schema';
 import { queryKeys } from '../../shared/api/queryKeys';
 import { DataAge, useConnection } from '../../shared/offline';
-import { receptionsInScope } from '../../shared/offline/scope';
+import { hasPermissionCode, receptionsInScope } from '../../shared/offline/scope';
 import { addDays, diffDays } from '../../shared/time';
 import { buildPlanVM } from './buildPlanVM';
 import { resolveColors } from './colors';
@@ -36,7 +36,20 @@ export interface PlanFocus {
   date?: string;
 }
 
-export function PlanPage({ me, focus }: { me: Me | null | undefined; focus?: PlanFocus }) {
+/** Voľné lôžko a deň, na ktoré recepčná klikla (UC2). */
+export interface FreeCellTarget {
+  receptionId?: number;
+  roomId: number;
+  bedId: number;
+  roomLabel: string;
+  bedLabel: string;
+  day: string;
+}
+
+/** Skladá dialóg ubytovania z plánu (features sa medzi sebou neimportujú, dialóg dodáva `app/`). */
+export type RenderCheckIn = (target: FreeCellTarget, onClose: () => void) => ReactNode;
+
+export function PlanPage({ me, focus, renderCheckIn }: { me: Me | null | undefined; focus?: PlanFocus; renderCheckIn?: RenderCheckIn }) {
   const view = useQuery({ queryKey: queryKeys.preference(DEFAULT_VIEW_KEY), queryFn: () => loadPreference(DEFAULT_VIEW_KEY) });
   const colors = useQuery({ queryKey: queryKeys.preference('plan.colors'), queryFn: () => loadPreference('plan.colors') });
   const extra = useQuery({ queryKey: queryKeys.preference('plan.showExtraBeds'), queryFn: () => loadPreference('plan.showExtraBeds') });
@@ -45,6 +58,7 @@ export function PlanPage({ me, focus }: { me: Me | null | undefined; focus?: Pla
     <PlanScreen
       me={me}
       focus={focus}
+      renderCheckIn={renderCheckIn}
       initial={parseDefaultView(view.data?.data?.value)}
       initialVersion={view.data?.data?.version}
       colorPref={colors.data?.data?.value}
@@ -56,17 +70,19 @@ export function PlanPage({ me, focus }: { me: Me | null | undefined; focus?: Pla
 interface ScreenProps {
   me: Me | null | undefined;
   focus?: PlanFocus;
+  renderCheckIn?: RenderCheckIn;
   initial: DefaultView;
   initialVersion?: number;
   colorPref: unknown;
   showExtraBeds: boolean;
 }
 
-function PlanScreen({ me, focus, initial, initialVersion, colorPref, showExtraBeds }: ScreenProps) {
+function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPref, showExtraBeds }: ScreenProps) {
   const { t } = useTranslation();
   const { state, canWrite } = useConnection();
   const [filters, setFilters] = useState<DefaultView>(initial);
   const [selected, setSelected] = useState<BarClick | null>(null);
+  const [freeCell, setFreeCell] = useState<{ roomId: number; bedId: number; day: string } | null>(null);
 
   // --- recepcia ---
   const receptions = useQuery({ queryKey: [...queryKeys.plan, 'receptions'], queryFn: loadReceptions });
@@ -169,6 +185,10 @@ function PlanScreen({ me, focus, initial, initialVersion, colorPref, showExtraBe
   const shift = (days: number) => patch({ daysBack: filters.daysBack - days, daysAhead: filters.daysAhead + days });
   const select = useCallback((c: BarClick) => setSelected(c), []);
 
+  const canCheckIn = renderCheckIn !== undefined && canWrite && hasPermissionCode(me, 'STAY_CREATE');
+  const cellRoom = freeCell && vm?.rows.find((r) => r.kind === 'room' && r.roomId === freeCell.roomId);
+  const cellBed = freeCell && vm?.rows.find((r) => r.kind === 'bed' && r.bedId === freeCell.bedId);
+
   const selectedRoom = selected && vm?.rows.find((r) => r.kind === 'room' && r.roomId === selected.roomId);
   const selectedBed = selected && vm?.rows.find((r) => r.kind === 'bed' && r.bedId === selected.bedId);
 
@@ -253,6 +273,7 @@ function PlanScreen({ me, focus, initial, initialVersion, colorPref, showExtraBe
               receptionId={receptionId}
               selectedBarKey={selected ? barKey(selected.bedId, selected.bar.id) : undefined}
               onSelectBar={select}
+              onFreeCell={canCheckIn ? setFreeCell : undefined}
             />
             {vm.rows.length === 0 && <Text c="dimmed" mt="sm" data-testid="plan-no-rooms">{t('plan.noRooms')}</Text>}
           </div>
@@ -266,6 +287,11 @@ function PlanScreen({ me, focus, initial, initialVersion, colorPref, showExtraBe
           )}
         </Group>
       )}
+      {canCheckIn && freeCell && cellRoom?.kind === 'room' && cellBed?.kind === 'bed' &&
+        renderCheckIn(
+          { ...freeCell, receptionId, roomLabel: `${cellRoom.building} ${cellRoom.label}`, bedLabel: cellBed.bedLabel },
+          () => setFreeCell(null),
+        )}
     </Paper>
   );
 }

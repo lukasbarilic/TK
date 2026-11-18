@@ -1,6 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { useMe } from '../features/auth';
 import { PlanPage } from '../features/plan';
+import { CheckInDialog } from '../features/stays';
 
 /** Skladá obrazovku plánu s prihláseným používateľom (features sa medzi sebou neimportujú). Odkaz `?roomId&date` skočí na izbu a dátum. */
 export function PlanRoute() {
@@ -11,5 +12,6 @@ export function PlanRoute() {
     roomId: Number.isInteger(roomId) && params.get('roomId') ? roomId : undefined,
     date: date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : undefined,
   };
-  return <PlanPage me={useMe().data} focus={focus} />;
+  const me = useMe().data;
+  return <PlanPage me={me} focus={focus} renderCheckIn={(target, onClose) => <CheckInDialog me={me} onClose={onClose} target={target} />} />;
 }
