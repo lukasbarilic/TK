@@ -1,5 +1,5 @@
 import { apiBytes, apiCall } from '../../shared/api/client';
-import { offlineQuery } from '../../shared/offline';
+import { offlineQuery, type JournalSpec } from '../../shared/offline';
 import { DS } from '../../shared/offline/datasets';
 import { platform } from '../../shared/platform';
 import type { components } from '../../shared/api/schema';
@@ -28,6 +28,13 @@ export interface GuestLocations {
   guests: GuestLocation[];
 }
 
+/** Denník čítaní (DLD kap. 7): klienti = ID kariet hostí v zozname (rovnako ako pri exporte). */
+const guestListJournal: JournalSpec<GuestLocations> = {
+  operation: 'GUEST_LOCATION_VIEW',
+  dataScope: 'NAME',
+  clientIds: (l) => [...new Set(l.guests.map((g) => g.reservationId))],
+};
+
 /** Zoznam hostí na deň: online zo servera, offline z trezora (`guest-list/<date>`). Filtre sa uplatňujú lokálne. */
 export const loadGuestList = (date: string) =>
   offlineQuery<GuestLocations>(DS.guestList, date, async (etag) => {
@@ -36,7 +43,7 @@ export const loadGuestList = (date: string) =>
       headers: etag ? { 'If-None-Match': etag } : {},
     });
     return res.status === 304 ? { status: 304 } : { status: 200, data: res.data as unknown as GuestLocations, etag: res.headers.etag };
-  });
+  }, undefined, guestListJournal);
 
 type BuildingView = components['schemas']['BuildingView'];
 

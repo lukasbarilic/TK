@@ -1,7 +1,7 @@
 import { apiCall } from '../../shared/api/client';
 import { isNetError } from '../../shared/api/errors';
 import type { components } from '../../shared/api/schema';
-import { connection, offlineQuery } from '../../shared/offline';
+import { connection, offlineQuery, reservationViewSpec } from '../../shared/offline';
 import { DS } from '../../shared/offline/datasets';
 import { platform } from '../../shared/platform';
 
@@ -90,7 +90,7 @@ export const loadReservation = (id: number) =>
   offlineQuery<ReservationDetail>(DS.reservation, String(id), async () => ({
     status: 200,
     data: (await apiCall('get', '/api/reservations/{id}', { path: { id } })).data,
-  }));
+  }), undefined, reservationViewSpec);
 
 /** Pobyty karty – len online (nie sú samostatnou sadou v trezore). */
 export const loadStays = async (id: number): Promise<ReservationStay[]> =>

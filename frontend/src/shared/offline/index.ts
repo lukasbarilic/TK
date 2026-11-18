@@ -7,3 +7,4 @@ export { startSyncRuntime } from './syncRuntime';
 export { useConnection, useLastSync, useSyncStatus } from './useConnection';
 export { WriteAction } from './WriteAction';
 export { wasEventHandled, markEventHandled } from './handledEvents';
+export { flushJournal, recordRead, startJournalRuntime, reservationViewSpec, type JournalSpec } from './journal';

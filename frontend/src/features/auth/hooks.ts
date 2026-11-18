@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../shared/api/queryKeys';
-import { connection } from '../../shared/offline';
+import { connection, flushJournal } from '../../shared/offline';
 import { platform } from '../../shared/platform';
 import { changePassword, fetchMe, login, logout } from './authApi';
 import { loginFlow, syncVaultAfterPasswordChange } from './loginFlow';
@@ -84,6 +84,8 @@ export function useLogoutAndWipe() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (username: string) => {
+      // neodoslaný denník čítaní sa pred vymazaním pokúsi odoslať, ak je spojenie (DLD kap. 7)
+      if (connection.getState() === 'online') await flushJournal();
       try {
         await logout();
       } catch {

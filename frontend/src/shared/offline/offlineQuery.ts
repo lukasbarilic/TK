@@ -1,6 +1,7 @@
 import { isNetError } from '../api/errors';
 import { platform } from '../platform';
 import { connection, type Connection } from './connection';
+import { recordRead, type JournalSpec } from './journal';
 
 export interface FetchResult<T> {
   status: 200 | 304;
@@ -14,17 +15,28 @@ export type OfflineResult<T> =
   | { data: null; source: 'cache'; syncedAt: undefined; empty: true };
 
 interface Deps {
-  vault: Pick<typeof platform.vault, 'get' | 'put'>;
+  vault: Pick<typeof platform.vault, 'get' | 'put' | 'info'>;
   connection: Pick<Connection, 'getState' | 'onNetworkError'>;
   now: () => Date;
 }
 
 const defaultDeps = (): Deps => ({ vault: platform.vault, connection, now: () => new Date() });
 
-async function fromVault<T>(deps: Deps, ds: string, key: string): Promise<OfflineResult<T>> {
+const journalDeps = (deps: Deps) => ({ vault: deps.vault, deviceId: () => platform.config.deviceId(), now: deps.now });
+
+async function fromVault<T>(
+  deps: Deps,
+  ds: string,
+  key: string,
+  journal: JournalSpec<T> | undefined,
+  conn: 'OFFLINE' | 'CACHED',
+): Promise<OfflineResult<T>> {
   try {
     const entry = await deps.vault.get<T>(ds, key);
-    if (entry) return { data: entry.value, source: 'cache', syncedAt: entry.meta.syncedAt, empty: false };
+    if (entry) {
+      if (journal) await recordRead(journal, entry.value, conn, journalDeps(deps));
+      return { data: entry.value, source: 'cache', syncedAt: entry.meta.syncedAt, empty: false };
+    }
   } catch {
     // zamknutý trezor = žiadne dáta
   }
@@ -36,15 +48,16 @@ async function fromVault<T>(deps: Deps, ds: string, key: string): Promise<Offlin
  * - `online`: `fetcher` s uloženým ETagom; `200` → uloží a vráti `server`, `304` → dáta z trezoru (`cache`, `syncedAt` sa obnoví).
  *   Sieťová chyba → stav `checking` a dáta z trezoru.
  * - inak (offline, relácia vypršala, kontrola spojenia): dáta z trezoru.
- * Zápis do denníka čítaní (kap. 7) je mimo rozsahu tohto modulu (F15).
+ * Ak je zadaný `journal`, každé zobrazenie z trezora (offline = `OFFLINE`, `304` = `CACHED`) sa zapíše do denníka čítaní (kap. 7).
  */
 export async function offlineQuery<T>(
   ds: string,
   key: string,
   fetcher: (etag?: string) => Promise<FetchResult<T>>,
   deps: Deps = defaultDeps(),
+  journal?: JournalSpec<T>,
 ): Promise<OfflineResult<T>> {
-  if (deps.connection.getState() !== 'online') return fromVault<T>(deps, ds, key);
+  if (deps.connection.getState() !== 'online') return fromVault<T>(deps, ds, key, journal, 'OFFLINE');
 
   let stored: Awaited<ReturnType<Deps['vault']['get']>> = null;
   try {
@@ -58,17 +71,18 @@ export async function offlineQuery<T>(
   } catch (e) {
     if (isNetError(e)) {
       deps.connection.onNetworkError();
-      return fromVault<T>(deps, ds, key);
+      return fromVault<T>(deps, ds, key, journal, 'OFFLINE');
     }
     throw e;
   }
   const syncedAt = deps.now().toISOString();
   if (res.status === 304) {
-    if (!stored) return fromVault<T>(deps, ds, key);
+    if (!stored) return fromVault<T>(deps, ds, key, journal, 'CACHED');
     await deps.vault.put(ds, key, stored.value, { etag: stored.meta.etag, syncedAt });
+    if (journal) await recordRead(journal, stored.value as T, 'CACHED', journalDeps(deps));
     return { data: stored.value as T, source: 'cache', syncedAt, empty: false };
   }
-  if (res.data === undefined) return fromVault<T>(deps, ds, key);
+  if (res.data === undefined) return fromVault<T>(deps, ds, key, journal, 'CACHED');
   try {
     await deps.vault.put(ds, key, res.data, { etag: res.etag, syncedAt });
   } catch {

@@ -1,7 +1,7 @@
 import { apiCall, type ApiResult } from '../../shared/api/client';
 import { ApiError } from '../../shared/api/errors';
 import type { components } from '../../shared/api/schema';
-import { putLocal, offlineQuery, type FetchResult, type OfflineResult } from '../../shared/offline';
+import { putLocal, offlineQuery, reservationViewSpec, type JournalSpec, type FetchResult, type OfflineResult } from '../../shared/offline';
 import { DS } from '../../shared/offline/datasets';
 import { addDays } from '../../shared/time';
 import { DEFAULT_VIEW, type DefaultView, type Plan, type StoredPlan } from './types';
@@ -42,6 +42,16 @@ export function syncWindow(businessDate: string, config: ClientConfig | null | u
   };
 }
 
+/** Denník čítaní (DLD kap. 7): klienti = ID kariet z pásikov pobytov v pláne. */
+const planJournal: JournalSpec<StoredPlan> = {
+  operation: 'PLAN_VIEW',
+  dataScope: 'NAME',
+  clientIds: (p) =>
+    (p.plan.rooms ?? []).flatMap((r) =>
+      (r.bars ?? []).flatMap((b) => ('reservationId' in b && typeof b.reservationId === 'number' ? [b.reservationId] : [])),
+    ),
+};
+
 /**
  * Plán pre zobrazený rozsah. Okno synchronizácie ide cez `offlineQuery` (zdieľa trezor aj ETag so synchronizáciou);
  * rozsah mimo okna sa dotiahne len online, bez zápisu do trezora.
@@ -65,7 +75,7 @@ export async function loadPlan(
     });
     if (res.status === 304) return { status: 304 };
     return { status: 200, data: { from: win.from, to: win.to, plan: res.data }, etag: res.headers.etag };
-  });
+  }, undefined, planJournal);
 }
 
 /** Len dotknuté izby (živá zmena, DLD kap. 5.3 / HLD kap. 6.4). */
@@ -78,7 +88,7 @@ export const loadCard = (reservationId: number) =>
   offlineQuery<Detail>(DS.reservation, String(reservationId), async () => ({
     status: 200,
     data: (await apiCall('get', '/api/reservations/{id}', { path: { id: reservationId } })).data,
-  }));
+  }), undefined, reservationViewSpec);
 
 /** Nastavenie používateľa (B06); neexistujúce (404) = predvolené. */
 export const loadPreference = (key: string) =>

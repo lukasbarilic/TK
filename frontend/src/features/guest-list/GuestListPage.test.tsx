@@ -125,10 +125,12 @@ describe('Zoznam hostí', () => {
     expect(decode(bytes).charCodeAt(0)).toBe(0xfeff);
     expect(decode(bytes)).toContain('Ukážková Mária;1958;Alfa');
     const keys = await platform.vault.list(DS.journal);
-    expect(keys).toHaveLength(1);
-    const entry = await platform.vault.get<{ operation: string; connection: string; clientIds: number[] }>(DS.journal, keys[0]);
-    expect(entry?.value).toMatchObject({ operation: 'GUEST_LOCATION_EXPORT', connection: 'OFFLINE' });
-    expect([...(entry?.value.clientIds ?? [])].sort()).toEqual([1, 2, 3]);
+    expect(keys).toHaveLength(2);
+    const entries = await Promise.all(keys.map((k) => platform.vault.get<{ operation: string; connection: string; clientIds: number[] }>(DS.journal, k)));
+    const byOp = Object.fromEntries(entries.map((e) => [e?.value.operation, e?.value]));
+    expect(byOp.GUEST_LOCATION_VIEW).toMatchObject({ connection: 'OFFLINE' });
+    expect(byOp.GUEST_LOCATION_EXPORT).toMatchObject({ connection: 'OFFLINE' });
+    expect([...(byOp.GUEST_LOCATION_EXPORT?.clientIds ?? [])].sort()).toEqual([1, 2, 3]);
   });
 
   it('offline: deň, ktorý nie je uložený, ukáže hlášku', async () => {
