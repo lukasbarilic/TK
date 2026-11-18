@@ -63,7 +63,23 @@
   },
   "errors": {
     "forbidden": "Na túto akciu nemáte oprávnenie.",
-    "generic": "Nastala neočakávaná chyba."
+    "generic": "Nastala neočakávaná chyba.",
+    "BED_OCCUPIED": "Lôžko je v tomto termíne už obsadené.",
+    "ROOM_BLOCKED": "Izba je v tomto termíne blokovaná.",
+    "ROOM_NOT_EMPTY": "Izba nie je celá prázdna.",
+    "BED_UNAVAILABLE": "Lôžko nie je dostupné.",
+    "EXTRA_BED_AGE": "Na prístelku nemožno ubytovať hosťa tohto veku.",
+    "PAST_CHANGE": "Zmena začína pred aktuálnym obchodným dňom.",
+    "OUTSIDE_RESERVATION": "Pobyt presahuje termín rezervačnej karty.",
+    "MISSING_PERMISSION": "Na túto akciu nemáte oprávnenie.",
+    "MAX_NIGHTS_EXCEEDED": "Pobyt je dlhší, než dovoľuje vaše oprávnenie.",
+    "CATEGORY_MISMATCH": "Na izbu inej kategórie, než má karta, nemáte oprávnenie ubytovať.",
+    "RESERVATION_NOT_ACTIVE": "Kartu v tomto stave nemožno ubytovať.",
+    "VALIDATION_FAILED": "Zadané údaje nie sú platné.",
+    "RELEASES_HELD_BED": "Ubytovaním sa uvoľní lôžko držané pre iný pobyt.",
+    "STAY_LOCKED": "Pobyt je uzamknutý.",
+    "PARTY_MEMBER_MOVED": "Presunie sa aj člen skupiny.",
+    "CONTINUES_ON_NEXT_RESERVATION": "Pobyt nadväzuje na ďalšiu rezervačnú kartu."
   },
   "menu": {
     "plan": "Plán ubytovania",
@@ -150,5 +166,41 @@
     "save": "Uložiť",
     "saved": "Karta bola uložená.",
     "conflict": "Kartu medzitým zmenil niekto iný. Údaje sa obnovili – skontrolujte ich a uložte znova."
+  },
+  "confirm": {
+    "title": "Potvrďte upozornenia",
+    "intro": "Operácia má upozornenia. Chcete napriek tomu pokračovať?",
+    "cancel": "Zrušiť",
+    "proceed": "Pokračovať"
+  },
+  "stays": {
+    "open": "Ubytovať",
+    "title": "Ubytovať klienta",
+    "from": "Od (príchod)",
+    "to": "Do (odchod)",
+    "nights_one": "{{count}} noc",
+    "nights_few": "{{count}} noci",
+    "nights_many": "{{count}} nocí",
+    "nights_other": "{{count}} nocí",
+    "limit_one": "Najviac {{count}} noc",
+    "limit_few": "Najviac {{count}} noci",
+    "limit_many": "Najviac {{count}} nocí",
+    "limit_other": "Najviac {{count}} nocí",
+    "tooLong_one": "Pobyt je dlhší, než dovoľuje vaše oprávnenie (najviac {{count}} noc).",
+    "tooLong_few": "Pobyt je dlhší, než dovoľuje vaše oprávnenie (najviac {{count}} noci).",
+    "tooLong_many": "Pobyt je dlhší, než dovoľuje vaše oprávnenie (najviac {{count}} nocí).",
+    "tooLong_other": "Pobyt je dlhší, než dovoľuje vaše oprávnenie (najviac {{count}} nocí).",
+    "allCategories": "Všetky kategórie",
+    "otherCategory": "iná kategória",
+    "noRooms": "V tomto termíne nie je voľná žiadna izba.",
+    "badDates": "Zadajte príchod pred odchodom.",
+    "pickBed": "Voľné lôžka",
+    "submit": "Ubytovať",
+    "target": "{{place}}, od {{day}}",
+    "searchCard": "Meno alebo číslo karty",
+    "noCards": "Nenašla sa žiadna rezervovaná karta bez pobytu.",
+    "pick": "Vybrať",
+    "cardTerm": "Karta: {{from}} – {{to}}",
+    "cell": "Voľné lôžko – ubytovať od {{day}}"
   }
 }

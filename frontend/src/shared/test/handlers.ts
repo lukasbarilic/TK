@@ -12,6 +12,8 @@ export const receptionist: Me = {
     { code: 'RESERVATION_VIEW', scopes: [{ receptionId: 2 }] },
     { code: 'BUSINESS_DAY_CLOSE', scopes: [{ receptionId: 2 }] },
     { code: 'GUEST_LOCATION_VIEW' },
+    { code: 'STAY_CREATE', limit: 14, scopes: [{ receptionId: 2 }] },
+    { code: 'STAY_OTHER_CATEGORY', scopes: [{ receptionId: 2 }] },
   ],
 };
 export const doctor: Me = {

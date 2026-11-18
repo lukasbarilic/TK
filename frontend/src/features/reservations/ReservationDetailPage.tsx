@@ -1,6 +1,6 @@
 import { Alert, Badge, Button, Checkbox, Group, Loader, Paper, Stack, Table, Text, TextInput, Title } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { ApiError } from '../../shared/api/errors';
@@ -10,10 +10,20 @@ import { DS } from '../../shared/offline/datasets';
 import { loadReservation, loadStays, updateReservation, type ReservationDetail } from './reservationsApi';
 
 /** Detail karty: hostia, kontakty (len s `RESERVATION_VIEW`, rieši rodič), pobyty s odkazom na plán, úprava online. */
-export function ReservationDetailPage({ id, canSeeContacts }: { id: number; canSeeContacts: boolean }) {
+export function ReservationDetailPage({
+  id,
+  canSeeContacts,
+  renderCheckIn,
+}: {
+  id: number;
+  canSeeContacts: boolean;
+  /** Dialóg ubytovania dodáva `app/` (features sa medzi sebou neimportujú); bez neho sa tlačidlo nezobrazí. */
+  renderCheckIn?: (card: ReservationDetail, onClose: () => void) => ReactNode;
+}) {
   const { t } = useTranslation();
   const card = useQuery({ queryKey: ['reservations', 'detail', id], queryFn: () => loadReservation(id) });
   const stays = useQuery({ queryKey: ['reservations', 'stays', id], queryFn: () => loadStays(id), retry: false });
+  const [checkingIn, setCheckingIn] = useState(false);
 
   return (
     <Paper withBorder p="md" radius="lg" bg="white" data-testid="reservation-detail">
@@ -43,7 +53,15 @@ export function ReservationDetailPage({ id, canSeeContacts }: { id: number; canS
             ))}
           </Stack>
           <Stack gap={4}>
-            <Text fw={600}>{t('reservations.stays')}</Text>
+            <Group justify="space-between">
+              <Text fw={600}>{t('reservations.stays')}</Text>
+              {renderCheckIn && (card.data.data.status === 'RESERVED' || card.data.data.status === 'CHECKED_IN') && (
+                <WriteAction>
+                  <Button size="compact-md" onClick={() => setCheckingIn(true)}>{t('stays.open')}</Button>
+                </WriteAction>
+              )}
+            </Group>
+            {checkingIn && renderCheckIn?.(card.data.data, () => setCheckingIn(false))}
             {stays.isPending && <Loader size="xs" />}
             {stays.isError && <Text size="sm" c="dimmed" data-testid="stays-unavailable">{t('offline.onlineOnly')}</Text>}
             {stays.data && stays.data.length === 0 && <Text size="sm" c="dimmed">{t('reservations.noStays')}</Text>}

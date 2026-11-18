@@ -91,9 +91,14 @@ interface Props {
   selectedBarKey?: string;
   /** Musí byť stabilná (useCallback), inak sa pásiky zbytočne prekresľujú. */
   onSelectBar: (click: BarClick) => void;
+  /** Klik na voľný deň lôžka (UC2); bez nej sú prázdne miesta neaktívne. */
+  onFreeCell?: (click: { roomId: number; bedId: number; day: string }) => void;
 }
 
-export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, selectedBarKey, onSelectBar }: Props) {
+/** Je lôžko v daný deň (noc `day`) voľné podľa lokálnych dát? Rozhoduje server, toto je len pomoc. */
+const isFree = (bars: BarVM[], day: string) => !bars.some((b) => b.from <= day && day < b.to);
+
+export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, selectedBarKey, onSelectBar, onFreeCell }: Props) {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const dayWidth = DAY_WIDTH[zoom];
@@ -246,7 +251,22 @@ export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, sele
                       ? t('plan.extraBed', { n: row.bedLabel })
                       : t('plan.bed', { n: row.bedLabel })}
                 </div>
-                <div style={{ position: 'relative', width, flex: 'none', backgroundImage: isRoom ? undefined : gridLines }}>
+                <div
+                  data-testid={isRoom ? undefined : 'plan-bed-cells'}
+                  onClick={
+                    !isRoom && onFreeCell
+                      ? (e) => {
+                          if (e.target !== e.currentTarget) return; // klik na pásik rieši pásik
+                          const col = Math.floor((e.clientX - e.currentTarget.getBoundingClientRect().left) / dayWidth);
+                          const day = vm.days[col];
+                          if (day && isFree(row.bars, day)) {
+                            onFreeCell({ roomId: row.roomId, bedId: row.bedId, day });
+                          }
+                        }
+                      : undefined
+                  }
+                  style={{ position: 'relative', width, flex: 'none', backgroundImage: isRoom ? undefined : gridLines, cursor: !isRoom && onFreeCell ? 'copy' : undefined }}
+                >
                   {!isRoom &&
                     row.bars.map((bar) => (
                       <BarView
