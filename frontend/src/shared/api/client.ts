@@ -108,3 +108,22 @@ export async function apiCall<P extends keyof paths & string, M extends HttpMeth
   }
   return { status: res.status, data: res.json as ResponseOf<P, M>, headers: res.headers };
 }
+
+/** Stiahnutie binárnej odpovede (CSV/PDF) cez `Platform.http` s `accept: 'bytes'`; chyby ako pri `apiCall`. */
+export async function apiBytes(
+  path: string,
+  query?: Record<string, string | number | boolean | string[] | undefined>,
+  impl: Pick<Platform, 'http'> = platform,
+): Promise<Uint8Array> {
+  let res: HttpResponse;
+  try {
+    res = await impl.http({ method: 'GET', path, query, accept: 'bytes' });
+  } catch (e) {
+    if (isNetError(e) && e.kind !== 'config') observer?.onNetworkError();
+    throw e;
+  }
+  if (res.status >= 502 && res.status <= 504) observer?.onNetworkError();
+  else observer?.onResponse();
+  if (res.status < 200 || res.status >= 300) throw toApiError(res.status, res.json, res.headers);
+  return res.bytes ?? new Uint8Array();
+}

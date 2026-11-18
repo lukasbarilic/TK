@@ -324,7 +324,7 @@ describe('menu a trasy podľa oprávnení', () => {
   it('lekár: len zoznam hostí; úvod = zoznam hostí', async () => {
     mockApi(doctor);
     const { router } = renderApp();
-    expect(await screen.findByText('Zoznam hostí – pripravuje sa')).toBeInTheDocument();
+    expect(await screen.findByTestId('guest-list-page')).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/guests');
     expect(menu().getAllByRole('link').map((l) => l.textContent)).toEqual(['Zoznam hostí']);
     expect(screen.queryByRole('combobox', { name: 'Recepcia' })).not.toBeInTheDocument();
