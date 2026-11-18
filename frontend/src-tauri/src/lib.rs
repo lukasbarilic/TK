@@ -45,6 +45,7 @@ pub fn run() {
                 .build(),
         )
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(AppState {
             net: net.clone(),
             paths: ConfigPaths::from_env(),
@@ -79,6 +80,8 @@ pub fn run() {
             commands::vault_remove,
             commands::vault_info,
             commands::vault_set_sync_state,
+            commands::update_check,
+            commands::update_install,
         ])
         .run(tauri::generate_context!())
         .expect("chyba pri spustení aplikácie");

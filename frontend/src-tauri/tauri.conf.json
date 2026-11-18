@@ -47,6 +47,14 @@
   },
   "bundle": {
     "active": false,
+    "createUpdaterArtifacts": true,
     "icon": ["icons/icon.ico", "icons/icon.png"]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "DOPLNIT_VEREJNY_KLUC_AKTUALIZACII_pozri_docs/frontend/AKTUALIZACIE.md",
+      "endpoints": [],
+      "windows": { "installMode": "passive" }
+    }
   }
 }

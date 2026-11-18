@@ -19,6 +19,9 @@ fn main() {
             "vault_list",
             "vault_remove",
             "vault_info",
+            "vault_set_sync_state",
+            "update_check",
+            "update_install",
         ]),
     ))
     .expect("chyba tauri-build");
