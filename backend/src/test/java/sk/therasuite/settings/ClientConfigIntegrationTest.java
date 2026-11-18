@@ -35,7 +35,7 @@ class ClientConfigIntegrationTest {
     mvc.perform(get("/api/client-config").with(TestUsers.as(jdbc, "cfg.bez.roly")))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.apiVersion").value(1))
-        .andExpect(jsonPath("$.minClientVersion").value("1.0.0"))
+        .andExpect(jsonPath("$.minClientVersion").value("0.1.0"))
         .andExpect(jsonPath("$.serverTime").isNotEmpty())
         .andExpect(jsonPath("$.idleTimeoutSec").value(1800))
         .andExpect(jsonPath("$.offline.planDaysBack").value(7))
