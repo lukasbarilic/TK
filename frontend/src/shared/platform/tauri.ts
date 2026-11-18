@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
-import type { HttpRequest, HttpResponse, LiveEvent, LiveState, Platform } from './types';
+import type { EntryMeta, HttpRequest, HttpResponse, LiveEvent, LiveState, Platform, Vault } from './types';
+import { toVaultError } from './vaultError';
 
 const notImplemented = (): never => {
   throw new Error('Tauri platforma nie je implementovaná');
@@ -48,24 +49,46 @@ function connectLive(
   };
 }
 
+/** Príkazy `vault_*`; chyby jadra sa menia na `VaultError`. DEK sa do JS nikdy nedostane. */
+async function vaultCall<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+  try {
+    return await invoke<T>(cmd, args);
+  } catch (e) {
+    throw toVaultError(e);
+  }
+}
+
+function createVault(): Vault {
+  return {
+    exists: (username) => vaultCall('vault_exists', { username }),
+    create: (username, password) => vaultCall('vault_create', { username, password }),
+    unlock: (username, password) => vaultCall('vault_unlock', { username, password }),
+    rewrap: (oldPassword, newPassword) => vaultCall('vault_rewrap', { oldPassword, newPassword }),
+    lock: () => vaultCall('vault_lock'),
+    wipe: (username) => vaultCall('vault_wipe', { username }),
+    put: (dataset, key, value, meta) => vaultCall('vault_put', { dataset, key, value, meta: meta ?? null }),
+    get: <T>(dataset: string, key: string) =>
+      vaultCall<{ value: T; meta: EntryMeta } | null>('vault_get', { dataset, key }),
+    list: (dataset) => vaultCall('vault_list', { dataset }),
+    remove: (dataset, keys) => vaultCall('vault_remove', { dataset, keys }),
+    // zamknutý trezor = žiadne informácie (rovnako ako vo webovom trezore)
+    info: async () => {
+      try {
+        return await vaultCall('vault_info');
+      } catch (e) {
+        if (toVaultError(e).kind === 'locked') return null;
+        throw e;
+      }
+    },
+  };
+}
+
 export function createTauriPlatform(): Platform {
   return {
     kind: 'tauri',
     http,
     live: { connect: connectLive },
-    vault: {
-      exists: notImplemented,
-      create: notImplemented,
-      unlock: notImplemented,
-      rewrap: notImplemented,
-      lock: notImplemented,
-      wipe: notImplemented,
-      put: notImplemented,
-      get: notImplemented,
-      list: notImplemented,
-      remove: notImplemented,
-      info: notImplemented,
-    },
+    vault: createVault(),
     config: {
       serverUrl: () => invoke<string | null>('config_get'),
       setServerUrl: (url) => invoke<void>('config_set_server_url', { url }),

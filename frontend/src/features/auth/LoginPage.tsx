@@ -3,11 +3,24 @@ import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, isNetError } from '../../shared/api/errors';
 import { useLogin } from './hooks';
+import { LoginFlowError } from './loginFlow';
 
 /** Zobrazí text chyby prihlásenia podľa DLD kap. 11 (401, 423, sieťová chyba). */
 export function useLoginErrorText() {
   const { t, i18n } = useTranslation();
   return (e: unknown): string => {
+    if (e instanceof LoginFlowError) {
+      switch (e.reason) {
+        case 'no-vault': return t('auth.noVault');
+        case 'wrong-password': return t('auth.invalidCredentials');
+        case 'expired': return t('auth.vaultExpired');
+        case 'deactivated': return t('auth.deactivated');
+        case 'throttled': {
+          const time = e.until ? new Date(e.until).toLocaleTimeString(i18n.language) : '';
+          return t('auth.vaultThrottled', { time });
+        }
+      }
+    }
     if (isNetError(e)) return t('auth.serverUnavailable');
     if (e instanceof ApiError && (e.status === 423 || e.code === 'ACCOUNT_LOCKED')) {
       if (e.lockedUntil) {

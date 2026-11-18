@@ -2,7 +2,9 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
+import { SESSION_DATASET, SESSION_KEY } from '../features/auth/loginFlow';
 import { clearSessionExpired } from '../features/auth/session';
+import { platform } from '../shared/platform';
 import { admin, doctor, mockApi, receptionist } from '../shared/test/handlers';
 import { renderWithProviders } from '../shared/test/render';
 import { server } from '../shared/test/server';
@@ -18,7 +20,11 @@ function renderApp(path = '/') {
 
 const menu = () => within(screen.getByTestId('main-menu'));
 
-afterEach(() => clearSessionExpired());
+afterEach(async () => {
+  clearSessionExpired();
+  await platform.vault.lock();
+  for (const u of ['recepcna.demo', 'x']) await platform.vault.wipe(u);
+});
 
 describe('prihlásenie', () => {
   it('úspešné prihlásenie načíta GET /api/me a otvorí úvodnú obrazovku', async () => {
@@ -75,7 +81,7 @@ describe('prihlásenie', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/Účet je zamknutý do .*2026/);
   });
 
-  it('server nedostupný', async () => {
+  it('server nedostupný a na tomto počítači nie je trezor', async () => {
     mockApi(null);
     server.use(http.post('/api/auth/login', () => HttpResponse.error()));
     renderApp();
@@ -83,7 +89,9 @@ describe('prihlásenie', () => {
     await user.type(await screen.findByLabelText(/^Používateľské meno/), 'x');
     await user.type(screen.getByLabelText(/^Heslo/), 'y');
     await user.click(screen.getByRole('button', { name: 'Prihlásiť sa' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Server nie je dostupný');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Na tomto počítači ste sa ešte neprihlásili online.',
+    );
   });
 
   it('pri mustChangePassword zobrazí len zmenu hesla a potom pokračuje do aplikácie', async () => {
@@ -123,6 +131,182 @@ describe('prihlásenie', () => {
     await user.click(await screen.findByRole('button', { name: 'Odhlásiť' }));
     expect(await screen.findByLabelText(/^Používateľské meno/)).toBeInTheDocument();
     expect(called).toBe(true);
+  });
+});
+
+async function typeCredentials(username: string, password: string) {
+  const user = userEvent.setup();
+  await user.type(await screen.findByLabelText(/^Používateľské meno/), username);
+  await user.type(screen.getByLabelText(/^Heslo/), password);
+  await user.click(screen.getByRole('button', { name: 'Prihlásiť sa' }));
+  return user;
+}
+
+async function seedVault(username: string, password: string) {
+  await platform.vault.create(username, password);
+  await platform.vault.put(SESSION_DATASET, SESSION_KEY, receptionist);
+  await platform.vault.lock();
+}
+
+describe('lokálny trezor a prihlásenie bez servera', () => {
+  const online = () => {
+    let loggedIn = false;
+    server.use(
+      http.get('/api/me', () => (loggedIn ? HttpResponse.json(receptionist) : HttpResponse.json({}, { status: 401 }))),
+      http.post('/api/auth/login', () => {
+        loggedIn = true;
+        return HttpResponse.json(receptionist);
+      }),
+      http.get('/api/catalog/receptions', () => HttpResponse.json([])),
+    );
+  };
+
+  it('prvé online prihlásenie vytvorí trezor a uloží doňho profil', async () => {
+    online();
+    renderApp();
+    await typeCredentials('recepcna.demo', 'heslo-demo');
+    await screen.findByText('Plán ubytovania – pripravuje sa');
+    expect(await platform.vault.exists('recepcna.demo')).toBe(true);
+    expect((await platform.vault.get(SESSION_DATASET, SESSION_KEY))?.value).toEqual(receptionist);
+  });
+
+  it('online prihlásenie s iným heslom založí nový trezor (dáta zo starého zmiznú)', async () => {
+    await seedVault('recepcna.demo', 'stare-heslo');
+    await platform.vault.unlock('recepcna.demo', 'stare-heslo');
+    await platform.vault.put('plan', '1', { a: 1 });
+    await platform.vault.lock();
+    online();
+    renderApp();
+    await typeCredentials('recepcna.demo', 'nove-heslo');
+    await screen.findByText('Plán ubytovania – pripravuje sa');
+    expect(await platform.vault.get('plan', '1')).toBeNull();
+    await platform.vault.lock();
+    expect(await platform.vault.unlock('recepcna.demo', 'nove-heslo')).toBe('ok');
+  });
+
+  it('online prihlásenie s rovnakým heslom zachová dáta v trezore', async () => {
+    await seedVault('recepcna.demo', 'heslo-demo');
+    await platform.vault.unlock('recepcna.demo', 'heslo-demo');
+    await platform.vault.put('plan', '1', { a: 1 });
+    await platform.vault.lock();
+    online();
+    renderApp();
+    await typeCredentials('recepcna.demo', 'heslo-demo');
+    await screen.findByText('Plán ubytovania – pripravuje sa');
+    expect((await platform.vault.get('plan', '1'))?.value).toEqual({ a: 1 });
+  });
+
+  it('offline prihlásenie so správnym heslom otvorí aplikáciu z trezora', async () => {
+    await seedVault('recepcna.demo', 'heslo-demo');
+    server.use(
+      http.get('/api/me', () => HttpResponse.json({}, { status: 401 })),
+      http.post('/api/auth/login', () => HttpResponse.error()),
+      http.get('/api/catalog/receptions', () => HttpResponse.error()),
+    );
+    renderApp();
+    await typeCredentials('recepcna.demo', 'heslo-demo');
+    expect(await screen.findByText('Plán ubytovania – pripravuje sa')).toBeInTheDocument();
+    expect(screen.getByText('Recepčná Ukážková')).toBeInTheDocument();
+  });
+
+  it('offline prihlásenie so zlým heslom zobrazí chybu', async () => {
+    await seedVault('recepcna.demo', 'heslo-demo');
+    mockApi(null);
+    server.use(http.post('/api/auth/login', () => HttpResponse.error()));
+    renderApp();
+    await typeCredentials('recepcna.demo', 'zle-heslo');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Nesprávne meno alebo heslo.');
+  });
+
+  it('offline: po 5 zlých pokusoch sa prihlásenie dočasne zablokuje', async () => {
+    await seedVault('recepcna.demo', 'heslo-demo');
+    mockApi(null);
+    server.use(http.post('/api/auth/login', () => HttpResponse.error()));
+    renderApp();
+    const user = await typeCredentials('recepcna.demo', 'zle-heslo');
+    for (let i = 0; i < 4; i++) {
+      await screen.findByRole('alert');
+      await user.click(screen.getByRole('button', { name: 'Prihlásiť sa' }));
+    }
+    await waitFor(async () => {
+      await user.click(screen.getByRole('button', { name: 'Prihlásiť sa' }));
+      expect(screen.getByRole('alert')).toHaveTextContent('Príliš veľa nesprávnych pokusov');
+    });
+  });
+
+  it('offline bez trezoru na tomto počítači zobrazí vysvetlenie', async () => {
+    mockApi(null);
+    server.use(http.post('/api/auth/login', () => HttpResponse.error()));
+    renderApp();
+    await typeCredentials('recepcna.demo', 'heslo-demo');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Na tomto počítači ste sa ešte neprihlásili online.',
+    );
+  });
+
+  it('zlé heslo na serveri (401) trezor neskúša ani nemení', async () => {
+    await seedVault('recepcna.demo', 'heslo-demo');
+    mockApi(null);
+    server.use(
+      http.post('/api/auth/login', () => HttpResponse.json({ code: 'INVALID_CREDENTIALS' }, { status: 401 })),
+    );
+    renderApp();
+    await typeCredentials('recepcna.demo', 'ine-heslo');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Nesprávne meno alebo heslo.');
+    expect(await platform.vault.exists('recepcna.demo')).toBe(true);
+    expect(await platform.vault.unlock('recepcna.demo', 'heslo-demo')).toBe('ok');
+  });
+
+  it('deaktivovaný účet vymaže trezor', async () => {
+    await seedVault('recepcna.demo', 'heslo-demo');
+    mockApi(null);
+    server.use(
+      http.post('/api/auth/login', () => HttpResponse.json({ code: 'ACCOUNT_DISABLED' }, { status: 403 })),
+    );
+    renderApp();
+    await typeCredentials('recepcna.demo', 'heslo-demo');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Účet je deaktivovaný.');
+    expect(await platform.vault.exists('recepcna.demo')).toBe(false);
+  });
+
+  it('zmena hesla prebalí trezor (nové heslo odomkne, staré nie)', async () => {
+    await seedVault('recepcna.demo', 'stare');
+    await platform.vault.unlock('recepcna.demo', 'stare');
+    await platform.vault.put('plan', '1', { a: 1 });
+    let changed = false;
+    server.use(
+      http.get('/api/me', () => HttpResponse.json({ ...receptionist, mustChangePassword: !changed })),
+      http.post('/api/me/password', () => {
+        changed = true;
+        return new HttpResponse(null, { status: 204 });
+      }),
+      http.get('/api/catalog/receptions', () => HttpResponse.json([])),
+    );
+    renderApp();
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText(/^Súčasné heslo/), 'stare');
+    await user.type(screen.getByLabelText(/^Nové heslo(?! znova)/), 'nove-heslo-1');
+    await user.type(screen.getByLabelText(/^Nové heslo znova/), 'nove-heslo-1');
+    await user.click(screen.getByRole('button', { name: 'Zmeniť heslo' }));
+    await screen.findByText('Plán ubytovania – pripravuje sa');
+    await platform.vault.lock();
+    expect(await platform.vault.unlock('recepcna.demo', 'stare')).toBe('wrong-password');
+    expect(await platform.vault.unlock('recepcna.demo', 'nove-heslo-1')).toBe('ok');
+    expect((await platform.vault.get('plan', '1'))?.value).toEqual({ a: 1 });
+  });
+
+  it('„Odhlásiť a vymazať údaje z tohto počítača“ zmaže trezor a odhlási', async () => {
+    await seedVault('recepcna.demo', 'heslo-demo');
+    await platform.vault.unlock('recepcna.demo', 'heslo-demo');
+    mockApi(receptionist);
+    server.use(http.post('/api/auth/logout', () => new HttpResponse(null, { status: 204 })));
+    renderApp();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Profil používateľa' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Odhlásiť a vymazať údaje z tohto počítača' }));
+    await user.click(await screen.findByRole('button', { name: 'Odhlásiť a vymazať' }));
+    expect(await screen.findByLabelText(/^Používateľské meno/)).toBeInTheDocument();
+    expect(await platform.vault.exists('recepcna.demo')).toBe(false);
   });
 });
 

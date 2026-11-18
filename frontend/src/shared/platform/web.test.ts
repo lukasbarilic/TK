@@ -120,6 +120,26 @@ describe('web platform – trezor v pamäti', () => {
   });
 });
 
+describe('web platform – trezor: chyby a obmedzenie pokusov', () => {
+  it('locked je VaultError a info zamknutého trezoru je null', async () => {
+    const { vault } = createWebPlatform();
+    await vault.create('jana', 'a');
+    await vault.lock();
+    await expect(vault.get('ds', 'k')).rejects.toMatchObject({ name: 'VaultError', kind: 'locked' });
+    await expect(vault.put('ds', 'k', 1)).rejects.toMatchObject({ kind: 'locked' });
+    expect(await vault.info()).toBeNull();
+  });
+
+  it('po 5 zlých pokusoch unlock vyhodí throttled s časom', async () => {
+    const { vault } = createWebPlatform();
+    await vault.create('jana', 'a');
+    await vault.lock();
+    for (let i = 0; i < 5; i++) expect(await vault.unlock('jana', 'zle')).toBe('wrong-password');
+    await expect(vault.unlock('jana', 'a')).rejects.toMatchObject({ kind: 'throttled' });
+    await expect(vault.unlock('jana', 'a')).rejects.toHaveProperty('until');
+  });
+});
+
 describe('web platform – ostatné', () => {
   it('checkUpdate je vždy null a deviceId je stabilné', async () => {
     const p = createWebPlatform();

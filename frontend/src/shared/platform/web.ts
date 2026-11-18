@@ -8,6 +8,7 @@ import type {
   Platform,
   Vault,
 } from './types';
+import { VaultError } from './vaultError';
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -115,36 +116,66 @@ function connectLive(
   };
 }
 
+// Čakanie (s) po n-tom neúspešnom pokuse, rovnako ako v natívnom jadre (DLD kap. 4.2).
+const UNLOCK_DELAYS_S: Record<number, number> = { 5: 30, 6: 60, 7: 120, 8: 300, 9: 900 };
+
 /** Trezor v pamäti (len pre vývoj a testy); heslo sa porovnáva pri unlock. */
 function createMemoryVault(): Vault {
   interface Entry { value: unknown; meta: EntryMeta }
-  interface Store { password: string; data: Map<string, Entry>; created: string }
+  interface Store {
+    password: string;
+    data: Map<string, Entry>;
+    created: string;
+    failed: number;
+    blockedUntil: number;
+  }
   const stores = new Map<string, Store>();
   let current: { username: string; store: Store } | null = null;
   const k = (u: string) => u.toLowerCase();
   const id = (dataset: string, key: string) => `${dataset}\u0000${key}`;
   const open = (): Store => {
-    if (!current) throw new Error('locked');
+    if (!current) throw new VaultError('locked', 'Trezor je zamknutý (locked).');
     return current.store;
   };
 
   return {
     exists: async (u) => stores.has(k(u)),
     create: async (u, password) => {
-      const store: Store = { password, data: new Map(), created: new Date().toISOString() };
+      const store: Store = {
+        password,
+        data: new Map(),
+        created: new Date().toISOString(),
+        failed: 0,
+        blockedUntil: 0,
+      };
       stores.set(k(u), store);
       current = { username: u, store };
     },
     unlock: async (u, password) => {
+      current = null;
       const store = stores.get(k(u));
       if (!store) return 'missing';
-      if (store.password !== password) return 'wrong-password';
+      if (store.blockedUntil > Date.now()) {
+        throw new VaultError(
+          'throttled',
+          'Príliš veľa nesprávnych pokusov.',
+          new Date(store.blockedUntil).toISOString(),
+        );
+      }
+      if (store.password !== password) {
+        store.failed += 1;
+        const wait = UNLOCK_DELAYS_S[Math.min(store.failed, 9)] ?? 0;
+        store.blockedUntil = wait ? Date.now() + wait * 1000 : 0;
+        return 'wrong-password';
+      }
+      store.failed = 0;
+      store.blockedUntil = 0;
       current = { username: u, store };
       return 'ok';
     },
     rewrap: async (oldPassword, newPassword) => {
       const store = open();
-      if (store.password !== oldPassword) throw new Error('wrong-password');
+      if (store.password !== oldPassword) throw new VaultError('wrong-password', 'Nesprávne súčasné heslo.');
       store.password = newPassword;
     },
     lock: async () => {
