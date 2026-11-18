@@ -1,6 +1,6 @@
 import { apiCall } from '../../shared/api/client';
 import type { components } from '../../shared/api/schema';
-import { offlineQuery } from '../../shared/offline';
+import { offlineQuery, type JournalSpec } from '../../shared/offline';
 import { DS, movementsKey } from '../../shared/offline/datasets';
 
 export type Movements = components['schemas']['Movements'];
@@ -20,6 +20,13 @@ export const loadBusinessDay = (receptionId: number) =>
     data: (await apiCall('get', '/api/receptions/{id}/business-day', { path: { id: receptionId } })).data,
   }));
 
+/** Denník čítaní (DLD kap. 7): klienti = ID kariet príchodov a odchodov. */
+const movementsJournal: JournalSpec<Movements> = {
+  operation: 'MOVEMENTS_VIEW',
+  dataScope: 'NAME',
+  clientIds: (m) => [...(m.arrivals ?? []), ...(m.departures ?? [])].flatMap((x) => (x.reservationId === undefined ? [] : [x.reservationId])),
+};
+
 /** Príchody a odchody (B02): online zo servera, offline z trezora (`movements/<receptionId>:<date>`). */
 export const loadMovements = (receptionId: number, date: string) =>
   offlineQuery<Movements>(DS.movements, movementsKey(receptionId, date), async (etag) => {
@@ -29,7 +36,7 @@ export const loadMovements = (receptionId: number, date: string) =>
       headers: etag ? { 'If-None-Match': etag } : {},
     });
     return res.status === 304 ? { status: 304 } : { status: 200, data: res.data, etag: res.headers.etag };
-  });
+  }, undefined, movementsJournal);
 
 /** Triedenie podľa izby (bez izby hore, číselne) a potom podľa mena. */
 export function sortMovements(list: Movement[] | undefined): Movement[] {

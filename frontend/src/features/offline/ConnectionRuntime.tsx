@@ -6,6 +6,7 @@ import { platform } from '../../shared/platform';
 import {
   connection,
   setDataChangedHandler,
+  startJournalRuntime,
   startSyncRuntime,
   syncEngine,
   useSyncStatus,
@@ -54,9 +55,11 @@ export function ConnectionRuntime() {
         }
       },
     });
+    const stopJournal = startJournalRuntime({ connection });
     return () => {
       stopped = true;
       stopSync();
+      stopJournal();
       setDataChangedHandler(null);
       ACTIVITY_EVENTS.forEach((e) => window.removeEventListener(e, touch));
       connection.stop();
