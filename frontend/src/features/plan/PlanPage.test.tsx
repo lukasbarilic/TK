@@ -215,6 +215,39 @@ describe('PlanPage – online', () => {
       expect(planRequests.every((u) => u.searchParams.getAll('roomIds').length === 0)).toBe(true);
     });
   });
+
+  describe('šírka mriežky', () => {
+    const original = globalThis.ResizeObserver;
+    afterEach(() => {
+      globalThis.ResizeObserver = original;
+    });
+
+    it('doplní dni do šírky mriežky a načíta celé týždne', async () => {
+      // každý pozorovaný prvok má šírku 1300 px
+      globalThis.ResizeObserver = class {
+        constructor(private cb: ResizeObserverCallback) {}
+        observe(target: Element) {
+          const entry = {
+            target,
+            contentRect: { width: 1300, height: 600 } as DOMRectReadOnly,
+            borderBoxSize: [{ inlineSize: 1300, blockSize: 600 }],
+            contentBoxSize: [{ inlineSize: 1300, blockSize: 600 }],
+            devicePixelContentBoxSize: [],
+          } as unknown as ResizeObserverEntry;
+          queueMicrotask(() => this.cb([entry], this as unknown as ResizeObserver));
+        }
+        unobserve() {}
+        disconnect() {}
+      };
+      mockServer();
+      renderWithProviders(<PlanPage me={receptionist} />);
+      // zoom Stredné (36 px): (1300 − 200 − 20) / 36 = 30 dní namiesto 15 z nastavení
+      await waitFor(() => expect(screen.getAllByTestId('plan-day')).toHaveLength(30));
+      expect(screen.getByTestId('plan-range')).toHaveTextContent('2026-11-17 – 2026-12-16');
+      // načíta sa po celých týždňoch: 15 dní navyše → 21
+      expect(planRequests.at(-1)?.searchParams.get('to')).toBe('2026-12-22');
+    });
+  });
 });
 
 describe('PlanPage – offline', () => {
