@@ -85,7 +85,8 @@
     "menu": {
       "moveFrom": "Presťahovať od…",
       "swap": "Vymeniť s…",
-      "cancel": "Zrušiť ubytovanie"
+      "cancel": "Zrušiť ubytovanie",
+      "newReservation": "Nová rezervácia sem…"
     },
     "moveFrom": {
       "bed": "Cieľové lôžko",
@@ -103,7 +104,8 @@
       "save": "Uložiť zmeny",
       "clear": "Zahodiť",
       "saveFailed": "Zmeny sa neuložili, odkladisko ostalo."
-    }
+    },
+    "newReservation": "+ Nová rezervácia"
   },
   "errors": {
     "forbidden": "Na túto akciu nemáte oprávnenie.",
@@ -331,7 +333,8 @@
     "save": "Uložiť",
     "saved": "Karta bola uložená.",
     "conflict": "Kartu medzitým zmenil niekto iný. Údaje sa obnovili – skontrolujte ich a uložte znova.",
-    "crumbList": "Rezervačné karty"
+    "crumbList": "Rezervačné karty",
+    "new": "+ Nová rezervácia"
   },
   "confirm": {
     "title": "Potvrďte upozornenia",
@@ -448,5 +451,68 @@
   "shared": {
     "back": "Späť",
     "breadcrumbs": "Drobčeková navigácia"
+  },
+  "newReservation": {
+    "title": "Nová rezervácia",
+    "fromPlan": "Otvorené z plánu: {{place}}, od {{day}}",
+    "offline": "Novú rezerváciu možno založiť len so spojením so serverom.",
+    "guests": "1. Hostia",
+    "searchClient": "Vyhľadať existujúceho klienta",
+    "searchClientPlaceholder": "meno alebo priezvisko",
+    "noClients": "Nenašiel sa žiadny klient.",
+    "lastStay": "posledný pobyt {{date}}",
+    "addClient": "Pridať",
+    "newClient": "+ Nový klient (nie je v zozname)",
+    "removeGuest": "Odobrať",
+    "primary": "Hlavný hosť",
+    "firstName": "Meno",
+    "lastName": "Priezvisko",
+    "birthDate": "Dátum narodenia",
+    "email": "E-mail",
+    "phone": "Telefón",
+    "stay": "2. Pobyt",
+    "nightsLabel": "Počet nocí",
+    "category": "Kategória",
+    "adults": "Dospelí",
+    "children": "Deti",
+    "payer": "Platiteľ",
+    "doctor": "Lekár (ID)",
+    "earlyCheckIn": "Skorý príchod",
+    "lateCheckOut": "Neskorý odchod",
+    "exclusiveRoomUse": "Výhradné užívanie izby",
+    "doNotMove": "Nepresúvať",
+    "bed": "3. Lôžko",
+    "bedFree": "voľné celé obdobie",
+    "bedOther": "Vybrať iné voľné lôžko…",
+    "bedNone": "Zatiaľ neprideľovať",
+    "plannedBusy": "Vybrané lôžko nie je v celom termíne voľné. Vyberte iné lôžko alebo uložte len kartu.",
+    "bedNeedsStay": "Najprv vyplňte termín a kategóriu.",
+    "noteTitle": "4. Poznámka",
+    "note": "Poznámka ku karte",
+    "noteInPlan": "Zobraziť ikonu v pláne ubytovania",
+    "summary": "Súhrn",
+    "freeBeds_one": "V termíne je voľné {{count}} lôžko kategórie.",
+    "freeBeds_few": "V termíne sú voľné {{count}} lôžka kategórie.",
+    "freeBeds_many": "V termíne je voľných {{count}} lôžok kategórie.",
+    "freeBeds_other": "V termíne je voľných {{count}} lôžok kategórie.",
+    "saveWithBed": "Uložiť a prideliť lôžko",
+    "saveCard": "Uložiť len kartu",
+    "cancel": "Zrušiť a vrátiť sa",
+    "fixFields": "Opravte označené polia.",
+    "leaveTitle": "Zahodiť rozpísanú rezerváciu?",
+    "leaveText": "Formulár obsahuje neuložené údaje. Ak odídete, stratia sa.",
+    "leaveStay": "Zostať vo formulári",
+    "leaveDiscard": "Odísť bez uloženia",
+    "errors": {
+      "required": "Povinný údaj.",
+      "guestsRequired": "Pridajte aspoň jedného hosťa.",
+      "email": "Neplatný e-mail.",
+      "birthDate": "Neplatný dátum narodenia.",
+      "adultsMin": "Aspoň jeden dospelý.",
+      "childrenMin": "Počet detí nemôže byť záporný.",
+      "doctor": "Zadajte číselné ID lekára.",
+      "noteLong": "Poznámka môže mať najviac 2000 znakov.",
+      "departureAfterArrival": "Odchod musí byť neskôr ako príchod."
+    }
   }
 }

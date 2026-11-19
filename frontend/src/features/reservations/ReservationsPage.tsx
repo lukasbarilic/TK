@@ -10,9 +10,9 @@ import { PAGE_SIZE, searchReservations, type ReservationStatus } from './reserva
 const STATUSES: ReservationStatus[] = ['RESERVED', 'CHECKED_IN', 'CHECKED_OUT', 'CANCELLED'];
 
 /** Rezervačné karty: vyhľadávanie (online na serveri, offline v kartách z trezora) so stránkovaním. */
-export function ReservationsPage() {
+export function ReservationsPage({ onNew }: { onNew?: () => void } = {}) {
   const { t } = useTranslation();
-  const { state } = useConnection();
+  const { state, canWrite } = useConnection();
   const [draft, setDraft] = useState('');
   const [q, setQ] = useState('');
   const [status, setStatus] = useState<ReservationStatus | ''>('');
@@ -35,7 +35,10 @@ export function ReservationsPage() {
 
   return (
     <Paper withBorder p="md" radius="lg" bg="white" data-testid="reservations-page">
-      <Title order={2} mb="sm">{t('reservations.title')}</Title>
+      <Group justify="space-between" mb="sm">
+        <Title order={2}>{t('reservations.title')}</Title>
+        {onNew && canWrite && <Button onClick={onNew} data-testid="reservations-new">{t('reservations.new')}</Button>}
+      </Group>
       <form onSubmit={submit} role="search">
         <Group align="flex-end" mb="md">
           <TextInput

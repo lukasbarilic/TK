@@ -196,6 +196,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reservations/with-stay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createWithStay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["searchClients"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reservations/{id}/stays": {
         parameters: {
             query?: never;
@@ -977,6 +1009,47 @@ export interface components {
             fromDate?: string;
             /** Format: int64 */
             version?: number;
+        };
+        ClientItem: {
+            /** Format: int64 */
+            id: number;
+            firstName?: string;
+            lastName?: string;
+            /** Format: int32 */
+            birthYear?: number;
+            /** Format: date */
+            lastStayDate?: string;
+        };
+        CreateWithStayRequest: {
+            /** Format: date */
+            arrivalDate: string;
+            /** Format: date */
+            departureDate: string;
+            /** Format: int64 */
+            bookedCategoryId: number;
+            /** Format: int64 */
+            payerId: number;
+            /** Format: int32 */
+            adults: number;
+            /** Format: int32 */
+            children?: number;
+            exclusiveRoomUse?: boolean;
+            guests: components["schemas"]["GuestRequest"][];
+            /** Format: int64 */
+            attendingDoctorId?: number;
+            earlyCheckIn?: boolean;
+            lateCheckOut?: boolean;
+            doNotMove?: boolean;
+            note?: string;
+            noteInPlan?: boolean;
+            /** Format: int64 */
+            bedId: number;
+            extraBed?: boolean;
+            confirm?: string[];
+        };
+        ReservationWithStay: {
+            reservation: components["schemas"]["Detail"];
+            stay: components["schemas"]["StayView"];
         };
         CreateRequest: {
             /** Format: date */
@@ -1858,6 +1931,53 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PageViewListItem"];
+                };
+            };
+        };
+    };
+    createWithStay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWithStayRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReservationWithStay"];
+                };
+            };
+        };
+    };
+    searchClients: {
+        parameters: {
+            query?: {
+                q?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ClientItem"][];
                 };
             };
         };

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { StatusAction } from '../../shared/status';
 
 /** Akcie stavu karty majú predponu `status:`; ostatné sú zmeny ubytovania. */
-export type MenuAction = 'moveFrom' | 'swap' | 'cancel' | `status:${StatusAction}`;
+export type MenuAction = 'moveFrom' | 'swap' | 'cancel' | 'newReservation' | `status:${StatusAction}`;
 
 interface Props {
   x: number;

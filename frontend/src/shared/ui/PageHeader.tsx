@@ -11,11 +11,23 @@ export interface Crumb {
  * Hlavička obrazovky mimo hlavného menu: tlačidlo Späť a drobčeky.
  * Späť ide v histórii; ak história nie je (priamy vstup), ide na `fallback` (nadradená obrazovka).
  */
-export function PageHeader({ title, crumbs, fallback }: { title: string; crumbs: Crumb[]; fallback: string }) {
+export function PageHeader({
+  title,
+  crumbs,
+  fallback,
+  confirmLeave,
+}: {
+  title: string;
+  crumbs: Crumb[];
+  fallback: string;
+  /** Rozpísaný formulár: pred odchodom (Späť, drobčeky) sa zavolá s akciou, ktorú treba po potvrdení vykonať. */
+  confirmLeave?: (proceed: () => void) => void;
+}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const back = () => void (location.key !== 'default' ? navigate(-1) : navigate(fallback, { replace: true }));
+  const guard = (go: () => void) => (confirmLeave ? confirmLeave(go) : go());
+  const back = () => guard(() => void (location.key !== 'default' ? navigate(-1) : navigate(fallback, { replace: true })));
   return (
     <Group mb="sm" gap="md" align="center" data-testid="page-header">
       <Button variant="default" size="compact-md" onClick={back}>
@@ -25,7 +37,21 @@ export function PageHeader({ title, crumbs, fallback }: { title: string; crumbs:
         <Breadcrumbs aria-label={t('shared.breadcrumbs')}>
           {crumbs.map((c, i) =>
             c.to ? (
-              <Anchor key={i} component={Link} to={c.to} size="sm">
+              <Anchor
+                key={i}
+                component={Link}
+                to={c.to}
+                size="sm"
+                onClick={
+                  confirmLeave
+                    ? (e: React.MouseEvent) => {
+                        e.preventDefault();
+                        const to = c.to as string;
+                        guard(() => void navigate(to));
+                      }
+                    : undefined
+                }
+              >
                 {c.label}
               </Anchor>
             ) : (
