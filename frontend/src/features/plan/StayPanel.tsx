@@ -64,6 +64,14 @@ export function StayPanel({ bar, roomLabel, bedLabel, onClose }: Props) {
                     {g.primaryGuest ? ` (${t('plan.panel.primary')})` : ''}
                   </Text>
                 ))}
+              {card.data.data.note && (
+                <Text size="sm" data-testid="panel-note" style={{ whiteSpace: 'pre-wrap' }}>
+                  <b>{t('plan.panel.note')}:</b> {card.data.data.note}
+                </Text>
+              )}
+              <Text size="sm" c="dimmed" data-testid="panel-comment-count">
+                {t('plan.panel.comments', { count: bar.commentCount ?? card.data.data.comments?.length ?? 0 })}
+              </Text>
               <DataAge source={card.data.source} syncedAt={card.data.syncedAt} />
             </>
           )}

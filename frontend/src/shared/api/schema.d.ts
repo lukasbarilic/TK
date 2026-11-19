@@ -228,6 +228,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reservations/{id}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["commentsList"];
+        put?: never;
+        post: operations["commentsAdd"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reservations/{id}/comments/{commentId}/hide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["commentsHide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reservations/{id}/stays": {
         parameters: {
             query?: never;
@@ -1132,7 +1164,22 @@ export interface components {
             /** Format: date-time */
             cancelledAt?: string;
             cancelReason?: string;
+            note?: string;
+            noteInPlan?: boolean;
+            comments?: components["schemas"]["CommentView"][];
             guests?: components["schemas"]["GuestView"][];
+        };
+        CommentView: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int64 */
+            authorId?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            text?: string;
+        };
+        CommentRequest: {
+            text: string;
         };
         GuestView: {
             /** Format: int64 */
@@ -1308,6 +1355,8 @@ export interface components {
             earlyCheckIn?: boolean;
             lateCheckOut?: boolean;
             exclusiveRoomUse?: boolean;
+            note?: string;
+            noteInPlan?: boolean;
         };
         UpdateUserRequest: {
             displayName?: string;
@@ -1723,6 +1772,75 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["Detail"];
                 };
+            };
+        };
+    };
+    commentsList: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CommentView"][];
+                };
+            };
+        };
+    };
+    commentsAdd: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommentRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CommentView"];
+                };
+            };
+        };
+    };
+    commentsHide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                commentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

@@ -64,6 +64,10 @@
       "card": "Rezervačná karta",
       "cardError": "Kartu sa nepodarilo načítať.",
       "primary": "hlavný hosť",
+      "note": "Poznámka",
+      "comments_one": "{{count}} komentár",
+      "comments_few": "{{count}} komentáre",
+      "comments_other": "{{count}} komentárov",
       "locked": "Pobyt je uzamknutý.",
       "heldHint": "Lôžko je držané pre pobyt na tej istej izbe.",
       "type": {
@@ -334,6 +338,29 @@
     "saved": "Karta bola uložená.",
     "conflict": "Kartu medzitým zmenil niekto iný. Údaje sa obnovili – skontrolujte ich a uložte znova.",
     "crumbList": "Rezervačné karty",
+    "note": {
+      "title": "Poznámka ku karte",
+      "empty": "Karta nemá poznámku.",
+      "edit": "Upraviť poznámku",
+      "label": "Text poznámky",
+      "showInPlan": "Zobraziť ikonu v pláne",
+      "save": "Uložiť poznámku",
+      "cancel": "Zrušiť",
+      "saved": "Poznámka bola uložená.",
+      "inPlan": "Zobrazuje sa v pláne"
+    },
+    "comments": {
+      "title": "Komentáre",
+      "empty": "Zatiaľ žiadne komentáre.",
+      "author": "Používateľ č. {{id}}",
+      "newLabel": "Nový komentár",
+      "add": "Pridať komentár",
+      "hide": "Skryť",
+      "hideTitle": "Skryť komentár?",
+      "hideText": "Komentár sa prestane zobrazovať. Táto akcia sa zapíše do auditu.",
+      "hideConfirm": "Skryť komentár",
+      "hideCancel": "Ponechať"
+    },
     "new": "+ Nová rezervácia"
   },
   "confirm": {

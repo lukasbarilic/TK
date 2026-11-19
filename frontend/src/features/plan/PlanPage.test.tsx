@@ -127,6 +127,24 @@ describe('PlanPage – online', () => {
     expect(screen.queryByTestId('stay-panel')).toBeNull();
   });
 
+  it('pásik s hasNote má ikonu poznámky a panel ukáže text poznámky a počet komentárov', async () => {
+    mockServer(() => {
+      const p = samplePlan();
+      const b = p.rooms?.[0].bars?.[0] as { hasNote?: boolean; commentCount?: number };
+      b.hasNote = true;
+      b.commentCount = 2;
+      return p;
+    });
+    server.use(http.get('/api/reservations/:id', () => HttpResponse.json({ ...sampleCard, note: 'Fiktívna poznámka', noteInPlan: true, comments: [] })));
+    renderWithProviders(<PlanPage me={receptionist} />);
+    await screen.findAllByTestId('plan-bar');
+    expect(within(bar('stay:812', 11) as HTMLElement).getByTestId('bar-icon-note')).toBeInTheDocument();
+    await userEvent.click(bar('stay:812', 11) as HTMLElement);
+    const panel = await screen.findByTestId('stay-panel');
+    expect(await within(panel).findByTestId('panel-note')).toHaveTextContent('Fiktívna poznámka');
+    expect(within(panel).getByTestId('panel-comment-count')).toHaveTextContent('2 komentáre');
+  });
+
   it('zmena pohľadu sa uloží do plan.defaultView', async () => {
     mockServer();
     renderWithProviders(<PlanPage me={receptionist} />);
