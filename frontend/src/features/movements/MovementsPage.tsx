@@ -1,11 +1,12 @@
 import { Alert, Badge, Button, Group, Loader, NativeSelect, Paper, Table, Text, Title } from '@mantine/core';
 import { originState } from '../../shared/navigation/origin';
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { components } from '../../shared/api/schema';
-import { DataAge, useConnection } from '../../shared/offline';
+import { DataAge, useConnection, WriteAction } from '../../shared/offline';
+import { statusActions, useStatusActions, type StatusAction } from '../../shared/status';
 import { receptionsInScope } from '../../shared/offline/scope';
 import { addDays } from '../../shared/time';
 import { loadBusinessDay, loadMovements, loadReceptions, sortMovements, type Movement } from './movementsApi';
@@ -22,14 +23,35 @@ const PRINT_CSS = `@media print {
 const fmtDay = (day: string, lang: string) =>
   new Date(`${day}T00:00:00Z`).toLocaleDateString(lang, { weekday: 'short', day: 'numeric', month: 'numeric', timeZone: 'UTC' });
 
-function MovementList({ kind, rows }: { kind: 'arrivals' | 'departures'; rows: Movement[] }) {
+/** Karta bez lôžka, ktorej treba pridať lôžko (dialóg dodáva `app/`). */
+export interface AssignCard {
+  id: number;
+  reservationNumber?: string;
+}
+export type RenderAssignBed = (card: AssignCard, onClose: () => void) => ReactNode;
+
+interface ListProps {
+  kind: 'arrivals' | 'departures';
+  rows: Movement[];
+  me: Me | null | undefined;
+  /** Akcie sa ponúkajú len pre dnešný deň (príchod v budúcnosti server odmietne). */
+  actionable: boolean;
+  onAction: (a: StatusAction, id: number) => void;
+  onAssign?: (m: Movement) => void;
+}
+
+function MovementList({ kind, rows, me, actionable, onAction, onAssign }: ListProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const done = rows.filter((m) => (kind === 'arrivals' ? m.status !== 'RESERVED' : m.status === 'CHECKED_OUT')).length;
   return (
     <Paper withBorder p="md" radius="lg" bg="white" data-testid={`movements-${kind}`}>
       <Group gap="xs" mb="xs">
         <Title order={3}>{t(`movements.${kind}`)}</Title>
         <Badge variant="light" data-testid={`movements-${kind}-count`}>{rows.length}</Badge>
+        <Text size="sm" c="dimmed" data-testid={`movements-${kind}-progress`}>
+          {t(kind === 'arrivals' ? 'movements.arrivedProgress' : 'movements.departedProgress', { done, total: rows.length })}
+        </Text>
       </Group>
       {rows.length === 0 ? (
         <Text c="dimmed" data-testid={`movements-${kind}-empty`}>{t('movements.empty')}</Text>
@@ -44,6 +66,7 @@ function MovementList({ kind, rows }: { kind: 'arrivals' | 'departures'; rows: M
               <Table.Th>{t('movements.stay')}</Table.Th>
               <Table.Th>{t('movements.payer')}</Table.Th>
               <Table.Th>{t('movements.status')}</Table.Th>
+              {actionable && <Table.Th>{t('movements.actions')}</Table.Th>}
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
@@ -66,6 +89,11 @@ function MovementList({ kind, rows }: { kind: 'arrivals' | 'departures'; rows: M
                 <Table.Td>{m.arrivalDate} – {m.departureDate}</Table.Td>
                 <Table.Td>{m.payer?.name}</Table.Td>
                 <Table.Td>{m.status && <Badge variant="light">{t(`plan.status.${m.status}`, m.status)}</Badge>}</Table.Td>
+                {actionable && (
+                  <Table.Td onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                    <RowAction kind={kind} m={m} me={me} onAction={onAction} onAssign={onAssign} />
+                  </Table.Td>
+                )}
               </Table.Tr>
             ))}
           </Table.Tbody>
@@ -75,12 +103,43 @@ function MovementList({ kind, rows }: { kind: 'arrivals' | 'departures'; rows: M
   );
 }
 
+function RowAction({ kind, m, me, onAction, onAssign }: { kind: 'arrivals' | 'departures'; m: Movement; me: Me | null | undefined; onAction: ListProps['onAction']; onAssign?: ListProps['onAssign'] }) {
+  const { t } = useTranslation();
+  if (m.reservationId === undefined) return null;
+  const id = m.reservationId;
+  const allowed = statusActions(m.status, me);
+  if (kind === 'arrivals' && !m.roomNumber && m.status !== 'CHECKED_OUT') {
+    return onAssign ? (
+      <WriteAction>
+        <Button size="compact-sm" variant="light" onClick={() => onAssign(m)}>{t('movements.assignBed')}</Button>
+      </WriteAction>
+    ) : null;
+  }
+  if (kind === 'arrivals' && allowed.includes('checkIn')) {
+    return (
+      <WriteAction>
+        <Button size="compact-sm" onClick={() => onAction('checkIn', id)}>{t('movements.checkIn')}</Button>
+      </WriteAction>
+    );
+  }
+  if (kind === 'departures' && allowed.includes('checkOut')) {
+    return (
+      <WriteAction>
+        <Button size="compact-sm" onClick={() => onAction('checkOut', id)}>{t('movements.checkOut')}</Button>
+      </WriteAction>
+    );
+  }
+  return null;
+}
+
 /** Príchody a odchody recepcie: dnes / zajtra podľa obchodného dňa, offline z trezora (HLD-frontend kap. 3.2). */
-export function MovementsPage({ me }: { me: Me | null | undefined }) {
+export function MovementsPage({ me, renderAssignBed }: { me: Me | null | undefined; renderAssignBed?: RenderAssignBed }) {
   const { t, i18n } = useTranslation();
   const { state } = useConnection();
   const [pickedReception, setPickedReception] = useState<number | undefined>();
   const [offset, setOffset] = useState<0 | 1>(0);
+  const [assigning, setAssigning] = useState<Movement | null>(null);
+  const status = useStatusActions();
 
   const receptions = useQuery({ queryKey: ['movements', 'receptions', state], queryFn: loadReceptions });
   const allowed = useMemo(() => {
@@ -136,6 +195,7 @@ export function MovementsPage({ me }: { me: Me | null | undefined }) {
         <Button variant="default" onClick={() => window.print()} disabled={!data || data.empty}>{t('movements.print')}</Button>
       </Group>
 
+      {status.node}
       {noAccess && <Alert color="orange">{t('plan.noReception')}</Alert>}
       {loading && !noAccess && <Loader size="sm" data-testid="movements-loading" />}
       {(result.isError || day.isError || receptions.isError) && <Alert color="red">{t('errors.generic')}</Alert>}
@@ -144,9 +204,11 @@ export function MovementsPage({ me }: { me: Me | null | undefined }) {
         <>
           <Text size="sm" c="dimmed" mb="sm" data-testid="movements-date">{date}</Text>
           <Group align="flex-start" grow wrap="wrap">
-            <MovementList kind="arrivals" rows={arrivals} />
-            <MovementList kind="departures" rows={departures} />
+            <MovementList kind="arrivals" rows={arrivals} me={me} actionable={offset === 0} onAction={status.request} onAssign={renderAssignBed ? setAssigning : undefined} />
+            <MovementList kind="departures" rows={departures} me={me} actionable={offset === 0} onAction={status.request} />
           </Group>
+          {assigning?.reservationId !== undefined &&
+            renderAssignBed?.({ id: assigning.reservationId, reservationNumber: assigning.reservationNumber }, () => setAssigning(null))}
         </>
       )}
     </Paper>

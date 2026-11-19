@@ -12,6 +12,7 @@ export function ReservationDetailRoute() {
   return Number.isInteger(n) ? (
     <ReservationDetailPage
       id={n}
+      me={me}
       canSeeContacts={hasPermission(me, 'RESERVATION_VIEW')}
       renderCheckIn={
         canCheckIn

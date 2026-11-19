@@ -41,9 +41,21 @@
     "noReception": "Nemáte oprávnenie na plán žiadnej recepcie.",
     "noRooms": "Filtrom nevyhovuje žiadna izba.",
     "status": {
-      "RESERVED": "Rezervované",
-      "CHECKED_IN": "Ubytovaný",
-      "CHECKED_OUT": "Odhlásený"
+      "RESERVED": "Rezervovaná",
+      "CHECKED_IN": "Prítomný",
+      "CHECKED_OUT": "Odhlásený",
+      "CANCELLED": "Stornovaná",
+      "NO_SHOW": "Neprišiel"
+    },
+    "counts": {
+      "arriving": "Dnes príde",
+      "departing": "Odíde",
+      "inHouse": "V dome"
+    },
+    "icons": {
+      "arrival": "Príchod dnes",
+      "departure": "Odchod dnes",
+      "note": "Poznámka"
     },
     "panel": {
       "title": "Detail pobytu",
@@ -100,13 +112,19 @@
     "ROOM_BLOCKED": "Izba je v tomto termíne blokovaná.",
     "ROOM_NOT_EMPTY": "Izba nie je celá prázdna.",
     "BED_UNAVAILABLE": "Lôžko nie je dostupné.",
-    "EXTRA_BED_AGE": "Na prístelku nemožno ubytovať hosťa tohto veku.",
+    "EXTRA_BED_AGE": "Na prístelku nemožno prideliť hosťa tohto veku.",
     "PAST_CHANGE": "Zmena začína pred aktuálnym obchodným dňom.",
     "OUTSIDE_RESERVATION": "Pobyt presahuje termín rezervačnej karty.",
     "MISSING_PERMISSION": "Na túto akciu nemáte oprávnenie.",
     "MAX_NIGHTS_EXCEEDED": "Pobyt je dlhší, než dovoľuje vaše oprávnenie.",
-    "CATEGORY_MISMATCH": "Na izbu inej kategórie, než má karta, nemáte oprávnenie ubytovať.",
-    "RESERVATION_NOT_ACTIVE": "Kartu v tomto stave nemožno ubytovať.",
+    "CATEGORY_MISMATCH": "Na izbu inej kategórie, než má karta, nemáte oprávnenie prideliť lôžko.",
+    "RESERVATION_NOT_ACTIVE": "Kartu v tomto stave nemožno prideliť na lôžko.",
+    "NO_BED_ASSIGNED": "Karta nemá pridelené lôžko pre všetkých hostí. Najprv prideľte lôžko.",
+    "ARRIVAL_IN_FUTURE": "Dátum príchodu je neskôr ako obchodný deň, hosťa zatiaľ nemožno prijať.",
+    "INVALID_STATUS_TRANSITION": "Z aktuálneho stavu karty túto akciu nemožno vykonať. Údaje sa obnovili.",
+    "NO_SHOW_IN_FUTURE": "Karta s príchodom v budúcnosti nemôže byť neprišiel.",
+    "UNDO_CHECK_IN_NOT_ALLOWED": "Príchod možno zrušiť len v obchodný deň príchodu.",
+    "EARLY_DEPARTURE": "Hosť odchádza skôr, než je dátum odchodu; pobyty sa skrátia.",
     "VALIDATION_FAILED": "Zadané údaje nie sú platné.",
     "RELEASES_HELD_BED": "Ubytovaním sa uvoľní lôžko držané pre iný pobyt.",
     "STAY_LOCKED": "Pobyt je uzamknutý.",
@@ -257,7 +275,34 @@
     "persons": "Osôb",
     "stay": "Pobyt",
     "payer": "Platiteľ",
-    "status": "Stav"
+    "status": "Stav",
+    "actions": "Akcie",
+    "checkIn": "Príchod",
+    "checkOut": "Odchod",
+    "assignBed": "Prideliť lôžko",
+    "arrivedProgress": "prijatých {{done}} / {{total}}",
+    "departedProgress": "odhlásených {{done}} / {{total}}"
+  },
+  "status": {
+    "actions": {
+      "checkIn": "Príchod hosťa",
+      "checkOut": "Odchod hosťa",
+      "cancel": "Storno…",
+      "noShow": "Neprišiel",
+      "undoCheckIn": "Zrušiť príchod",
+      "revertNoShow": "Neskorý príchod"
+    },
+    "steps": {
+      "RESERVED": "Rezervovaná",
+      "CHECKED_IN": "Prítomný",
+      "CHECKED_OUT": "Odhlásený"
+    },
+    "cancelTitle": "Storno rezervačnej karty",
+    "reasonLabel": "Dôvod storna",
+    "cancelSubmit": "Stornovať kartu",
+    "cancelBack": "Späť",
+    "cancelled": "Stornovaná {{time}}.",
+    "cancelReason": "Dôvod: {{reason}}"
   },
   "reservations": {
     "title": "Rezervačné karty",
@@ -295,8 +340,8 @@
     "proceed": "Pokračovať"
   },
   "stays": {
-    "open": "Ubytovať",
-    "title": "Ubytovať klienta",
+    "open": "Prideliť lôžko",
+    "title": "Prideliť lôžko",
     "from": "Od (príchod)",
     "to": "Do (odchod)",
     "nights_one": "{{count}} noc",
@@ -316,13 +361,13 @@
     "noRooms": "V tomto termíne nie je voľná žiadna izba.",
     "badDates": "Zadajte príchod pred odchodom.",
     "pickBed": "Voľné lôžka",
-    "submit": "Ubytovať",
+    "submit": "Prideliť lôžko",
     "target": "{{place}}, od {{day}}",
     "searchCard": "Meno alebo číslo karty",
     "noCards": "Nenašla sa žiadna rezervovaná karta bez pobytu.",
     "pick": "Vybrať",
     "cardTerm": "Karta: {{from}} – {{to}}",
-    "cell": "Voľné lôžko – ubytovať od {{day}}"
+    "cell": "Voľné lôžko – prideliť lôžko od {{day}}"
   },
   "guestList": {
     "title": "Moji pacienti a ich ubytovanie",

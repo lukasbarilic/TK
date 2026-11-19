@@ -29,6 +29,8 @@ export interface BarVM {
   status?: string;
   locked?: boolean;
   flags?: string[];
+  /** Poznámka karty označená na zobrazenie v pláne. */
+  hasNote?: boolean;
   stayId?: number;
   reservationId?: number;
   partyId?: number;

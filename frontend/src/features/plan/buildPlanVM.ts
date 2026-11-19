@@ -23,6 +23,7 @@ type Loose = {
   status?: string;
   locked?: boolean;
   flags?: string[];
+  hasNote?: boolean;
   partyId?: number;
   reason?: string;
 };
@@ -54,6 +55,7 @@ function toBar(dto: BarDto, vmFrom: string, lastCol: number): BarVM | null {
       status: b.status,
       locked: b.locked,
       flags: b.flags,
+      hasNote: b.hasNote,
       stayId: b.stayId,
       reservationId: b.reservationId,
       partyId: b.partyId,

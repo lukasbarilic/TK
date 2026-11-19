@@ -64,8 +64,9 @@ export function parseProblemDetail(json: unknown): ProblemDetail {
     detail: str(json.detail),
     code: str(json.code),
     confirmable: json.confirmable === true,
+    // server posiela upozornenia ako `{ code, message }` (staršie testy aj ako holé kódy)
     warnings: Array.isArray(json.warnings)
-      ? json.warnings.filter((w): w is string => typeof w === 'string')
+      ? json.warnings.flatMap((w): string[] => (typeof w === 'string' ? [w] : isRecord(w) && typeof w.code === 'string' ? [w.code] : []))
       : undefined,
     fieldViolations: violations,
     lockedUntil: str(json.lockedUntil),

@@ -36,6 +36,102 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reservations/{id}/check-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["statusCheckIn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reservations/{id}/check-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["statusCheckOut"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reservations/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["statusCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reservations/{id}/no-show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["statusNoShow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reservations/{id}/undo-check-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["statusUndoCheckIn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reservations/{id}/revert-no-show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["statusRevertNoShow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stays/{id}/move": {
         parameters: {
             query?: never;
@@ -861,6 +957,9 @@ export interface components {
             flags?: string[];
             /** Format: int64 */
             partyId?: number;
+            hasNote?: boolean;
+            /** Format: int32 */
+            commentCount?: number;
         };
         SwapRequest: {
             /** Format: int64 */
@@ -907,12 +1006,26 @@ export interface components {
             email?: string;
             phone?: string;
         };
+        StatusRequest: {
+            /** Format: int64 */
+            version: number;
+        };
+        CheckOutRequest: {
+            /** Format: int64 */
+            version: number;
+            confirm?: string[];
+        };
+        CancelRequest: {
+            /** Format: int64 */
+            version: number;
+            reason: string;
+        };
         Detail: {
             /** Format: int64 */
             id?: number;
             reservationNumber?: string;
             /** @enum {string} */
-            status?: "RESERVED" | "CHECKED_IN" | "CHECKED_OUT" | "CANCELLED";
+            status?: "RESERVED" | "CHECKED_IN" | "CHECKED_OUT" | "CANCELLED" | "NO_SHOW";
             /** Format: date */
             arrivalDate?: string;
             /** Format: date */
@@ -939,6 +1052,13 @@ export interface components {
             children?: number;
             /** Format: int64 */
             version?: number;
+            /** Format: date-time */
+            checkedInAt?: string;
+            /** Format: date-time */
+            checkedOutAt?: string;
+            /** Format: date-time */
+            cancelledAt?: string;
+            cancelReason?: string;
             guests?: components["schemas"]["GuestView"][];
         };
         GuestView: {
@@ -1175,7 +1295,7 @@ export interface components {
             /** Format: date */
             departureDate?: string;
             /** @enum {string} */
-            status?: "RESERVED" | "CHECKED_IN" | "CHECKED_OUT" | "CANCELLED";
+            status?: "RESERVED" | "CHECKED_IN" | "CHECKED_OUT" | "CANCELLED" | "NO_SHOW";
             /** Format: int64 */
             bookedCategoryId?: number;
             bookedCategoryName?: string;
@@ -1481,6 +1601,162 @@ export interface operations {
             };
         };
     };
+    statusCheckIn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    statusCheckOut: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckOutRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    statusCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    statusNoShow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    statusUndoCheckIn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    statusRevertNoShow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
     move: {
         parameters: {
             query?: never;
@@ -1561,7 +1837,7 @@ export interface operations {
         parameters: {
             query?: {
                 q?: string;
-                status?: "RESERVED" | "CHECKED_IN" | "CHECKED_OUT" | "CANCELLED";
+                status?: "RESERVED" | "CHECKED_IN" | "CHECKED_OUT" | "CANCELLED" | "NO_SHOW";
                 from?: string;
                 to?: string;
                 receptionId?: number;

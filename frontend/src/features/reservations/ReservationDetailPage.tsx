@@ -9,6 +9,8 @@ import { ApiError } from '../../shared/api/errors';
 import { DataAge, WriteAction } from '../../shared/offline';
 import { putLocal } from '../../shared/offline';
 import { DS } from '../../shared/offline/datasets';
+import type { components } from '../../shared/api/schema';
+import { StatusButtons, useStatusActions } from '../../shared/status';
 import { loadReservation, loadStays, updateReservation, type ReservationDetail } from './reservationsApi';
 
 /** Detail karty: hostia, kontakty (len s `RESERVATION_VIEW`, rieši rodič), pobyty s odkazom na plán, úprava online. */
@@ -16,9 +18,12 @@ export function ReservationDetailPage({
   id,
   canSeeContacts,
   renderCheckIn,
+  me,
 }: {
   id: number;
   canSeeContacts: boolean;
+  /** Prihlásený používateľ: podľa oprávnení `RESERVATION_STATUS(_FIX)` sa ponúknu akcie stavu. */
+  me?: components['schemas']['MeView'] | null;
   /** Dialóg ubytovania dodáva `app/` (features sa medzi sebou neimportujú); bez neho sa tlačidlo nezobrazí. */
   renderCheckIn?: (card: ReservationDetail, onClose: () => void) => ReactNode;
 }) {
@@ -26,6 +31,7 @@ export function ReservationDetailPage({
   const card = useQuery({ queryKey: ['reservations', 'detail', id], queryFn: () => loadReservation(id) });
   const stays = useQuery({ queryKey: ['reservations', 'stays', id], queryFn: () => loadStays(id), retry: false });
   const [checkingIn, setCheckingIn] = useState(false);
+  const status = useStatusActions();
   const origin = readOrigin(useLocation().state);
 
   return (
@@ -44,6 +50,9 @@ export function ReservationDetailPage({
       {card.data && !card.data.empty && (
         <Stack gap="md">
           <DetailBody d={card.data.data} />
+          <StatusProgress d={card.data.data} />
+          {status.node}
+          <StatusButtons status={card.data.data.status} me={me} busy={status.busy} onAction={(a) => status.request(a, id)} />
           <DataAge source={card.data.source} syncedAt={card.data.syncedAt} />
           <Stack gap={4}>
             <Text fw={600}>{t('reservations.guests')}</Text>
@@ -92,6 +101,40 @@ export function ReservationDetailPage({
         </Stack>
       )}
     </Paper>
+  );
+}
+
+const fmtTime = (iso: string | undefined, lang: string) =>
+  iso ? new Date(iso).toLocaleString(lang, { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : undefined;
+
+/** Priebeh v troch krokoch (Rezervovaná → Prítomný → Odhlásený) s časmi; storno a neprišiel sú samostatné konce. */
+function StatusProgress({ d }: { d: ReservationDetail }) {
+  const { t, i18n } = useTranslation();
+  const rank = { RESERVED: 0, NO_SHOW: 0, CANCELLED: 0, CHECKED_IN: 1, CHECKED_OUT: 2 }[d.status ?? 'RESERVED'];
+  const steps = [
+    { key: 'RESERVED', time: undefined },
+    { key: 'CHECKED_IN', time: fmtTime(d.checkedInAt, i18n.language) },
+    { key: 'CHECKED_OUT', time: fmtTime(d.checkedOutAt, i18n.language) },
+  ];
+  return (
+    <Stack gap={4}>
+      <Group gap="lg" data-testid="status-steps">
+        {steps.map((s, i) => (
+          <Stack key={s.key} gap={0} data-testid="status-step" data-done={i <= rank && d.status !== 'CANCELLED' && d.status !== 'NO_SHOW'}>
+            <Text size="sm" fw={i === rank ? 700 : 400} c={i <= rank && d.status !== 'CANCELLED' ? undefined : 'dimmed'}>
+              {i + 1}. {t(`status.steps.${s.key}`)}
+            </Text>
+            {s.time && <Text size="xs" c="dimmed">{s.time}</Text>}
+          </Stack>
+        ))}
+      </Group>
+      {d.status === 'CANCELLED' && (
+        <Text size="sm" data-testid="status-cancelled">
+          {t('status.cancelled', { time: fmtTime(d.cancelledAt, i18n.language) ?? '' })}
+          {d.cancelReason ? ` ${t('status.cancelReason', { reason: d.cancelReason })}` : ''}
+        </Text>
+      )}
+    </Stack>
   );
 }
 

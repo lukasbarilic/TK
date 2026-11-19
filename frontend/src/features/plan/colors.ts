@@ -1,4 +1,4 @@
-export type ColorKey = 'RESERVED' | 'CHECKED_IN' | 'CHECKED_OUT' | 'HELD_BED' | 'ROOM_BLOCK';
+export type ColorKey = 'RESERVED' | 'CHECKED_IN' | 'CHECKED_OUT' | 'NO_SHOW' | 'HELD_BED' | 'ROOM_BLOCK';
 
 export interface BarColors {
   fill: string;
@@ -11,6 +11,7 @@ export const DEFAULT_COLORS: Record<ColorKey, BarColors> = {
   RESERVED: { fill: '#CFE3F7', border: '#5B8FC9', text: '#13243A' },
   CHECKED_IN: { fill: '#1E5FA8', border: '#154A85', text: '#FFFFFF' },
   CHECKED_OUT: { fill: '#E3E8EE', border: '#9AA8B8', text: '#4A5D75' },
+  NO_SHOW: { fill: '#FBD9B0', border: '#E07B16', text: '#4A2606' },
   HELD_BED: { fill: '#EAF3FC', border: '#5B8FC9', text: '#4A5D75' },
   ROOM_BLOCK: { fill: '#C8CED6', border: '#8A94A1', text: '#13243A' },
 };
@@ -46,5 +47,5 @@ export function resolveColors(raw: unknown): Record<ColorKey, BarColors> {
 export function colorKeyOf(bar: { type: string; status?: string }): ColorKey {
   if (bar.type === 'HELD_BED') return 'HELD_BED';
   if (bar.type === 'ROOM_BLOCK') return 'ROOM_BLOCK';
-  return bar.status === 'CHECKED_IN' || bar.status === 'CHECKED_OUT' ? bar.status : 'RESERVED';
+  return bar.status === 'CHECKED_IN' || bar.status === 'CHECKED_OUT' || bar.status === 'NO_SHOW' ? bar.status : 'RESERVED';
 }

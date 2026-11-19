@@ -112,7 +112,7 @@ const renderPlan = () =>
 
 const openFromCard = async () => {
   renderCard();
-  await userEvent.click(await screen.findByRole('button', { name: 'Ubytovať' }));
+  await userEvent.click(await screen.findByRole('button', { name: 'Prideliť lôžko' }));
   return screen.findByTestId('checkin-dialog');
 };
 
@@ -127,7 +127,7 @@ describe('Ubytovanie z karty', () => {
     expect(availableQueries[0].searchParams.get('allCategories')).toBeNull();
 
     await userEvent.click(within(dialog).getByRole('radio', { name: 'Lôžko 2' }));
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Ubytovať' }));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Prideliť lôžko' }));
     await waitFor(() => expect(screen.queryByTestId('checkin-dialog')).toBeNull());
     expect(posts).toEqual([{ id: '912', body: { bedId: 22, from: '2026-11-22', to: '2026-11-25' } }]);
   });
@@ -148,11 +148,11 @@ describe('Ubytovanie z karty', () => {
     await within(dialog).findByText(/ALF 102/);
     expect(within(dialog).getByTestId('checkin-limit')).toHaveTextContent('Najviac 14 nocí');
     await userEvent.click(within(dialog).getByRole('radio', { name: 'Lôžko 1' }));
-    const submit = within(dialog).getByRole('button', { name: 'Ubytovať' });
+    const submit = within(dialog).getByRole('button', { name: 'Prideliť lôžko' });
     expect(submit).toBeEnabled();
     fireEvent.change(within(dialog).getByLabelText('Do (odchod)'), { target: { value: '2026-12-10' } });
     expect(await within(dialog).findByTestId('checkin-too-long')).toBeInTheDocument();
-    expect(within(dialog).getByRole('button', { name: 'Ubytovať' })).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Prideliť lôžko' })).toBeDisabled();
     expect(posts).toHaveLength(0);
   });
 
@@ -165,7 +165,7 @@ describe('Ubytovanie z karty', () => {
     const dialog = await openFromCard();
     await within(dialog).findByText(/ALF 102/);
     await userEvent.click(within(dialog).getByRole('radio', { name: 'Lôžko 1' }));
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Ubytovať' }));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Prideliť lôžko' }));
 
     const warnings = await screen.findByTestId('confirm-warnings');
     expect(warnings).toHaveTextContent('Ubytovaním sa uvoľní lôžko držané pre iný pobyt.');
@@ -179,20 +179,20 @@ describe('Ubytovanie z karty', () => {
     const dialog = await openFromCard();
     await within(dialog).findByText(/ALF 102/);
     await userEvent.click(within(dialog).getByRole('radio', { name: 'Lôžko 1' }));
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Ubytovať' }));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Prideliť lôžko' }));
     expect(await within(dialog).findByTestId('checkin-error')).toHaveTextContent('Lôžko je v tomto termíne už obsadené.');
     await waitFor(() => expect(availableQueries.length).toBeGreaterThan(1));
     expect(posts).toHaveLength(1);
     expect(screen.queryByTestId('confirm-warnings')).toBeNull();
   });
 
-  it('bez spojenia je tlačidlo „Ubytovať“ neaktívne', async () => {
+  it('bez spojenia je tlačidlo „Prideliť lôžko“ neaktívne', async () => {
     mockServer();
     await platform.vault.put(DS.reservation, '912', card, { syncedAt: '2026-11-18T08:00:00Z' });
     connection.reset('offline');
     renderCard();
-    expect(await screen.findByRole('button', { name: 'Ubytovať' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Ubytovať' }).closest('[data-testid="write-disabled"]')).not.toBeNull();
+    expect(await screen.findByRole('button', { name: 'Prideliť lôžko' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Prideliť lôžko' }).closest('[data-testid="write-disabled"]')).not.toBeNull();
   });
 });
 
@@ -221,7 +221,7 @@ describe('Ubytovanie z plánu', () => {
     await userEvent.click(within(cards[0]).getByRole('button', { name: 'Vybrať' }));
 
     expect(within(dialog).getByTestId('checkin-nights')).toHaveTextContent('3 noci');
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Ubytovať' }));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Prideliť lôžko' }));
     await waitFor(() => expect(screen.queryByTestId('checkin-dialog')).toBeNull());
     expect(posts).toEqual([{ id: '912', body: { bedId: 21, from: '2026-11-22', to: '2026-11-25' } }]);
 
