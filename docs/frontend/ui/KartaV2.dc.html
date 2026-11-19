@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<title>TheraSuite – Rezervačná karta v2</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1E5FA8}a:hover{color:#154A85}
+button:disabled{cursor:not-allowed;opacity:.55}
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-wrap: wrap; background: #EEF5FC; color: #13243A; font-family: Inter, system-ui, sans-serif; font-size: 14px">
+
+  <nav aria-label="Hlavné menu" style="flex: 1 1 232px; max-width: 260px; box-sizing: border-box; background: #DCEBFA; border-right: 1px solid #C9DCEF; padding: 20px 14px; display: flex; flex-direction: column; gap: 4px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 10px 20px">
+      <div style="width: 32px; height: 32px; border-radius: 9px; background: #1E5FA8; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 14c3-3 6 3 9 0s6 3 9 0"></path><path d="M3 9c3-3 6 3 9 0s6 3 9 0"></path></svg></div>
+      <div style="display: flex; flex-direction: column; line-height: 1.15"><span style="font-weight: 700; font-size: 17px; letter-spacing: -0.2px">TheraSuite</span><span style="font-size: 11px; color: #4A5D75; letter-spacing: 0.2px">by N-teq</span></div>
+    </div>
+    <a href="PlanV2.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #24374F; text-decoration: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M9 4v16"></path></svg>Plán ubytovania</a>
+    <a href="KartaV2.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; background: #FFFFFF; color: #1E5FA8; font-weight: 600; text-decoration: none; box-shadow: 0 1px 2px rgba(19,36,58,.08)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M8 8h8M8 12h8M8 16h5"></path></svg>Rezervačné karty</a>
+    <a href="PrichodyV2.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #24374F; text-decoration: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 12h12M12 6l6 6-6 6M20 4v16"></path></svg>Príchody a odchody</a>
+    <a href="UzavierkaReport.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #24374F; text-decoration: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg>Nočná uzávierka</a>
+    <a href="Lekar.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #24374F; text-decoration: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3v6a4 4 0 0 0 8 0V3M10 13v3a4 4 0 0 0 8 0v-2"></path><circle cx="18" cy="12" r="2"></circle></svg>Zoznam hostí</a>
+  </nav>
+
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 12px 24px; background: #FFFFFF; border-bottom: 1px solid #C9DCEF">
+      <a href="PlanV2.dc.html" title="Späť (Alt+←)" style="display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px 0 8px; border-radius: 8px; border: 1px solid #B9CFE6; color: #154A85; font-weight: 600; text-decoration: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>Späť</a>
+      <nav aria-label="Kde som" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #4A5D75">
+        <a href="PlanV2.dc.html" style="text-decoration: none">Plán ubytovania</a><span aria-hidden="true">/</span><span>17. 11. ALF 102</span><span aria-hidden="true">/</span><span style="color: #13243A; font-weight: 600">Karta R-2026-0140</span>
+      </nav>
+      <div style="flex-grow: 1"></div>
+      <div style="display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 500; background: #DDF2F0; color: #0B5C5C"><span style="width: 8px; height: 8px; border-radius: 50%; background: #13897F"></span>Online</div>
+    </header>
+
+    <div style="padding: 20px 24px; display: flex; flex-direction: column; gap: 16px">
+      <section style="background: #FFFFFF; border: 1px solid #C9DCEF; border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px">
+          <h1 style="margin: 0; font-size: 24px; letter-spacing: -0.5px">Ukážková M., Ukážkový P.</h1>
+          <span style="color: #4A5D75">Karta R-2026-0140</span>
+          <span style="padding: 4px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; {{ badgeStyle }}">{{ statusText }}</span>
+          <div style="flex-grow: 1"></div>
+          <sc-if value="{{ isReserved }}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; flex-wrap: wrap; gap: 8px">
+              <button type="button" onClick="{{ doNoShow }}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid #F2C79A; background: #FFFFFF; font: inherit; color: #7A3705; cursor: pointer">Neprišiel</button>
+              <button type="button" onClick="{{ doCancel }}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid #D9A486; background: #FFFFFF; font: inherit; color: #9A3B0B; cursor: pointer">Storno…</button>
+              <a href="Ubytovat.dc.html" style="display: flex; align-items: center; height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid #1E5FA8; text-decoration: none; font-weight: 600">Zmeniť lôžko</a>
+              <button type="button" onClick="{{ doCheckIn }}" style="height: 40px; padding: 0 18px; border-radius: 8px; border: 0; background: #1E5FA8; font: inherit; font-weight: 600; color: #FFFFFF; cursor: pointer">Príchod hosťa</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isIn }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-wrap: wrap; gap: 8px">
+              <button type="button" onClick="{{ doUndo }}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid #B9CFE6; background: #FFFFFF; font: inherit; color: #24374F; cursor: pointer">Zrušiť príchod</button>
+              <button type="button" onClick="{{ doCheckOut }}" style="height: 40px; padding: 0 18px; border-radius: 8px; border: 0; background: #1E5FA8; font: inherit; font-weight: 600; color: #FFFFFF; cursor: pointer">Odchod hosťa</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isNoShow }}" hint-placeholder-val="{{ false }}">
+            <button type="button" onClick="{{ doUndo }}" style="height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid #1E5FA8; background: #FFFFFF; font: inherit; font-weight: 600; color: #1E5FA8; cursor: pointer">Neskorý príchod</button>
+          </sc-if>
+          <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+            <button type="button" onClick="{{ doReset }}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid #B9CFE6; background: #FFFFFF; font: inherit; color: #24374F; cursor: pointer">Ukážka: späť na začiatok</button>
+          </sc-if>
+        </div>
+
+        <ol aria-label="Priebeh pobytu" style="margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+          <sc-for list="{{ steps }}" as="s" hint-placeholder-count="3">
+            <li style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; {{ s.style }}">
+              <span style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; {{ s.dot }}">{{ s.n }}</span>
+              <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">{{ s.label }}</span><span style="font-size: 12px; color: #4A5D75">{{ s.when }}</span></span>
+            </li>
+          </sc-for>
+        </ol>
+      </section>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+        <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+          <section style="background: #FFFFFF; border: 1px solid #C9DCEF; border-radius: 12px; padding: 18px 20px">
+            <h2 style="margin: 0 0 14px; font-size: 16px">Pobyt</h2>
+            <dl style="margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 20px">
+              <div><dt style="font-size: 12px; color: #4A5D75">Príchod</dt><dd style="margin: 4px 0 0; font-weight: 600">ut 17. 11. 2026</dd></div>
+              <div><dt style="font-size: 12px; color: #4A5D75">Odchod</dt><dd style="margin: 4px 0 0; font-weight: 600">ut 24. 11. 2026</dd></div>
+              <div><dt style="font-size: 12px; color: #4A5D75">Pridelené lôžka</dt><dd style="margin: 4px 0 0; font-weight: 600">ALF 102 / 1, 2</dd></div>
+              <div><dt style="font-size: 12px; color: #4A5D75">Kategória</dt><dd style="margin: 4px 0 0; font-weight: 600">K2</dd></div>
+              <div><dt style="font-size: 12px; color: #4A5D75">Platiteľ</dt><dd style="margin: 4px 0 0; font-weight: 600">Zdravotná poisťovňa Demo</dd></div>
+              <div><dt style="font-size: 12px; color: #4A5D75">Lekár</dt><dd style="margin: 4px 0 0; font-weight: 600">MUDr. Ukážkový</dd></div>
+              <div><dt style="font-size: 12px; color: #4A5D75">Osoby</dt><dd style="margin: 4px 0 0; font-weight: 600">2 dospelí</dd></div>
+              <div><dt style="font-size: 12px; color: #4A5D75">Príznaky</dt><dd style="margin: 4px 0 0; font-weight: 600">Skorý príchod</dd></div>
+            </dl>
+          </section>
+          <section style="background: #FFFFFF; border: 1px solid #C9DCEF; border-radius: 12px; overflow: hidden">
+            <h2 style="margin: 0; padding: 14px 20px; font-size: 16px; border-bottom: 1px solid #E3EDF7">Hostia</h2>
+            <div style="display: flex; align-items: center; gap: 14px; padding: 12px 20px"><span style="font-weight: 600; flex-grow: 1">Mária Ukážková</span><span style="color: #4A5D75">1958 · +421 900 000 000 · maria@example.invalid</span></div>
+            <div style="display: flex; align-items: center; gap: 14px; padding: 12px 20px; border-top: 1px solid #EEF3F8"><span style="font-weight: 600; flex-grow: 1">Peter Ukážkový</span><span style="color: #4A5D75">1955 · +421 900 000 001 · peter@example.invalid</span></div>
+          </section>
+        </div>
+
+        <div style="flex: 1 1 340px; max-width: 420px; display: flex; flex-direction: column; gap: 16px">
+          <section style="background: #FFF8E8; border: 1px solid #EBCB8B; border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A5A00" stroke-width="2" aria-hidden="true"><path d="M12 17v5M5 3h14l-2 7 3 4H4l3-4z"></path></svg>
+              <h2 style="margin: 0; font-size: 16px; flex-grow: 1">Poznámka ku karte</h2>
+              <button type="button" style="border: 0; background: transparent; font: inherit; font-weight: 600; color: #1E5FA8; cursor: pointer; padding: 6px 4px">Upraviť</button>
+            </div>
+            <p style="margin: 0; line-height: 1.5; color: #3B2A05">Pani Ukážková potrebuje izbu na prízemí alebo pri výťahu. Pri príchode pripraviť invalidný vozík.</p>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #5A4310"><input type="checkbox" checked>Zobraziť ikonu v pláne ubytovania</label>
+          </section>
+
+          <section style="background: #FFFFFF; border: 1px solid #C9DCEF; border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+            <h2 style="margin: 0; font-size: 16px">Komentáre</h2>
+            <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px">
+              <sc-for list="{{ comments }}" as="c" hint-placeholder-count="2">
+                <li style="display: flex; gap: 10px">
+                  <span style="width: 30px; height: 30px; border-radius: 50%; background: #D3E6FA; color: #154A85; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0">{{ c.ini }}</span>
+                  <span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 12px; color: #4A5D75"><b style="color: #13243A">{{ c.who }}</b> · {{ c.when }}</span><span style="line-height: 1.45">{{ c.text }}</span></span>
+                </li>
+              </sc-for>
+            </ol>
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">Nový komentár
+              <textarea rows="2" value="{{ draft }}" onInput="{{ onDraft }}" placeholder="Napr. telefonovala, príde o 18:00" style="font: inherit; font-weight: 400; padding: 8px 10px; border: 1px solid #B9CFE6; border-radius: 8px; background: #F5F9FE; color: #13243A; resize: vertical"></textarea>
+            </label>
+            <button type="button" onClick="{{ addComment }}" style="align-self: flex-end; height: 36px; padding: 0 14px; border-radius: 8px; border: 0; background: #1E5FA8; font: inherit; font-weight: 600; color: #FFFFFF; cursor: pointer">Pridať komentár</button>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      status: 'RESERVED',
+      draft: '',
+      comments: [
+        { ini: 'RH', who: 'Recepčná Hlavná', when: '16. 11. 14:20', text: 'Klientka volala, príde vlakom okolo 15:30.' },
+        { ini: 'VR', who: 'Vedúca recepcie', when: '16. 11. 09:05', text: 'Platiteľ potvrdil 7 nocí.' }
+      ]
+    };
+  }
+  renderVals() {
+    const st = this.state.status;
+    const meta = {
+      RESERVED: { t: 'Rezervovaná', s: 'background: #CFE3F7; color: #154A85;' },
+      CHECKED_IN: { t: 'Prítomný', s: 'background: #1E5FA8; color: #FFFFFF;' },
+      CHECKED_OUT: { t: 'Odhlásený', s: 'background: #E1E6EC; color: #24374F;' },
+      CANCELLED: { t: 'Stornovaná', s: 'background: #F7E7DE; color: #7A3705;' },
+      NO_SHOW: { t: 'Neprišiel', s: 'background: #FFF1E0; color: #7A3705;' }
+    }[st];
+    const order = { RESERVED: 0, CHECKED_IN: 1, CHECKED_OUT: 2, NO_SHOW: 0, CANCELLED: 0 }[st];
+    const labels = [
+      { label: 'Rezervovaná', when: 'založená 2. 11. 09:12' },
+      { label: 'Prítomný', when: st === 'RESERVED' ? 'očakávaný príchod dnes' : 'príchod 17. 11. 15:42' },
+      { label: 'Odhlásený', when: st === 'CHECKED_OUT' ? 'odchod 17. 11. 15:44' : 'odchod 24. 11.' }
+    ];
+    const steps = labels.map((l, i) => {
+      const done = i <= order && st !== 'CANCELLED';
+      const current = i === order;
+      return Object.assign({ n: String(i + 1) }, l, {
+        style: current ? 'background: #EAF3FC; border: 1px solid #5B8FC9;' : 'background: #F7FAFE; border: 1px solid #E3EDF7;',
+        dot: done ? 'background: #1E5FA8; color: #FFFFFF;' : 'background: #FFFFFF; color: #4A5D75; border: 1px solid #B9CFE6;'
+      });
+    });
+    const set = (s) => () => this.setState({ status: s });
+    return {
+      statusText: meta.t, badgeStyle: meta.s, steps,
+      isReserved: st === 'RESERVED', isIn: st === 'CHECKED_IN', isNoShow: st === 'NO_SHOW',
+      isDone: st === 'CHECKED_OUT' || st === 'CANCELLED',
+      doCheckIn: set('CHECKED_IN'), doCheckOut: set('CHECKED_OUT'), doUndo: set('RESERVED'),
+      doNoShow: set('NO_SHOW'), doCancel: set('CANCELLED'), doReset: set('RESERVED'),
+      comments: this.state.comments, draft: this.state.draft,
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      addComment: () => {
+        const text = (this.state.draft || '').trim();
+        if (!text) return;
+        this.setState({ draft: '', comments: [{ ini: 'RH', who: 'Recepčná Hlavná', when: 'teraz', text }].concat(this.state.comments) });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

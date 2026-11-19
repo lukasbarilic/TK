@@ -30,3 +30,16 @@ Súbory v tomto priečinku sú zdrojová kópia plátna k 18. 11. 2026 (formát 
 | Online stav | pozadie `#DDF2F0`, text `#0B5C5C` |
 | Písmo | Inter (400, 500, 600, 700) |
 | Logo | „TheraSuite“ a pod ním menšie „by N-teq“ |
+
+## v2 – úpravy po teste (19. 11. 2026)
+
+| Súbor | Obrazovka | Tiket |
+|---|---|---|
+| `Stavy.dc.html` | Stavy rezervačnej karty a pravidlá prechodov | B08, F18 |
+| `KartaV2.dc.html` | Karta: tlačidlá podľa stavu, priebeh, poznámka, komentáre, Späť | F18, F20, F21 |
+| `NovaRezervacia.dc.html` | Nová rezervácia (aj z plánu) | F19 |
+| `PlanV2.dc.html` | Plán: farby stavov, ikony, menu na pásiku | F18 |
+| `PrichodyV2.dc.html` | Príchody a odchody s tlačidlami | F18 |
+| `UzavierkaReport.dc.html` | Uzávierka: report dňa, obsadenosť, výhľad 14 dní | F22 |
+
+Farby stavov: Rezervovaná `#CFE3F7` s čiarkovaným okrajom `#3F79B8`, Prítomný `#1E5FA8`, Odhlásený `#D5DCE4`, Neprišiel `#FFF1E0` s okrajom `#D2691E`, Stornovaná `#F7E7DE`. Poznámka ku karte: panel `#FFF8E8`, okraj `#EBCB8B`.

@@ -80,3 +80,21 @@ powershell -ExecutionPolicy Bypass -File docs\frontend\vytvor-tikety.ps1 -Ticket
 ```
 
 Bez `-DryRun` založí 24 issues so štítkom `frontend-1` a odkazy `[F05]` nahradí číslami issues. Agenta spustíte pridaním štítku `ai-agent`.
+
+## v2 – úpravy po teste (19. 11. 2026)
+
+Epic **TK-42** (štítok `frontend-2`). Návrh obrazoviek: `ui/Stavy`, `ui/KartaV2`, `ui/NovaRezervacia`, `ui/PlanV2`, `ui/PrichodyV2`, `ui/UzavierkaReport`.
+
+| # | Jira | Tiket | Závisí od |
+|---|---|---|---|
+| B08 | TK-43 | Stavy karty: príchod, odchod, storno, neprišiel | – |
+| B09 | TK-44 | Uzávierka: stav Neprišiel a report dňa s obsadenosťou | B08 |
+| B10 | TK-45 | Poznámka a komentáre ku karte | – |
+| B11 | TK-46 | Nová karta s vyhľadaním klienta a pridelením lôžka | B10 |
+| F21 | TK-50 | Navigácia Späť a drobčeky | – |
+| F18 | TK-47 | Stavy karty v aplikácii (karta, plán, príchody) | B08, F21 |
+| F19 | TK-48 | Nová rezervácia (aj z plánu) | B11, F18, F21 |
+| F20 | TK-49 | Poznámka a komentáre na karte | B10, F18 |
+| F22 | TK-51 | Report uzávierky, tlač a archív | B09, F21 |
+
+Poradie: backend B08 → B09 a B10 → B11; frontend F21 hneď, potom F18 → F19, F20, F22 podľa hotového backendu.

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<title>TheraSuite – Stavy rezervačnej karty</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 900px; background: #EEF5FC; color: #13243A; font-family: Inter, system-ui, sans-serif; font-size: 15px">
+<svg role="img" aria-label="Z Rezervovaná do Prítomný, príchod hosťa" width="199" height="8" viewBox="0 0 199 8" preserveAspectRatio="none" style="position: absolute; left: 560px; top: 328px; width: 199px; height: 8px; overflow: visible; fill: none; stroke: #4A6A8F; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-1" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#4A6A8F" stroke="none" style="stroke: none; fill: #4A6A8F; fill: context-stroke"/></marker></defs><path d="M 0 4 L 195 4" marker-end="url(#dc-arrow-head-filled-1)"></path></svg>
+<svg role="img" aria-label="Z Prítomný späť do Rezervovaná, zrušenie príchodu v ten istý deň" width="199" height="8" viewBox="0 0 199 8" preserveAspectRatio="none" style="position: absolute; left: 561px; top: 360px; width: 199px; height: 8px; overflow: visible; fill: none; stroke: #4A6A8F; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 6 6"><defs><marker id="dc-arrow-head-filled-2" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#4A6A8F" stroke="none" style="stroke: none; fill: #4A6A8F; fill: context-stroke"/></marker></defs><path d="M 199 4 L 4 4" marker-end="url(#dc-arrow-head-filled-2)"></path></svg>
+<svg role="img" aria-label="Z Prítomný do Odhlásený, odchod hosťa" width="199" height="8" viewBox="0 0 199 8" preserveAspectRatio="none" style="position: absolute; left: 960px; top: 344px; width: 199px; height: 8px; overflow: visible; fill: none; stroke: #4A6A8F; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-3" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#4A6A8F" stroke="none" style="stroke: none; fill: #4A6A8F; fill: context-stroke"/></marker></defs><path d="M 0 4 L 195 4" marker-end="url(#dc-arrow-head-filled-3)"></path></svg>
+<svg role="img" aria-label="Z Rezervovaná do Stornovaná, storno karty" width="95" height="8" viewBox="0 0 95 8" preserveAspectRatio="none" style="position: absolute; left: 265px; top: 344px; width: 95px; height: 8px; overflow: visible; fill: none; stroke: #4A6A8F; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-4" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#4A6A8F" stroke="none" style="stroke: none; fill: #4A6A8F; fill: context-stroke"/></marker></defs><path d="M 95 4 L 4 4" marker-end="url(#dc-arrow-head-filled-4)"></path></svg>
+<svg role="img" aria-label="Z Rezervovaná do Neprišiel, hosť nedorazil v deň príchodu" width="8" height="203" viewBox="0 0 8 203" preserveAspectRatio="none" style="position: absolute; left: 423px; top: 396px; width: 8px; height: 203px; overflow: visible; fill: none; stroke: #4A6A8F; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-5" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#4A6A8F" stroke="none" style="stroke: none; fill: #4A6A8F; fill: context-stroke"/></marker></defs><path d="M 4 0 L 4 199" marker-end="url(#dc-arrow-head-filled-5)"></path></svg>
+<svg role="img" aria-label="Z Neprišiel späť do Rezervovaná, neskorý príchod" width="8" height="203" viewBox="0 0 8 203" preserveAspectRatio="none" style="position: absolute; left: 489px; top: 397px; width: 8px; height: 203px; overflow: visible; fill: none; stroke: #4A6A8F; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 6 6"><defs><marker id="dc-arrow-head-filled-6" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#4A6A8F" stroke="none" style="stroke: none; fill: #4A6A8F; fill: context-stroke"/></marker></defs><path d="M 4 203 L 4 4" marker-end="url(#dc-arrow-head-filled-6)"></path></svg>
+
+<div style="position: absolute; left: 64px; top: 64px; font-size: 30px; font-weight: 700; letter-spacing: -0.5px">Stavy rezervačnej karty</div>
+<div style="position: absolute; left: 64px; top: 112px; width: 1100px; font-size: 16px; line-height: 24px; color: #24374F">Pridelenie lôžka stav nemení. Stav mení až príchod, odchod, storno alebo neprišiel. Plná šípka je bežný krok, čiarkovaná je oprava.</div>
+
+<div style="position: absolute; left: 64px; top: 300px; width: 200px; height: 96px; box-sizing: border-box; padding: 12px; display: flex; align-items: center; justify-content: center; text-align: center; background: #F7E7DE; border: 1px solid #D9A486; border-radius: 12px; color: #5E2A03"><span><b>Stornovaná</b><br>s dôvodom, uvoľní lôžka</span></div>
+<div style="position: absolute; left: 360px; top: 300px; width: 200px; height: 96px; box-sizing: border-box; padding: 12px; display: flex; align-items: center; justify-content: center; text-align: center; background: #CFE3F7; border: 1px solid #5B8FC9; border-radius: 12px; color: #13243A"><span><b>Rezervovaná</b><br>lôžko môže byť pridelené</span></div>
+<div style="position: absolute; left: 760px; top: 300px; width: 200px; height: 96px; box-sizing: border-box; padding: 12px; display: flex; align-items: center; justify-content: center; text-align: center; background: #1E5FA8; border: 1px solid #154A85; border-radius: 12px; color: #FFFFFF"><span><b>Prítomný</b><br>hosť je v dome</span></div>
+<div style="position: absolute; left: 1160px; top: 300px; width: 200px; height: 96px; box-sizing: border-box; padding: 12px; display: flex; align-items: center; justify-content: center; text-align: center; background: #E1E6EC; border: 1px solid #AEB8C3; border-radius: 12px; color: #24374F"><span><b>Odhlásený</b><br>pobyt skončil</span></div>
+<div style="position: absolute; left: 360px; top: 600px; width: 200px; height: 96px; box-sizing: border-box; padding: 12px; display: flex; align-items: center; justify-content: center; text-align: center; background: #FFF1E0; border: 1px solid #F2C79A; border-radius: 12px; color: #5E2A03"><span><b>Neprišiel</b><br>nastaví uzávierka alebo recepcia</span></div>
+
+<div style="position: absolute; left: 620px; top: 304px; width: 80px; text-align: center; font-size: 13px; line-height: 16px; color: #24374F">príchod</div>
+<div style="position: absolute; left: 570px; top: 376px; width: 180px; text-align: center; font-size: 13px; line-height: 16px; color: #4A5D75">zrušiť príchod (ten istý deň)</div>
+<div style="position: absolute; left: 1020px; top: 320px; width: 80px; text-align: center; font-size: 13px; line-height: 16px; color: #24374F">odchod</div>
+<div style="position: absolute; left: 284px; top: 320px; width: 56px; text-align: center; font-size: 13px; line-height: 16px; color: #24374F">storno</div>
+<div style="position: absolute; left: 245px; top: 489px; width: 170px; text-align: right; font-size: 13px; line-height: 16px; color: #24374F">nedorazil v deň príchodu</div>
+<div style="position: absolute; left: 505px; top: 489px; width: 120px; font-size: 13px; line-height: 16px; color: #4A5D75">neskorý príchod</div>
+
+<div style="position: absolute; left: 760px; top: 560px; width: 600px; box-sizing: border-box; padding: 20px 24px; background: #FFFFFF; border: 1px solid #C9DCEF; border-radius: 12px; font-size: 14px; line-height: 22px; color: #24374F"><b style="color: #13243A">Pravidlá</b><br>• Príchod: v deň príchodu alebo neskôr, len s prideleným lôžkom.<br>• Odchod: v deň odchodu; skorší odchod skráti pobyt k dnešnému dňu.<br>• Storno: len z Rezervovanej, s dôvodom; uvoľní pridelené lôžka.<br>• Neprišiel: ponúkne uzávierka pre dnešné príchody bez príchodu.<br>• Opravy (čiarkované) len s oprávnením a zapíšu sa do auditu.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

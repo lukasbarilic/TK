@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<title>TheraSuite – Príchody a odchody v2</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1E5FA8}a:hover{color:#154A85}
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-wrap: wrap; background: #EEF5FC; color: #13243A; font-family: Inter, system-ui, sans-serif; font-size: 14px">
+
+  <nav aria-label="Hlavné menu" style="flex: 1 1 232px; max-width: 260px; box-sizing: border-box; background: #DCEBFA; border-right: 1px solid #C9DCEF; padding: 20px 14px; display: flex; flex-direction: column; gap: 4px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 10px 20px">
+      <div style="width: 32px; height: 32px; border-radius: 9px; background: #1E5FA8; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 14c3-3 6 3 9 0s6 3 9 0"></path><path d="M3 9c3-3 6 3 9 0s6 3 9 0"></path></svg></div>
+      <div style="display: flex; flex-direction: column; line-height: 1.15"><span style="font-weight: 700; font-size: 17px; letter-spacing: -0.2px">TheraSuite</span><span style="font-size: 11px; color: #4A5D75; letter-spacing: 0.2px">by N-teq</span></div>
+    </div>
+    <a href="PlanV2.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #24374F; text-decoration: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M9 4v16"></path></svg>Plán ubytovania</a>
+    <a href="KartaV2.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #24374F; text-decoration: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M8 8h8M8 12h8M8 16h5"></path></svg>Rezervačné karty</a>
+    <a href="PrichodyV2.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; background: #FFFFFF; color: #1E5FA8; font-weight: 600; text-decoration: none; box-shadow: 0 1px 2px rgba(19,36,58,.08)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 12h12M12 6l6 6-6 6M20 4v16"></path></svg>Príchody a odchody</a>
+    <a href="UzavierkaReport.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #24374F; text-decoration: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg>Nočná uzávierka</a>
+    <a href="Lekar.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #24374F; text-decoration: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3v6a4 4 0 0 0 8 0V3M10 13v3a4 4 0 0 0 8 0v-2"></path><circle cx="18" cy="12" r="2"></circle></svg>Zoznam hostí</a>
+  </nav>
+
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 14px 24px; background: #FFFFFF; border-bottom: 1px solid #C9DCEF">
+      <h1 style="margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.3px">Príchody a odchody</h1>
+      <div role="group" aria-label="Deň" style="display: flex; border: 1px solid #B9CFE6; border-radius: 8px; overflow: hidden">
+        <button type="button" aria-pressed="true" style="height: 36px; padding: 0 16px; border: 0; font: inherit; background: #D3E6FA; color: #154A85; font-weight: 600">Dnes, ut 17. 11.</button>
+        <button type="button" aria-pressed="false" style="height: 36px; padding: 0 16px; border: 0; border-left: 1px solid #B9CFE6; font: inherit; background: #FFFFFF; color: #24374F">Zajtra, st 18. 11.</button>
+      </div>
+      <div style="flex-grow: 1"></div>
+      <span style="color: #4A5D75; font-size: 13px">Recepcia: Hlavná budova</span>
+    </header>
+
+    <div style="padding: 20px 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 16px; align-items: start">
+      <section style="background: #FFFFFF; border: 1px solid #C9DCEF; border-radius: 12px; overflow: hidden">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid #E3EDF7">
+          <h2 style="margin: 0; font-size: 16px; flex-grow: 1">Príchody</h2>
+          <span style="font-size: 13px; color: #4A5D75">prijatých</span><span style="padding: 2px 10px; border-radius: 999px; background: #D3E6FA; color: #154A85; font-weight: 700">{{ arrDone }} / {{ arrTotal }}</span>
+        </div>
+        <sc-for list="{{ arrivals }}" as="r" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-top: 1px solid #EEF3F8">
+            <span style="width: 72px; font-weight: 700; color: #154A85">{{ r.room }}</span>
+            <a href="KartaV2.dc.html" style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; text-decoration: none; color: #13243A"><span style="font-weight: 600">{{ r.name }}</span><span style="font-size: 12px; color: #4A5D75">{{ r.meta }}</span></a>
+            <span style="padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; {{ r.badge }}">{{ r.status }}</span>
+            <sc-if value="{{ r.canIn }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ r.act }}" style="height: 34px; padding: 0 14px; border-radius: 8px; border: 0; background: #1E5FA8; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Príchod</button></sc-if>
+            <sc-if value="{{ r.needBed }}" hint-placeholder-val="{{ false }}"><a href="Ubytovat.dc.html" style="display: flex; align-items: center; height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid #1E5FA8; font-weight: 600; text-decoration: none">Prideliť lôžko</a></sc-if>
+          </div>
+        </sc-for>
+      </section>
+      <section style="background: #FFFFFF; border: 1px solid #C9DCEF; border-radius: 12px; overflow: hidden">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid #E3EDF7">
+          <h2 style="margin: 0; font-size: 16px; flex-grow: 1">Odchody</h2>
+          <span style="font-size: 13px; color: #4A5D75">odhlásených</span><span style="padding: 2px 10px; border-radius: 999px; background: #D3E6FA; color: #154A85; font-weight: 700">{{ depDone }} / {{ depTotal }}</span>
+        </div>
+        <sc-for list="{{ departures }}" as="r" hint-placeholder-count="3">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-top: 1px solid #EEF3F8">
+            <span style="width: 72px; font-weight: 700; color: #154A85">{{ r.room }}</span>
+            <a href="KartaV2.dc.html" style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; text-decoration: none; color: #13243A"><span style="font-weight: 600">{{ r.name }}</span><span style="font-size: 12px; color: #4A5D75">{{ r.meta }}</span></a>
+            <span style="padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; {{ r.badge }}">{{ r.status }}</span>
+            <sc-if value="{{ r.canOut }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ r.act }}" style="height: 34px; padding: 0 14px; border-radius: 8px; border: 0; background: #1E5FA8; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Odchod</button></sc-if>
+          </div>
+        </sc-for>
+      </section>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      arr: [
+        { id: 'a1', room: 'ALF 102', name: 'Ukážková M., Ukážkový P.', meta: 'R-2026-0140 · 2 osoby · do 24. 11.', st: 'RESERVED' },
+        { id: 'a2', room: 'ALF 205', name: 'Testovacia Z.', meta: 'R-2026-0144 · 1 osoba · do 1. 12.', st: 'RESERVED' },
+        { id: 'a3', room: 'BETA 204', name: 'Modelový D.', meta: 'R-2026-0145 · 1 osoba · do 30. 11.', st: 'CHECKED_IN' },
+        { id: 'a4', room: 'bez lôžka', name: 'Vzorkový F.', meta: 'R-2026-0148 · 1 osoba · do 27. 11.', st: 'RESERVED', noBed: true }
+      ],
+      dep: [
+        { id: 'd1', room: 'BETA 202', name: 'Fiktívny L.', meta: 'R-2026-0102 · od 9. 11.', st: 'CHECKED_OUT' },
+        { id: 'd2', room: 'ALF 108', name: 'Pokusná H.', meta: 'R-2026-0099 · od 3. 11.', st: 'CHECKED_IN' },
+        { id: 'd3', room: 'ALF 112', name: 'Návrhová S., Návrhový I.', meta: 'R-2026-0105 · od 10. 11.', st: 'CHECKED_IN' }
+      ]
+    };
+  }
+  renderVals() {
+    const B = {
+      RESERVED: ['Rezervovaná', 'background: #CFE3F7; color: #154A85;'],
+      CHECKED_IN: ['Prítomný', 'background: #1E5FA8; color: #FFFFFF;'],
+      CHECKED_OUT: ['Odhlásený', 'background: #E1E6EC; color: #24374F;']
+    };
+    const upd = (key, id, st) => () => this.setState({ [key]: this.state[key].map((r) => r.id === id ? Object.assign({}, r, { st }) : r) });
+    const arrivals = this.state.arr.map((r) => ({
+      room: r.room, name: r.name, meta: r.meta, status: B[r.st][0], badge: B[r.st][1],
+      canIn: r.st === 'RESERVED' && !r.noBed, needBed: r.st === 'RESERVED' && !!r.noBed,
+      act: upd('arr', r.id, 'CHECKED_IN')
+    }));
+    const departures = this.state.dep.map((r) => ({
+      room: r.room, name: r.name, meta: r.meta, status: B[r.st][0], badge: B[r.st][1],
+      canOut: r.st === 'CHECKED_IN', act: upd('dep', r.id, 'CHECKED_OUT')
+    }));
+    return {
+      arrivals, departures,
+      arrDone: this.state.arr.filter((r) => r.st === 'CHECKED_IN').length, arrTotal: this.state.arr.length,
+      depDone: this.state.dep.filter((r) => r.st === 'CHECKED_OUT').length, depTotal: this.state.dep.length
+    };
+  }
+}
+</script>
+</body>
+</html>

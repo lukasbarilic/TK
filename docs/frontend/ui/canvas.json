@@ -1,19 +1,140 @@
 {
   "v": 3,
-  "createdOnFiles": { "v": 1, "at": "2026-11-17T22:45:00Z" },
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-17T22:45:00Z"
+  },
   "title": "TheraSuite – návrh obrazoviek",
-  "launch": { "view": "canvas" },
+  "launch": {
+    "view": "canvas"
+  },
   "pages": [],
   "boards": {
-    "Prihlasenie.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 900, "title": "Prihlásenie (online aj offline)", "expand": "fill", "is_interactive": true },
-    "Main.dc.html": { "x": 1520, "y": 0, "w": 1440, "h": 900, "title": "Plán ubytovania", "expand": "fill", "is_interactive": true },
-    "Ubytovat.dc.html": { "x": 3040, "y": 0, "w": 1440, "h": 900, "title": "Ubytovanie – výber lôžka a upozornenie", "expand": "fill", "is_interactive": true },
-    "Karta.dc.html": { "x": 0, "y": 1300, "w": 1440, "h": 900, "title": "Rezervačná karta", "expand": "fill" },
-    "Prichody.dc.html": { "x": 1520, "y": 1300, "w": 1440, "h": 900, "title": "Príchody a odchody", "expand": "fill", "is_interactive": true },
-    "Uzavierka.dc.html": { "x": 3040, "y": 1300, "w": 1440, "h": 900, "title": "Nočná uzávierka", "expand": "fill" },
-    "Lekar.dc.html": { "x": 0, "y": 2600, "w": 1440, "h": 900, "title": "Zoznam hostí pre lekára", "expand": "fill" },
-    "Pouzivatelia.dc.html": { "x": 1520, "y": 2600, "w": 1440, "h": 900, "title": "Používatelia", "expand": "fill" },
-    "Audit.dc.html": { "x": 3040, "y": 2600, "w": 1440, "h": 900, "title": "Audit", "expand": "fill" }
+    "Prihlasenie.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Prihlásenie (online aj offline)",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "Main.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Plán ubytovania",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "Ubytovat.dc.html": {
+      "x": 3040,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Ubytovanie – výber lôžka a upozornenie",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "Karta.dc.html": {
+      "x": 0,
+      "y": 1300,
+      "w": 1440,
+      "h": 900,
+      "title": "Rezervačná karta",
+      "expand": "fill"
+    },
+    "Prichody.dc.html": {
+      "x": 1520,
+      "y": 1300,
+      "w": 1440,
+      "h": 900,
+      "title": "Príchody a odchody",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "Uzavierka.dc.html": {
+      "x": 3040,
+      "y": 1300,
+      "w": 1440,
+      "h": 900,
+      "title": "Nočná uzávierka",
+      "expand": "fill"
+    },
+    "Lekar.dc.html": {
+      "x": 0,
+      "y": 2600,
+      "w": 1440,
+      "h": 900,
+      "title": "Zoznam hostí pre lekára",
+      "expand": "fill"
+    },
+    "Pouzivatelia.dc.html": {
+      "x": 1520,
+      "y": 2600,
+      "w": 1440,
+      "h": 900,
+      "title": "Používatelia",
+      "expand": "fill"
+    },
+    "Audit.dc.html": {
+      "x": 3040,
+      "y": 2600,
+      "w": 1440,
+      "h": 900,
+      "title": "Audit",
+      "expand": "fill"
+    },
+    "Stavy.dc.html": {
+      "x": 0,
+      "y": 3900,
+      "w": 1440,
+      "h": 900,
+      "title": "v2 – Stavy rezervačnej karty"
+    },
+    "KartaV2.dc.html": {
+      "x": 1520,
+      "y": 3900,
+      "w": 1440,
+      "h": 900,
+      "title": "v2 – Rezervačná karta: stavy, poznámka, komentáre, Späť",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "NovaRezervacia.dc.html": {
+      "x": 3040,
+      "y": 3900,
+      "w": 1440,
+      "h": 900,
+      "title": "v2 – Nová rezervácia",
+      "expand": "fill"
+    },
+    "PlanV2.dc.html": {
+      "x": 0,
+      "y": 5200,
+      "w": 1440,
+      "h": 900,
+      "title": "v2 – Plán: farby stavov a akcie na pásiku",
+      "expand": "fill"
+    },
+    "PrichodyV2.dc.html": {
+      "x": 1520,
+      "y": 5200,
+      "w": 1440,
+      "h": 900,
+      "title": "v2 – Príchody a odchody s akciami",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "UzavierkaReport.dc.html": {
+      "x": 3040,
+      "y": 5200,
+      "w": 1440,
+      "h": 1100,
+      "title": "v2 – Nočná uzávierka: report dňa a obsadenosť",
+      "expand": "fill"
+    }
   },
   "order": [
     "Main.dc.html",
@@ -24,12 +145,50 @@
     "Uzavierka.dc.html",
     "Lekar.dc.html",
     "Pouzivatelia.dc.html",
-    "Audit.dc.html"
+    "Audit.dc.html",
+    "Stavy.dc.html",
+    "KartaV2.dc.html",
+    "NovaRezervacia.dc.html",
+    "PlanV2.dc.html",
+    "PrichodyV2.dc.html",
+    "UzavierkaReport.dc.html"
   ],
   "notes": {
-    "row1": { "x": 0, "y": -260, "text": "Prihlásenie a plán ubytovania", "kind": "title1", "maxW": 4480 },
-    "row2": { "x": 0, "y": 1040, "text": "Recepcia", "kind": "title1", "maxW": 4480 },
-    "row3": { "x": 0, "y": 2340, "text": "Lekár, administrácia a audit", "kind": "title1", "maxW": 4480 }
+    "row1": {
+      "x": 0,
+      "y": -260,
+      "text": "Prihlásenie a plán ubytovania",
+      "kind": "title1",
+      "maxW": 4480
+    },
+    "row2": {
+      "x": 0,
+      "y": 1040,
+      "text": "Recepcia",
+      "kind": "title1",
+      "maxW": 4480
+    },
+    "row3": {
+      "x": 0,
+      "y": 2340,
+      "text": "Lekár, administrácia a audit",
+      "kind": "title1",
+      "maxW": 4480
+    },
+    "row4": {
+      "x": 0,
+      "y": 3640,
+      "text": "v2 – úpravy po teste (19. 11.): stavy, karta, nová rezervácia",
+      "kind": "title1",
+      "maxW": 4480
+    },
+    "row5": {
+      "x": 0,
+      "y": 4940,
+      "text": "v2 – plán, príchody a odchody, report uzávierky",
+      "kind": "title1",
+      "maxW": 4480
+    }
   },
   "designSystems": []
 }
