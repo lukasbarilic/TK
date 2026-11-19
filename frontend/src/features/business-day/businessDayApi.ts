@@ -10,3 +10,13 @@ export const previewClose = async (receptionId: number): Promise<ClosePreview> =
 
 export const closeBusinessDay = async (receptionId: number) =>
   (await apiCall('post', '/api/receptions/{id}/business-day/close', { path: { id: receptionId } })).data;
+
+export type DayReport = components['schemas']['BusinessDayReport'];
+export type ArchiveItem = components['schemas']['ArchiveItem'];
+
+/** Zoznam uzavretých dní s uloženým reportom (od najnovšieho podľa servera). */
+export const listReports = async (receptionId: number): Promise<ArchiveItem[]> =>
+  (await apiCall('get', '/api/receptions/{id}/business-day/reports', { path: { id: receptionId }, query: {} })).data;
+
+export const getArchivedReport = async (receptionId: number, date: string) =>
+  (await apiCall('get', '/api/receptions/{id}/business-day/reports/{date}', { path: { id: receptionId, date } })).data;

@@ -12,11 +12,13 @@ import type { components } from '../../shared/api/schema';
 import { syncEngine, useConnection, WriteAction } from '../../shared/offline';
 import { receptionsInScope } from '../../shared/offline/scope';
 import { closeBusinessDay, previewClose, type Finding } from './businessDayApi';
+import { PrintableReport, usePrint } from './printReport';
+import { ReportArchive } from './ReportArchive';
+import { fmtDay as fmtDate } from './reportFormat';
 
 type Me = components['schemas']['MeView'];
 
-const fmtDate = (day: string, lang: string) =>
-  new Date(`${day}T00:00:00Z`).toLocaleDateString(lang, { weekday: 'short', day: 'numeric', month: 'numeric', year: 'numeric', timeZone: 'UTC' });
+
 
 function FindingList({ kind, findings }: { kind: 'blocking' | 'info'; findings: Finding[] }) {
   const { t } = useTranslation();
@@ -42,6 +44,26 @@ function FindingList({ kind, findings }: { kind: 'blocking' | 'info'; findings: 
   );
 }
 
+/** Neprišlí: pri uzavretí dňa im server nastaví stav Neprišiel. */
+function NoShowList({ findings }: { findings: Finding[] }) {
+  const { t } = useTranslation();
+  if (findings.length === 0) return null;
+  return (
+    <Paper withBorder radius="lg" bg="white" data-testid="close-noshow" style={{ overflow: 'hidden' }}>
+      <Text fw={600} p="sm" c="orange.9" bg="orange.0">{t('businessDay.noShowTitle')}</Text>
+      {findings.map((f, i) => (
+        <Group key={`${f.reservationId ?? ''}-${i}`} p="sm" justify="space-between" data-testid="close-noshow-finding" style={{ borderTop: '1px solid #EEF3F8' }}>
+          <Text fw={500}>{f.message ?? f.ruleCode}</Text>
+          {f.reservationId !== undefined && (
+            <Link to={`/reservations/${f.reservationId}`} state={originState(t('menu.businessDayClose'), '/business-day')}>{t('businessDay.openCard')}</Link>
+          )}
+        </Group>
+      ))}
+      <Text size="xs" c="dimmed" p="sm">{t('businessDay.noShowHint')}</Text>
+    </Paper>
+  );
+}
+
 /** Nočná uzávierka recepcie (HLD-ubytovanie kap. 5.8): kontrola → potvrdenie → nový obchodný deň. Len online. */
 export function BusinessDayClosePage({ me }: { me: Me | null | undefined }) {
   const { t, i18n } = useTranslation();
@@ -52,6 +74,8 @@ export function BusinessDayClosePage({ me }: { me: Me | null | undefined }) {
   const [closing, setClosing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  const [view, setView] = useState<'close' | 'archive'>('close');
+  const { printedAt, print } = usePrint();
 
   const receptions = useQuery({
     queryKey: queryKeys.receptions,
@@ -73,7 +97,9 @@ export function BusinessDayClosePage({ me }: { me: Me | null | undefined }) {
   });
   const p = preview.data;
   const blocking = p?.blocking ?? [];
-  const info = p?.info ?? [];
+  const noShows = (p?.info ?? []).filter((f) => f.ruleCode === 'NO_SHOW');
+  const info = (p?.info ?? []).filter((f) => f.ruleCode !== 'NO_SHOW');
+  const infoTotal = noShows.length + info.length;
   const canClose = p !== undefined && blocking.length === 0 && p.canClose !== false;
 
   const close = async () => {
@@ -106,11 +132,22 @@ export function BusinessDayClosePage({ me }: { me: Me | null | undefined }) {
   };
 
   const noAccess = receptions.data !== undefined && allowed.length === 0;
+  const receptionName = allowed.find((r) => r.id === receptionId)?.name ?? '';
   const dateText = p?.businessDate ? fmtDate(p.businessDate, i18n.language) : '';
 
   return (
     <Stack data-testid="business-day-page">
-      <Title order={2}>{t('businessDay.title')}</Title>
+      <Group justify="space-between" className="report-noprint">
+        <Title order={2}>{t('businessDay.title')}</Title>
+        {view === 'close' && (
+          <Group>
+            <Button variant="default" disabled={!canWrite || !p?.report} onClick={print}>{t('businessDay.printReport')}</Button>
+            <Button variant="default" disabled={!canWrite || receptionId === undefined} onClick={() => setView('archive')}>
+              {t('businessDay.archive')}
+            </Button>
+          </Group>
+        )}
+      </Group>
 
       {!canWrite && <Alert color="orange" data-testid="close-offline">{t('businessDay.offline')}</Alert>}
       {noAccess && <Alert color="orange">{t('businessDay.noReception')}</Alert>}
@@ -119,6 +156,7 @@ export function BusinessDayClosePage({ me }: { me: Me | null | undefined }) {
 
       {canWrite && allowed.length > 0 && (
         <NativeSelect
+          className="report-noprint"
           label={t('shell.receptionLabel')}
           data={allowed.map((r) => ({ value: String(r.id), label: r.name ?? r.code ?? String(r.id) }))}
           value={receptionId === undefined ? '' : String(receptionId)}
@@ -131,12 +169,17 @@ export function BusinessDayClosePage({ me }: { me: Me | null | undefined }) {
         />
       )}
 
-      {canWrite && preview.isPending && receptionId !== undefined && <Loader size="sm" data-testid="close-loading" />}
-      {canWrite && preview.isError && <Alert color="red">{errorText(t, preview.error)}</Alert>}
+      {canWrite && view === 'archive' && receptionId !== undefined && (
+        <ReportArchive receptionId={receptionId} receptionName={receptionName} onBack={() => setView('close')} />
+      )}
 
-      {canWrite && p && (
+      {canWrite && view === 'close' && preview.isPending && receptionId !== undefined && <Loader size="sm" data-testid="close-loading" />}
+      {canWrite && view === 'close' && preview.isError && <Alert color="red">{errorText(t, preview.error)}</Alert>}
+
+      {canWrite && view === 'close' && p && (
         <>
-          <Group grow align="stretch">
+          {p.report && <PrintableReport report={p.report} receptionName={receptionName} printedAt={printedAt} />}
+          <Group grow align="stretch" className="report-noprint">
             <Paper withBorder p="md" radius="lg" bg="white">
               <Text size="xs" c="dimmed">{t('businessDay.closing')}</Text>
               <Text fw={700} size="xl" data-testid="close-date">{dateText}</Text>
@@ -147,16 +190,20 @@ export function BusinessDayClosePage({ me }: { me: Me | null | undefined }) {
             </Paper>
             <Paper withBorder p="md" radius="lg" bg="white">
               <Text size="xs" c="dimmed">{t('businessDay.infoCount')}</Text>
-              <Text fw={700} size="xl" data-testid="close-info-count">{info.length}</Text>
+              <Text fw={700} size="xl" data-testid="close-info-count">{infoTotal}</Text>
             </Paper>
           </Group>
-          <FindingList kind="blocking" findings={blocking} />
-          <FindingList kind="info" findings={info} />
-          {blocking.length === 0 && info.length === 0 && <Text c="dimmed">{t('businessDay.noFindings')}</Text>}
+          <Stack className="report-noprint" data-testid="close-checks">
+            <Title order={3}>{t('businessDay.checksTitle')}</Title>
+            <FindingList kind="blocking" findings={blocking} />
+            <NoShowList findings={noShows} />
+            <FindingList kind="info" findings={info} />
+            {blocking.length === 0 && infoTotal === 0 && <Text c="dimmed">{t('businessDay.noFindings')}</Text>}
+          </Stack>
         </>
       )}
 
-      <Paper withBorder p="md" radius="lg" bg="white">
+      {view === 'close' && <Paper withBorder p="md" radius="lg" bg="white" className="report-noprint">
         <Group justify="space-between">
           <Text maw={520}>{t('businessDay.irreversible')}</Text>
           <Group>
@@ -176,7 +223,7 @@ export function BusinessDayClosePage({ me }: { me: Me | null | undefined }) {
             </WriteAction>
           </Group>
         </Group>
-      </Paper>
+      </Paper>}
 
       <Modal opened={confirming} onClose={() => setConfirming(false)} title={t('businessDay.confirmTitle')}>
         <Stack>
