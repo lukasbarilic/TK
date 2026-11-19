@@ -31,6 +31,8 @@ export interface BarVM {
   flags?: string[];
   /** Poznámka karty označená na zobrazenie v pláne. */
   hasNote?: boolean;
+  /** Počet viditeľných komentárov karty. */
+  commentCount?: number;
   stayId?: number;
   reservationId?: number;
   partyId?: number;

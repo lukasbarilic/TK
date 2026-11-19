@@ -9,6 +9,7 @@ export type ReservationDetail = components['schemas']['Detail'];
 export type ReservationListItem = components['schemas']['ListItem'];
 export type ReservationStay = components['schemas']['StayView'];
 export type ReservationUpdate = components['schemas']['UpdateRequest'];
+export type ReservationComment = components['schemas']['CommentView'];
 export type ReservationStatus = NonNullable<ReservationListItem['status']>;
 
 export const PAGE_SIZE = 20;
@@ -99,3 +100,12 @@ export const loadStays = async (id: number): Promise<ReservationStay[]> =>
 /** Úprava karty s optimistic locking (`version`); konflikt = `409`. */
 export const updateReservation = async (id: number, body: ReservationUpdate): Promise<ReservationDetail> =>
   (await apiCall('patch', '/api/reservations/{id}', { path: { id }, body })).data;
+
+/** Nový komentár karty (nedá sa upraviť, len skryť). */
+export const addComment = async (id: number, text: string): Promise<ReservationComment> =>
+  (await apiCall('post', '/api/reservations/{id}/comments', { path: { id }, body: { text } })).data;
+
+/** Skrytie komentára (`RESERVATION_EDIT`). */
+export const hideComment = async (id: number, commentId: number): Promise<void> => {
+  await apiCall('post', '/api/reservations/{id}/comments/{commentId}/hide', { path: { id, commentId } });
+};
