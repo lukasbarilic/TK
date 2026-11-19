@@ -1,5 +1,6 @@
 import { apiCall } from '../../shared/api/client';
 import type { components } from '../../shared/api/schema';
+import { addDays } from '../../shared/time';
 
 export type AvailableRoom = components['schemas']['AvailableRoomView'];
 export type StayView = components['schemas']['StayView'];
@@ -54,12 +55,23 @@ export async function createStay(reservationId: number, body: CreateStayBody): P
   return { stay: res.data, auditEventId: Number.isFinite(id) && res.headers['x-audit-event-id'] ? id : undefined };
 }
 
-/** Karty v stave `RESERVED` bez pobytu (UC2): hľadanie na serveri, pobyty sa overia po kartách. */
-export async function searchCardsWithoutStay(q: string): Promise<CardListItem[]> {
-  const res = (await apiCall('get', '/api/reservations', { query: { q: q.trim() || undefined, status: 'RESERVED', page: 0, size: 20 } })).data;
-  const cards = (res.content ?? []).filter((c) => c.id !== undefined && c.status === 'RESERVED');
-  const stays = await Promise.all(
-    cards.map((c) => apiCall('get', '/api/reservations/{id}/stays', { path: { id: c.id as number } }).then((r) => r.data.length)),
-  );
-  return cards.filter((_, i) => stays[i] === 0);
+/**
+ * Karty v stave `RESERVED` bez pobytu (UC2): jedno volanie, filter „bez pobytu“ robí server pred stránkovaním.
+ * S `day` sa ponúknu len karty, ktorých termín pokrýva daný deň.
+ */
+export async function searchCardsWithoutStay(q: string, day?: string): Promise<CardListItem[]> {
+  const res = (
+    await apiCall('get', '/api/reservations', {
+      query: {
+        q: q.trim() || undefined,
+        status: 'RESERVED',
+        withoutStay: true,
+        from: day,
+        to: day ? addDays(day, 1) : undefined,
+        page: 0,
+        size: 20,
+      },
+    })
+  ).data;
+  return (res.content ?? []).filter((c) => c.id !== undefined);
 }

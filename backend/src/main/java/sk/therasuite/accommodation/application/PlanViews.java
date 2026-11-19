@@ -13,7 +13,9 @@ public final class PlanViews {
 
   /**
    * Pásik pobytu. {@code from}/{@code to} sú orezané na zobrazené obdobie, {@code stayFrom}/{@code
-   * stayTo} sú skutočné dátumy pobytu. {@code label} je skrátené meno „Priezvisko M.“.
+   * stayTo} sú skutočné dátumy pobytu. {@code label} je skrátené meno „Priezvisko M.“. {@code
+   * hasNote} platí len pre poznámku označenú na zobrazenie v pláne, {@code commentCount} je počet
+   * viditeľných komentárov karty.
    */
   public record StayBar(
       String type,
@@ -28,7 +30,9 @@ public final class PlanViews {
       String status,
       boolean locked,
       List<String> flags,
-      Long partyId)
+      Long partyId,
+      boolean hasNote,
+      int commentCount)
       implements Bar {}
 
   /** Držané lôžko (dopočítané, v databáze nie je); drží ho karta s výhradným užívaním izby. */

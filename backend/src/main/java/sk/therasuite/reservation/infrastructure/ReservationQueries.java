@@ -1,9 +1,12 @@
 package sk.therasuite.reservation.infrastructure;
 
 import java.sql.Date;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import sk.therasuite.reservation.domain.ReservationStatus;
@@ -40,6 +43,10 @@ public class ReservationQueries {
         order by g.id limit 1) pg on true
       """;
 
+  /** Viditeľný komentár karty. */
+  public record CommentRow(
+      long id, long reservationId, long authorId, Instant createdAt, String text) {}
+
   private final JdbcTemplate jdbc;
 
   public ReservationQueries(JdbcTemplate jdbc) {
@@ -48,10 +55,17 @@ public class ReservationQueries {
 
   /**
    * Hľadá karty. Každé slovo z {@code q} musí byť obsiahnuté v mene niektorého hosťa alebo v čísle
-   * karty; diakritika a veľkosť písmen sa ignorujú.
+   * karty; diakritika a veľkosť písmen sa ignorujú. Pri {@code withoutStay} vráti len karty bez
+   * akéhokoľvek pobytu (filter sa uplatní pred stránkovaním).
    */
   public Result search(
-      String q, ReservationStatus status, LocalDate from, LocalDate to, int page, int size) {
+      String q,
+      ReservationStatus status,
+      LocalDate from,
+      LocalDate to,
+      boolean withoutStay,
+      int page,
+      int size) {
     StringBuilder where = new StringBuilder(" where true");
     List<Object> args = new ArrayList<>();
     if (q != null) {
@@ -83,6 +97,9 @@ public class ReservationQueries {
     if (from != null) {
       where.append(" and r.departure_date > ?");
       args.add(Date.valueOf(from));
+    }
+    if (withoutStay) {
+      where.append(" and not exists (select 1 from stay s where s.reservation_id = r.id)");
     }
     Long total = jdbc.queryForObject("select count(*) " + FROM + where, Long.class, args.toArray());
     List<Object> pageArgs = new ArrayList<>(args);
@@ -124,9 +141,137 @@ public class ReservationQueries {
     return exists("room_category", id);
   }
 
+  /** Aktívny používateľ s rolou lekára. */
+  public boolean doctorExists(long userId) {
+    return Boolean.TRUE.equals(
+        jdbc.queryForObject(
+            """
+            select exists (select 1 from user_account u
+              join user_role ur on ur.user_id = u.id join role r on r.id = ur.role_id
+              where u.id = ? and u.status = 'ACTIVE' and r.code = 'DOCTOR')
+            """,
+            Boolean.class,
+            userId));
+  }
+
+  /** Klient pri vyhľadávaní: bez kontaktov, len rok narodenia a koniec posledného pobytu. */
+  public record ClientRow(
+      long id, String firstName, String lastName, Integer birthYear, LocalDate lastStayDate) {}
+
+  /**
+   * Hľadá klientov podľa mena a priezviska (každé slovo z {@code q}, bez diakritiky a veľkosti
+   * písmen). Posledný pobyt = najneskorší odchod z karty, ktorá sa realizovala (nie zrušená ani
+   * neprišiel).
+   */
+  public List<ClientRow> searchClients(String q, int limit) {
+    StringBuilder where = new StringBuilder(" where true");
+    List<Object> args = new ArrayList<>();
+    if (q != null) {
+      for (String token : q.trim().split("\\s+")) {
+        if (!token.isEmpty()) {
+          where.append(
+              " and f_unaccent(lower(c.last_name || ' ' || c.first_name)) like f_unaccent(lower(?))");
+          args.add("%" + escapeLike(token) + "%");
+        }
+      }
+    }
+    args.add(limit);
+    return jdbc.query(
+        """
+        select c.id, c.first_name, c.last_name, extract(year from c.birth_date)::int,
+               (select max(r.departure_date) from reservation_guest g
+                  join reservation r on r.id = g.reservation_id
+                 where g.client_id = c.id and not g.cancelled
+                   and r.status in ('CHECKED_IN', 'CHECKED_OUT'))
+        from client c
+        """
+            + where
+            + " order by c.last_name, c.first_name, c.id limit ?",
+        (rs, i) -> {
+          Date last = rs.getDate(5);
+          return new ClientRow(
+              rs.getLong(1),
+              rs.getString(2),
+              rs.getString(3),
+              (Integer) rs.getObject(4),
+              last == null ? null : last.toLocalDate());
+        },
+        args.toArray());
+  }
+
   public boolean payerExists(long id) {
     return exists("payer", id);
   }
+
+  public CommentRow insertComment(long reservationId, long authorId, String text) {
+    return jdbc.queryForObject(
+        "insert into reservation_comment (reservation_id, author_id, text) values (?, ?, ?)"
+            + " returning id, reservation_id, author_id, created_at, text",
+        COMMENT_MAPPER,
+        reservationId,
+        authorId,
+        text);
+  }
+
+  /** Skryje komentár karty; prázdny výsledok, ak neexistuje alebo je už skrytý. */
+  public Optional<CommentRow> hideComment(long reservationId, long commentId, long userId) {
+    return jdbc
+        .query(
+            "update reservation_comment set hidden_at = now(), hidden_by = ?"
+                + " where id = ? and reservation_id = ? and hidden_at is null"
+                + " returning id, reservation_id, author_id, created_at, text",
+            COMMENT_MAPPER,
+            userId,
+            commentId,
+            reservationId)
+        .stream()
+        .findFirst();
+  }
+
+  /** Všetky viditeľné komentáre karty od najstaršieho. */
+  public List<CommentRow> comments(long reservationId) {
+    return jdbc.query(
+        "select id, reservation_id, author_id, created_at, text from reservation_comment"
+            + " where reservation_id = ? and hidden_at is null order by id",
+        COMMENT_MAPPER,
+        reservationId);
+  }
+
+  /**
+   * Posledných {@code limit} viditeľných komentárov každej z kariet jedným dotazom, od
+   * najstaršieho.
+   */
+  public List<CommentRow> lastComments(Collection<Long> reservationIds, int limit) {
+    if (reservationIds.isEmpty()) {
+      return List.of();
+    }
+    return jdbc.query(
+        con -> {
+          var ps =
+              con.prepareStatement(
+                  """
+                  select id, reservation_id, author_id, created_at, text from (
+                      select c.*, row_number() over (
+                          partition by c.reservation_id order by c.id desc) rn
+                      from reservation_comment c
+                      where c.reservation_id = any (?) and c.hidden_at is null) x
+                  where rn <= ? order by reservation_id, id
+                  """);
+          ps.setArray(1, con.createArrayOf("bigint", reservationIds.toArray()));
+          ps.setInt(2, limit);
+          return ps;
+        },
+        COMMENT_MAPPER);
+  }
+
+  private static final org.springframework.jdbc.core.RowMapper<CommentRow> COMMENT_MAPPER =
+      (rs, i) ->
+          new CommentRow(
+              rs.getLong(1),
+              rs.getLong(2),
+              rs.getLong(3),
+              rs.getTimestamp(4).toInstant(),
+              rs.getString(5));
 
   private boolean exists(String table, long id) {
     return Boolean.TRUE.equals(

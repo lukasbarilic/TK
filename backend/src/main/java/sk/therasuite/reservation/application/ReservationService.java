@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sk.therasuite.accommodation.application.ReservationStayGateway;
+import sk.therasuite.reservation.application.ReservationViews.CommentView;
 import sk.therasuite.reservation.application.ReservationViews.Detail;
 import sk.therasuite.reservation.application.ReservationViews.GuestView;
 import sk.therasuite.reservation.application.ReservationViews.ListItem;
@@ -26,6 +28,7 @@ import sk.therasuite.reservation.infrastructure.Reservation;
 import sk.therasuite.reservation.infrastructure.ReservationGuest;
 import sk.therasuite.reservation.infrastructure.ReservationGuestRepository;
 import sk.therasuite.reservation.infrastructure.ReservationQueries;
+import sk.therasuite.reservation.infrastructure.ReservationQueries.CommentRow;
 import sk.therasuite.reservation.infrastructure.ReservationQueries.Result;
 import sk.therasuite.reservation.infrastructure.ReservationQueries.Row;
 import sk.therasuite.reservation.infrastructure.ReservationRepository;
@@ -42,6 +45,10 @@ import sk.therasuite.shared.application.ApiException;
 public class ReservationService {
 
   static final int MAX_PAGE_SIZE = 100;
+  public static final int MAX_NOTE_LENGTH = 2000;
+
+  /** Počet komentárov v detaile karty (ďalšie sú dostupné cez endpoint komentárov). */
+  public static final int DETAIL_COMMENTS = 20;
 
   /** Hosť pri zakladaní karty: buď existujúci klient ({@code clientId}), alebo nový klient. */
   public record GuestInput(
@@ -61,7 +68,41 @@ public class ReservationService {
       int adults,
       int children,
       boolean exclusiveRoomUse,
-      List<GuestInput> guests) {}
+      List<GuestInput> guests,
+      Long attendingDoctorId,
+      boolean earlyCheckIn,
+      boolean lateCheckOut,
+      boolean doNotMove,
+      String note,
+      boolean noteInPlan) {
+
+    /** Založenie bez lekára, príznakov a poznámky. */
+    public CreateCommand(
+        LocalDate arrivalDate,
+        LocalDate departureDate,
+        Long bookedCategoryId,
+        Long payerId,
+        int adults,
+        int children,
+        boolean exclusiveRoomUse,
+        List<GuestInput> guests) {
+      this(
+          arrivalDate,
+          departureDate,
+          bookedCategoryId,
+          payerId,
+          adults,
+          children,
+          exclusiveRoomUse,
+          guests,
+          null,
+          false,
+          false,
+          false,
+          null,
+          false);
+    }
+  }
 
   /** Neuvedené (null) polia sa nemenia; {@code version} je verzia, z ktorej klient vychádzal. */
   public record UpdateCommand(
@@ -73,35 +114,72 @@ public class ReservationService {
       Boolean doNotMove,
       Boolean earlyCheckIn,
       Boolean lateCheckOut,
-      Boolean exclusiveRoomUse) {}
+      Boolean exclusiveRoomUse,
+      String note,
+      Boolean noteInPlan) {
+
+    /** Úprava bez zmeny poznámky. */
+    public UpdateCommand(
+        long version,
+        LocalDate arrivalDate,
+        LocalDate departureDate,
+        Long bookedCategoryId,
+        Long payerId,
+        Boolean doNotMove,
+        Boolean earlyCheckIn,
+        Boolean lateCheckOut,
+        Boolean exclusiveRoomUse) {
+      this(
+          version,
+          arrivalDate,
+          departureDate,
+          bookedCategoryId,
+          payerId,
+          doNotMove,
+          earlyCheckIn,
+          lateCheckOut,
+          exclusiveRoomUse,
+          null,
+          null);
+    }
+  }
 
   private final ReservationRepository reservations;
   private final ReservationGuestRepository guests;
   private final ClientRepository clients;
   private final ReservationQueries queries;
+  private final ReservationStayGateway stays;
 
   public ReservationService(
       ReservationRepository reservations,
       ReservationGuestRepository guests,
       ClientRepository clients,
-      ReservationQueries queries) {
+      ReservationQueries queries,
+      ReservationStayGateway stays) {
     this.reservations = reservations;
     this.guests = guests;
     this.clients = clients;
     this.queries = queries;
+    this.stays = stays;
   }
 
   @AuditedRead(operation = "RESERVATION_VIEW", scope = DataScope.NAME)
   @Transactional(readOnly = true)
   public AuditedReadResult<PageView<ListItem>> search(
-      String q, ReservationStatus status, LocalDate from, LocalDate to, int page, int size) {
+      String q,
+      ReservationStatus status,
+      LocalDate from,
+      LocalDate to,
+      boolean withoutStay,
+      int page,
+      int size) {
     if (page < 0 || size < 1 || size > MAX_PAGE_SIZE) {
       throw badRequest("Stránkovanie: page ≥ 0 a size 1–" + MAX_PAGE_SIZE + ".");
     }
     if (from != null && to != null && !from.isBefore(to)) {
       throw badRequest("Parameter 'from' musí byť pred 'to'.");
     }
-    Result result = queries.search(q, status, from, to, page, size);
+    Result result = queries.search(q, status, from, to, withoutStay, page, size);
     List<ListItem> items =
         result.rows().stream()
             .map(r ->
@@ -144,6 +222,10 @@ public class ReservationService {
       throw badRequest("Karta musí mať aspoň jedného hosťa.");
     }
     checkReferences(cmd.bookedCategoryId(), cmd.payerId());
+    String note = normalizeNote(cmd.note());
+    if (cmd.attendingDoctorId() != null && !queries.doctorExists(cmd.attendingDoctorId())) {
+      throw badRequest("Lekár neexistuje alebo nemá rolu lekára.");
+    }
 
     List<Client> resolved = new ArrayList<>();
     Set<Long> seen = new HashSet<>();
@@ -155,17 +237,23 @@ public class ReservationService {
       resolved.add(client);
     }
 
-    Reservation reservation =
-        reservations.saveAndFlush(
-            new Reservation(
-                queries.nextReservationNumber(),
-                cmd.arrivalDate(),
-                cmd.departureDate(),
-                cmd.bookedCategoryId(),
-                cmd.payerId(),
-                cmd.adults(),
-                cmd.children(),
-                cmd.exclusiveRoomUse()));
+    Reservation card =
+        new Reservation(
+            queries.nextReservationNumber(),
+            cmd.arrivalDate(),
+            cmd.departureDate(),
+            cmd.bookedCategoryId(),
+            cmd.payerId(),
+            cmd.adults(),
+            cmd.children(),
+            cmd.exclusiveRoomUse());
+    card.setAttendingDoctorId(cmd.attendingDoctorId());
+    card.setEarlyCheckIn(cmd.earlyCheckIn());
+    card.setLateCheckOut(cmd.lateCheckOut());
+    card.setDoNotMove(cmd.doNotMove());
+    card.setNote(note);
+    card.setNoteInPlan(cmd.noteInPlan());
+    Reservation reservation = reservations.saveAndFlush(card);
     for (int i = 0; i < resolved.size(); i++) {
       Client client = resolved.get(i);
       if (client.getId() == null) {
@@ -211,7 +299,29 @@ public class ReservationService {
     if (cmd.exclusiveRoomUse() != null) {
       r.setExclusiveRoomUse(cmd.exclusiveRoomUse());
     }
-    return detail(reservations.saveAndFlush(r));
+    boolean planNoteChanged = false;
+    if (cmd.note() != null) {
+      String note = normalizeNote(cmd.note());
+      planNoteChanged = !Objects.equals(note, r.getNote());
+      r.setNote(note);
+    }
+    if (cmd.noteInPlan() != null) {
+      planNoteChanged |= cmd.noteInPlan() != r.isNoteInPlan();
+      r.setNoteInPlan(cmd.noteInPlan());
+    }
+    Reservation saved = reservations.saveAndFlush(r);
+    if (planNoteChanged) {
+      stays.publishPlanChanged(stays.snapshot(id));
+    }
+    return detail(saved);
+  }
+
+  private static String normalizeNote(String raw) {
+    String note = raw == null || raw.isBlank() ? null : raw.strip();
+    if (note != null && note.length() > MAX_NOTE_LENGTH) {
+      throw badRequest("Poznámka môže mať najviac " + MAX_NOTE_LENGTH + " znakov.");
+    }
+    return note;
   }
 
   private Client resolveClient(GuestInput g) {
@@ -248,7 +358,7 @@ public class ReservationService {
     }
   }
 
-  private Reservation load(long id) {
+  Reservation load(long id) {
     return reservations
         .findById(id)
         .orElseThrow(
@@ -256,7 +366,7 @@ public class ReservationService {
   }
 
   /**
-   * Detail viacerých kariet naraz (offline režim): tri dotazy bez ohľadu na počet kariet.
+   * Detail viacerých kariet naraz (offline režim): štyri dotazy bez ohľadu na počet kariet.
    * Neexistujúce ID sa vynechajú, výsledok je zoradený podľa ID.
    */
   @AuditedRead(operation = "RESERVATION_VIEW", scope = DataScope.CONTACT)
@@ -283,9 +393,22 @@ public class ReservationService {
                     .collect(Collectors.toSet()))
             .stream()
             .collect(Collectors.toMap(Client::getId, Function.identity()));
+    Map<Long, List<CommentView>> commentsByCard =
+        queries
+            .lastComments(found.stream().map(Reservation::getId).toList(), DETAIL_COMMENTS)
+            .stream()
+            .collect(
+                Collectors.groupingBy(
+                    CommentRow::reservationId,
+                    Collectors.mapping(ReservationService::commentView, Collectors.toList())));
     List<Detail> details =
         found.stream()
-            .map(r -> detail(r, guestsByCard.getOrDefault(r.getId(), List.of()), clientsById::get))
+            .map(r ->
+                detail(
+                    r,
+                    guestsByCard.getOrDefault(r.getId(), List.of()),
+                    clientsById::get,
+                    commentsByCard.getOrDefault(r.getId(), List.of())))
             .toList();
     return new AuditedReadResult<>(
         details,
@@ -296,12 +419,26 @@ public class ReservationService {
             .toList());
   }
 
-  private Detail detail(Reservation r) {
-    return detail(r, guests.findByReservationIdOrderById(r.getId()), clients::getReferenceById);
+  /** Detail karty pre ostatné služby modulu (po zmene stavu). */
+  Detail detail(Reservation r) {
+    return detail(
+        r,
+        guests.findByReservationIdOrderById(r.getId()),
+        clients::getReferenceById,
+        queries.lastComments(List.of(r.getId()), DETAIL_COMMENTS).stream()
+            .map(ReservationService::commentView)
+            .toList());
+  }
+
+  static CommentView commentView(CommentRow c) {
+    return new CommentView(c.id(), c.authorId(), c.createdAt(), c.text());
   }
 
   private Detail detail(
-      Reservation r, List<ReservationGuest> reservationGuests, Function<Long, Client> client) {
+      Reservation r,
+      List<ReservationGuest> reservationGuests,
+      Function<Long, Client> client,
+      List<CommentView> comments) {
     List<GuestView> views =
         reservationGuests.stream()
             .map(g -> {
@@ -338,6 +475,13 @@ public class ReservationService {
         r.getAdults(),
         r.getChildren(),
         r.getVersion(),
+        r.getCheckedInAt(),
+        r.getCheckedOutAt(),
+        r.getCancelledAt(),
+        r.getCancelReason(),
+        r.getNote(),
+        r.isNoteInPlan(),
+        comments,
         views);
   }
 

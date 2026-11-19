@@ -136,7 +136,9 @@ public class AccommodationQueries {
       Long partyId,
       Long clientId,
       String lastName,
-      String firstName) {}
+      String firstName,
+      boolean hasNote,
+      int commentCount) {}
 
   public record PlanBlockRow(
       long id, long roomId, String reason, String note, LocalDate dateFrom, LocalDate dateTo) {}
@@ -366,6 +368,47 @@ public class AccommodationQueries {
         .findFirst();
   }
 
+  /** Pobyty karty s izbou a recepciou (podklad pre zmenu stavu karty). */
+  public List<StayRef> stayRefsOfReservation(long reservationId) {
+    return jdbc.query(
+        "select s.id, rm.id, bu.reception_id, s.date_from, s.date_to from stay s"
+            + " join bed b on b.id = s.bed_id join room rm on rm.id = b.room_id"
+            + " join building bu on bu.id = rm.building_id where s.reservation_id = ?"
+            + " order by s.date_from, s.id",
+        (rs, i) ->
+            new StayRef(
+                rs.getLong(1),
+                rs.getLong(2),
+                rs.getLong(3),
+                rs.getObject(4, LocalDate.class),
+                rs.getObject(5, LocalDate.class)),
+        reservationId);
+  }
+
+  /** Počet rôznych lôžok, na ktorých má karta pobyt. */
+  public int assignedBedCount(long reservationId) {
+    Integer n =
+        jdbc.queryForObject(
+            "select count(distinct bed_id) from stay where reservation_id = ?",
+            Integer.class,
+            reservationId);
+    return n == null ? 0 : n;
+  }
+
+  /** Počet hostí karty bez zrušených. */
+  public int activeGuestCount(long reservationId) {
+    Integer n =
+        jdbc.queryForObject(
+            "select count(*) from reservation_guest where reservation_id = ? and not cancelled",
+            Integer.class,
+            reservationId);
+    return n == null ? 0 : n;
+  }
+
+  public List<Long> receptionIds() {
+    return jdbc.queryForList("select id from reception order by id", Long.class);
+  }
+
   /**
    * Izby s aspoň jedným voľným lôžkom v celom intervale. Izba s blokáciou v intervale alebo s
    * pobytom karty so samostatným bývaním (držané lôžka) sa nevracia. Pri {@code categoryId} bez
@@ -498,7 +541,10 @@ public class AccommodationQueries {
                       select s.id, s.reservation_id, s.bed_id, b.room_id, s.date_from, s.date_to,
                              s.locked, r.status, r.arrival_date, r.departure_date,
                              r.early_check_in, r.late_check_out, r.party_id,
-                             c.id, c.last_name, c.first_name
+                             c.id, c.last_name, c.first_name,
+                             (r.note_in_plan and r.note is not null),
+                             (select count(*) from reservation_comment rc
+                              where rc.reservation_id = r.id and rc.hidden_at is null)
                       from stay s
                       join bed b on b.id = s.bed_id
                       join reservation r on r.id = s.reservation_id
@@ -533,7 +579,9 @@ public class AccommodationQueries {
                     (Long) rs.getObject(13),
                     (Long) rs.getObject(14),
                     rs.getString(15),
-                    rs.getString(16)));
+                    rs.getString(16),
+                    rs.getBoolean(17),
+                    rs.getInt(18)));
     List<PlanBlockRow> blocks =
         jdbc.query(
             con -> {

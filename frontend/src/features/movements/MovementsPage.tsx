@@ -1,4 +1,5 @@
 import { Alert, Badge, Button, Group, Loader, NativeSelect, Paper, Table, Text, Title } from '@mantine/core';
+import { originState } from '../../shared/navigation/origin';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -53,9 +54,9 @@ function MovementList({ kind, rows }: { kind: 'arrivals' | 'departures'; rows: M
                 tabIndex={0}
                 role="link"
                 style={{ cursor: 'pointer' }}
-                onClick={() => m.reservationId !== undefined && navigate(`/reservations/${m.reservationId}`)}
+                onClick={() => m.reservationId !== undefined && navigate(`/reservations/${m.reservationId}`, { state: originState(t('menu.movements'), '/movements') })}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && m.reservationId !== undefined) navigate(`/reservations/${m.reservationId}`);
+                  if (e.key === 'Enter' && m.reservationId !== undefined) navigate(`/reservations/${m.reservationId}`, { state: originState(t('menu.movements'), '/movements') });
                 }}
               >
                 <Table.Td>{m.roomNumber ? `${m.roomNumber}${m.bedNumber ? `/${m.bedNumber}` : ''}` : t('movements.noRoom')}</Table.Td>

@@ -78,7 +78,9 @@ class AccommodationPlanServiceTest {
         null,
         client,
         "Testovský",
-        "anna");
+        "anna",
+        false,
+        0);
   }
 
   private AuditedReadResult<Plan> plan(PlanData data, PlanFilter filter) {
