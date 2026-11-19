@@ -9,6 +9,7 @@ import { ConnectionBar, ConnectionRuntime } from '../../features/offline';
 import { receptionInScope, useLogout, useLogoutAndWipe, useMe } from '../../features/auth';
 import { UpdateRuntime } from '../../features/updates';
 import { visibleMenu } from '../menu';
+import { HistoryShortcuts } from '../../shared/navigation/HistoryShortcuts';
 
 // Oprávnenia, ktoré sa viažu na recepciu; z nich sa určuje „recepcie v rozsahu“.
 const RECEPTION_PERMISSIONS = ['PLAN_VIEW', 'RESERVATION_VIEW', 'BUSINESS_DAY_CLOSE'];
@@ -116,6 +117,7 @@ export function AppShell() {
       </Modal>
       <MantineAppShell.Main bg="#EEF5FC">
         <Box>
+          <HistoryShortcuts />
           <ConnectionRuntime />
           <ConnectionBar />
           <UpdateRuntime />

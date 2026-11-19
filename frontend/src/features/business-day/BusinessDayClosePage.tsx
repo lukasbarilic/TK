@@ -1,4 +1,5 @@
 import { Alert, Button, Group, Loader, Modal, NativeSelect, Paper, Stack, Text, Title } from '@mantine/core';
+import { originState } from '../../shared/navigation/origin';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,7 +32,7 @@ function FindingList({ kind, findings }: { kind: 'blocking' | 'info'; findings: 
           <Text fw={500}>{f.message ?? f.ruleCode}</Text>
           <Group gap="sm">
             {f.reservationId !== undefined && (
-              <Link to={`/reservations/${f.reservationId}`}>{t('businessDay.openCard')}</Link>
+              <Link to={`/reservations/${f.reservationId}`} state={originState(t('menu.businessDayClose'), '/business-day')}>{t('businessDay.openCard')}</Link>
             )}
             <Link to="/plan">{t('businessDay.openPlan')}</Link>
           </Group>

@@ -1,4 +1,5 @@
 import { Alert, Badge, Button, Group, Loader, NativeSelect, Paper, Table, Text, TextInput, Title } from '@mantine/core';
+import { originState } from '../../shared/navigation/origin';
 import { useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -79,7 +80,7 @@ export function ReservationsPage() {
           <Table.Tbody>
             {data.items.map((r) => (
               <Table.Tr key={r.id} data-testid="reservation-row">
-                <Table.Td><Link to={`/reservations/${r.id}`}>{r.reservationNumber}</Link></Table.Td>
+                <Table.Td><Link to={`/reservations/${r.id}`} state={originState(t('menu.reservations'), '/reservations')}>{r.reservationNumber}</Link></Table.Td>
                 <Table.Td>{[r.guestLastName, r.guestFirstName].filter(Boolean).join(' ')}</Table.Td>
                 <Table.Td>{r.arrivalDate} – {r.departureDate}</Table.Td>
                 <Table.Td>{r.status && <Badge variant="light">{t(`plan.status.${r.status}`, r.status)}</Badge>}</Table.Td>

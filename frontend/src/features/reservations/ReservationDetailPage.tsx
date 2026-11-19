@@ -1,8 +1,10 @@
-import { Alert, Badge, Button, Checkbox, Group, Loader, Paper, Stack, Table, Text, TextInput, Title } from '@mantine/core';
+import { Alert, Badge, Button, Checkbox, Group, Loader, Paper, Stack, Table, Text, TextInput } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { readOrigin } from '../../shared/navigation/origin';
+import { PageHeader } from '../../shared/ui/PageHeader';
 import { ApiError } from '../../shared/api/errors';
 import { DataAge, WriteAction } from '../../shared/offline';
 import { putLocal } from '../../shared/offline';
@@ -24,13 +26,18 @@ export function ReservationDetailPage({
   const card = useQuery({ queryKey: ['reservations', 'detail', id], queryFn: () => loadReservation(id) });
   const stays = useQuery({ queryKey: ['reservations', 'stays', id], queryFn: () => loadStays(id), retry: false });
   const [checkingIn, setCheckingIn] = useState(false);
+  const origin = readOrigin(useLocation().state);
 
   return (
     <Paper withBorder p="md" radius="lg" bg="white" data-testid="reservation-detail">
-      <Group justify="space-between" mb="sm">
-        <Title order={2}>{t('reservations.detail')}</Title>
-        <Link to="/reservations">{t('reservations.back')}</Link>
-      </Group>
+      <PageHeader
+        title={t('reservations.detail')}
+        fallback="/reservations"
+        crumbs={[
+          origin ?? { label: t('menu.reservations'), to: '/reservations' },
+          { label: card.data && !card.data.empty ? (card.data.data.reservationNumber ?? t('reservations.detail')) : t('reservations.detail') },
+        ]}
+      />
       {card.isPending && <Loader size="sm" />}
       {card.isError && <Alert color="red">{t('errors.generic')}</Alert>}
       {card.data?.empty && <Text c="dimmed" data-testid="reservation-not-stored">{t('offline.notStored')}</Text>}
