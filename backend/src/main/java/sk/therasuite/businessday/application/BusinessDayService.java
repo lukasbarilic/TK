@@ -16,7 +16,10 @@ import sk.therasuite.businessday.domain.Finding;
 import sk.therasuite.businessday.domain.Severity;
 import sk.therasuite.businessday.infrastructure.BusinessDayQueries;
 import sk.therasuite.businessday.infrastructure.BusinessDayQueries.RuleConfig;
+import sk.therasuite.businessday.infrastructure.BusinessDayReportQueries;
+import sk.therasuite.businessday.infrastructure.BusinessDayReportQueries.NoShowCard;
 import sk.therasuite.notification.application.LiveEvent;
+import sk.therasuite.reservation.application.ReservationStatusService;
 import sk.therasuite.shared.AuditedOperation;
 import sk.therasuite.shared.AuthenticatedUser;
 import sk.therasuite.shared.application.ApiException;
@@ -36,11 +39,15 @@ public class BusinessDayService {
       LocalDate businessDate,
       boolean canClose,
       List<FindingView> blocking,
-      List<FindingView> info) {}
+      List<FindingView> info,
+      BusinessDayReport report) {}
 
   public record DayView(long receptionId, LocalDate businessDate, String status) {}
 
   private final BusinessDayQueries queries;
+  private final BusinessDayReportQueries reportQueries;
+  private final BusinessDayReportService reports;
+  private final ReservationStatusService statuses;
   private final List<ClosingRule> rules;
   private final BusinessDayProperties properties;
   private final JsonMapper json;
@@ -48,11 +55,17 @@ public class BusinessDayService {
 
   public BusinessDayService(
       BusinessDayQueries queries,
+      BusinessDayReportQueries reportQueries,
+      BusinessDayReportService reports,
+      ReservationStatusService statuses,
       List<ClosingRule> rules,
       BusinessDayProperties properties,
       JsonMapper json,
       ApplicationEventPublisher events) {
     this.queries = queries;
+    this.reportQueries = reportQueries;
+    this.reports = reports;
+    this.statuses = statuses;
     this.rules = rules;
     this.properties = properties;
     this.json = json;
@@ -98,6 +111,13 @@ public class BusinessDayService {
           "Uzávierku blokuje " + preview.blocking().size() + " zistení.");
     }
     long userId = currentUserId();
+    // neprišlí dostanú stav NO_SHOW (cez službu stavov, v rámci auditu uzávierky)
+    for (NoShowCard card : reportQueries.noShowCandidates(day.receptionId(), day.businessDate())) {
+      statuses.noShow(card.id(), card.version());
+    }
+    BusinessDayReport report = reports.build(day.receptionId(), day.businessDate());
+    reportQueries.saveReport(
+        day.receptionId(), day.businessDate(), json.writeValueAsString(report), userId);
     queries.close(day.id(), userId, summaryJson(preview));
     LocalDate next = day.businessDate().plusDays(1);
     queries.insertOpen(receptionId, next);
@@ -113,13 +133,21 @@ public class BusinessDayService {
       if (config == null || !config.enabled()) {
         continue; // vypnuté pravidlo sa nevyhodnocuje
       }
-      Severity severity = Severity.valueOf(config.severity());
+      // neprišiel nikdy neblokuje: karty sa pri uzávierke samy označia ako NO_SHOW
+      Severity severity =
+          NoShowRule.CODE.equals(rule.code()) ? Severity.INFO : Severity.valueOf(config.severity());
       for (Finding f : rule.evaluate(day.receptionId(), day.businessDate())) {
         FindingView view = new FindingView(f.ruleCode(), severity, f.reservationId(), f.message());
         (severity == Severity.BLOCKING ? blocking : info).add(view);
       }
     }
-    return new Preview(day.receptionId(), day.businessDate(), blocking.isEmpty(), blocking, info);
+    return new Preview(
+        day.receptionId(),
+        day.businessDate(),
+        blocking.isEmpty(),
+        blocking,
+        info,
+        reports.build(day.receptionId(), day.businessDate()));
   }
 
   private String summaryJson(Preview preview) {
