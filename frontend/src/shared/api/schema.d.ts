@@ -276,6 +276,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/receptions/{id}/business-day/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["reports"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/receptions/{id}/business-day/reports/{date}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["report"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/receptions/{id}/business-day/close": {
         parameters: {
             query?: never;
@@ -1238,6 +1270,74 @@ export interface components {
             reservationId?: number;
             message?: string;
         };
+        BedStats: {
+            /** Format: int32 */
+            beds?: number;
+            /** Format: int32 */
+            occupied?: number;
+            /** Format: int32 */
+            blocked?: number;
+            /** Format: int32 */
+            free?: number;
+            /** Format: double */
+            percent?: number;
+        };
+        BuildingOccupancy: {
+            /** Format: int64 */
+            buildingId?: number;
+            name?: string;
+            stats?: components["schemas"]["BedStats"];
+        };
+        ForecastDay: {
+            /** Format: date */
+            date?: string;
+            /** Format: double */
+            percent?: number;
+        };
+        BusinessDayReport: {
+            /** Format: date */
+            businessDate?: string;
+            arrivals?: {
+                /** Format: int32 */
+                expectedPersons?: number;
+                /** Format: int32 */
+                arrivedPersons?: number;
+                /** Format: int32 */
+                noShowPersons?: number;
+            };
+            departures?: {
+                /** Format: int32 */
+                expectedPersons?: number;
+                /** Format: int32 */
+                departedPersons?: number;
+            };
+            inHouse?: {
+                /** Format: int32 */
+                startOfDay?: number;
+                /** Format: int32 */
+                endOfDay?: number;
+            };
+            occupancy?: {
+                complex?: components["schemas"]["BedStats"];
+                buildings?: components["schemas"]["BuildingOccupancy"][];
+            };
+            forecast?: components["schemas"]["ForecastDay"][];
+        };
+        ArchiveItem: {
+            /** Format: date */
+            businessDate?: string;
+            closedAt?: string;
+            /** Format: int64 */
+            closedBy?: number;
+        };
+        ArchiveDetail: {
+            /** Format: date */
+            businessDate?: string;
+            closedAt?: string;
+            /** Format: int64 */
+            closedBy?: number;
+            report?: components["schemas"]["BusinessDayReport"];
+        };
         Preview: {
             /** Format: int64 */
             receptionId?: number;
@@ -1246,6 +1346,7 @@ export interface components {
             canClose?: boolean;
             blocking?: components["schemas"]["FindingView"][];
             info?: components["schemas"]["FindingView"][];
+            report?: components["schemas"]["BusinessDayReport"];
         };
         ChangePasswordRequest: {
             currentPassword: string;
@@ -2190,6 +2291,54 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["DayView"];
+                };
+            };
+        };
+    };
+    reports: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ArchiveItem"][];
+                };
+            };
+        };
+    };
+    report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ArchiveDetail"];
                 };
             };
         };
