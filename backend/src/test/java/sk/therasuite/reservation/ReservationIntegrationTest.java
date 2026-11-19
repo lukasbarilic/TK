@@ -312,6 +312,64 @@ class ReservationIntegrationTest {
         .andExpect(status().isBadRequest());
   }
 
+  @Test
+  void withoutStayReturnsOnlyCardsWithoutStayAndTotalMatches() throws Exception {
+    MvcResult withStay = createCard("Pobytová", "Bezpobytový");
+    MvcResult without = createCard("Voľná", "Bezpobytový");
+    long withStayId =
+        ((Number) JsonPath.read(withStay.getResponse().getContentAsString(), "$.id")).longValue();
+    String withoutNumber =
+        JsonPath.read(without.getResponse().getContentAsString(), "$.reservationNumber");
+    long centre = jdbc.queryForObject("select id from centre where code = 'RT'", Long.class);
+    long reception =
+        jdbc.queryForObject(
+            "insert into reception (code, name) values ('RTWS', 'Test') returning id", Long.class);
+    long building =
+        jdbc.queryForObject(
+            "insert into building (centre_id, reception_id, code, name)"
+                + " values (?, ?, 'B', 'Budova') returning id",
+            Long.class,
+            centre,
+            reception);
+    long room =
+        jdbc.queryForObject(
+            "insert into room (building_id, number, category_id, regular_beds, extra_beds)"
+                + " values (?, '1', ?, 1, 0) returning id",
+            Long.class,
+            building,
+            categoryId);
+    long bed =
+        jdbc.queryForObject(
+            "insert into bed (room_id, bed_number, type) values (?, 1, 'REGULAR') returning id",
+            Long.class,
+            room);
+    jdbc.update(
+        "insert into stay (reservation_id, bed_id, date_from, date_to, price_category_id)"
+            + " values (?, ?, '2030-05-10', '2030-05-12', ?)",
+        withStayId,
+        bed,
+        categoryId);
+    RequestPostProcessor user = receptionist();
+
+    mvc.perform(get("/api/reservations").param("q", "Bezpobytový").with(user))
+        .andExpect(jsonPath("$.totalElements").value(2));
+    mvc.perform(
+            get("/api/reservations")
+                .param("q", "Bezpobytový")
+                .param("withoutStay", "true")
+                .with(user))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.totalElements").value(1))
+        .andExpect(jsonPath("$.content.length()").value(1))
+        .andExpect(jsonPath("$.content[0].reservationNumber").value(withoutNumber));
+    mvc.perform(
+            get("/api/reservations")
+                .param("q", "Bezpobytový")
+                .param("withoutStay", "false")
+                .with(user))
+        .andExpect(jsonPath("$.totalElements").value(2));
+  }
+
   private MvcResult patchCard(long id, String body) throws Exception {
     return mvc.perform(
             patch("/api/reservations/" + id)

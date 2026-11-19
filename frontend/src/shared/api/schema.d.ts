@@ -1565,6 +1565,7 @@ export interface operations {
                 from?: string;
                 to?: string;
                 receptionId?: number;
+                withoutStay?: boolean;
                 page?: number;
                 size?: number;
             };

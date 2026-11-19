@@ -102,7 +102,8 @@ public class ReservationController {
 
   /**
    * Parameter {@code receptionId} vyžaduje oprávnenie pre danú recepciu. Karta zatiaľ nie je s
-   * recepciou prepojená (vzniká až s pobytmi v P09), takže výsledky nefiltruje.
+   * recepciou prepojená (vzniká až s pobytmi v P09), takže výsledky nefiltruje. Parameter {@code
+   * withoutStay=true} vráti len karty bez pobytu (UC2 – ubytovanie z plánu).
    */
   @GetMapping
   public PageView<ListItem> search(
@@ -111,6 +112,7 @@ public class ReservationController {
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
       @RequestParam(required = false) Long receptionId,
+      @RequestParam(defaultValue = "false") boolean withoutStay,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size) {
     if (receptionId != null) {
@@ -118,7 +120,7 @@ public class ReservationController {
     } else {
       permissions.require(Permissions.RESERVATION_VIEW);
     }
-    return service.search(q, status, from, to, page, size).value();
+    return service.search(q, status, from, to, withoutStay, page, size).value();
   }
 
   @GetMapping("/{id}")
