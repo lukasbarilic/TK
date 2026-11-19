@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.time.LocalDate;
 import sk.therasuite.reservation.domain.PriceCategoryMode;
 import sk.therasuite.reservation.domain.PriceType;
@@ -38,6 +39,10 @@ public class Reservation extends BaseEntity {
   private boolean lateCheckOut;
   private int adults = 1;
   private int children;
+  private Instant checkedInAt;
+  private Instant checkedOutAt;
+  private Instant cancelledAt;
+  private String cancelReason;
 
   protected Reservation() {}
 
@@ -154,5 +159,50 @@ public class Reservation extends BaseEntity {
 
   public int getChildren() {
     return children;
+  }
+
+  public Instant getCheckedInAt() {
+    return checkedInAt;
+  }
+
+  public Instant getCheckedOutAt() {
+    return checkedOutAt;
+  }
+
+  public Instant getCancelledAt() {
+    return cancelledAt;
+  }
+
+  public String getCancelReason() {
+    return cancelReason;
+  }
+
+  public void checkIn(Instant now) {
+    status = ReservationStatus.CHECKED_IN;
+    checkedInAt = now;
+  }
+
+  public void undoCheckIn() {
+    status = ReservationStatus.RESERVED;
+    checkedInAt = null;
+  }
+
+  public void checkOut(Instant now) {
+    status = ReservationStatus.CHECKED_OUT;
+    checkedOutAt = now;
+  }
+
+  public void cancel(Instant now, String reason) {
+    status = ReservationStatus.CANCELLED;
+    cancelledAt = now;
+    cancelReason = reason;
+  }
+
+  public void markNoShow() {
+    status = ReservationStatus.NO_SHOW;
+  }
+
+  public void revertNoShow() {
+    status = ReservationStatus.RESERVED;
   }
 }

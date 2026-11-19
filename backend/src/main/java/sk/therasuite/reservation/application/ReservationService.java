@@ -248,7 +248,7 @@ public class ReservationService {
     }
   }
 
-  private Reservation load(long id) {
+  Reservation load(long id) {
     return reservations
         .findById(id)
         .orElseThrow(
@@ -296,7 +296,8 @@ public class ReservationService {
             .toList());
   }
 
-  private Detail detail(Reservation r) {
+  /** Detail karty pre ostatné služby modulu (po zmene stavu). */
+  Detail detail(Reservation r) {
     return detail(r, guests.findByReservationIdOrderById(r.getId()), clients::getReferenceById);
   }
 
@@ -338,6 +339,10 @@ public class ReservationService {
         r.getAdults(),
         r.getChildren(),
         r.getVersion(),
+        r.getCheckedInAt(),
+        r.getCheckedOutAt(),
+        r.getCancelledAt(),
+        r.getCancelReason(),
         views);
   }
 

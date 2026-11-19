@@ -366,6 +366,47 @@ public class AccommodationQueries {
         .findFirst();
   }
 
+  /** Pobyty karty s izbou a recepciou (podklad pre zmenu stavu karty). */
+  public List<StayRef> stayRefsOfReservation(long reservationId) {
+    return jdbc.query(
+        "select s.id, rm.id, bu.reception_id, s.date_from, s.date_to from stay s"
+            + " join bed b on b.id = s.bed_id join room rm on rm.id = b.room_id"
+            + " join building bu on bu.id = rm.building_id where s.reservation_id = ?"
+            + " order by s.date_from, s.id",
+        (rs, i) ->
+            new StayRef(
+                rs.getLong(1),
+                rs.getLong(2),
+                rs.getLong(3),
+                rs.getObject(4, LocalDate.class),
+                rs.getObject(5, LocalDate.class)),
+        reservationId);
+  }
+
+  /** Počet rôznych lôžok, na ktorých má karta pobyt. */
+  public int assignedBedCount(long reservationId) {
+    Integer n =
+        jdbc.queryForObject(
+            "select count(distinct bed_id) from stay where reservation_id = ?",
+            Integer.class,
+            reservationId);
+    return n == null ? 0 : n;
+  }
+
+  /** Počet hostí karty bez zrušených. */
+  public int activeGuestCount(long reservationId) {
+    Integer n =
+        jdbc.queryForObject(
+            "select count(*) from reservation_guest where reservation_id = ? and not cancelled",
+            Integer.class,
+            reservationId);
+    return n == null ? 0 : n;
+  }
+
+  public List<Long> receptionIds() {
+    return jdbc.queryForList("select id from reception order by id", Long.class);
+  }
+
   /**
    * Izby s aspoň jedným voľným lôžkom v celom intervale. Izba s blokáciou v intervale alebo s
    * pobytom karty so samostatným bývaním (držané lôžka) sa nevracia. Pri {@code categoryId} bez

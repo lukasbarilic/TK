@@ -187,7 +187,7 @@ class PermissionCheckerIntegrationTest {
 
   @Test
   void seedMatchesDesign() {
-    assertThat(jdbc.queryForObject("select count(*) from permission", Integer.class)).isEqualTo(24);
+    assertThat(jdbc.queryForObject("select count(*) from permission", Integer.class)).isEqualTo(26);
     assertThat(
             jdbc.queryForList(
                 "select code from role where system_role order by code", String.class))
