@@ -5,17 +5,18 @@ import { ComingSoon } from './ComingSoon';
 import { HomeRedirect } from './HomeRedirect';
 import { AppShell } from './layout/AppShell';
 import { MENU } from './menu';
-import { ReservationsPage } from '../features/reservations';
 import { BusinessDayRoute } from './BusinessDayRoute';
 import { GuestListRoute } from './GuestListRoute';
 import { MovementsRoute } from './MovementsRoute';
 import { PlanRoute } from './PlanRoute';
+import { NewReservationRoute } from './NewReservationRoute';
 import { ReservationDetailRoute } from './ReservationRoutes';
+import { ReservationsRoute } from './ReservationsRoute';
 import { UsersRoute } from './UsersRoute';
 import { AuditRoute } from './AuditRoute';
 
 const pageFor = (path: string, labelKey: string): ReactNode =>
-  path === '/plan' ? <PlanRoute /> : path === '/reservations' ? <ReservationsPage /> : path === '/movements' ? <MovementsRoute /> : path === '/business-day' ? <BusinessDayRoute /> : path === '/guests' ? <GuestListRoute /> : path === '/admin/users' ? <UsersRoute /> : path === '/audit' ? <AuditRoute /> : <ComingSoon titleKey={labelKey} />;
+  path === '/plan' ? <PlanRoute /> : path === '/reservations' ? <ReservationsRoute /> : path === '/movements' ? <MovementsRoute /> : path === '/business-day' ? <BusinessDayRoute /> : path === '/guests' ? <GuestListRoute /> : path === '/admin/users' ? <UsersRoute /> : path === '/audit' ? <AuditRoute /> : <ComingSoon titleKey={labelKey} />;
 
 export const routes: RouteObject[] = [
   {
@@ -31,6 +32,14 @@ export const routes: RouteObject[] = [
         path: m.path.slice(1),
         element: <RequirePermission code={m.permission}>{pageFor(m.path, m.labelKey)}</RequirePermission>,
       })),
+      {
+        path: 'reservations/new',
+        element: (
+          <RequirePermission code="RESERVATION_EDIT">
+            <NewReservationRoute />
+          </RequirePermission>
+        ),
+      },
       {
         path: 'reservations/:id',
         element: (

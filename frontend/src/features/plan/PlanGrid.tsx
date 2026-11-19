@@ -195,6 +195,8 @@ interface Props {
   onSelectBar: (click: BarClick) => void;
   /** Klik na voľný deň lôžka (UC2); bez nej sú prázdne miesta neaktívne. */
   onFreeCell?: (click: { roomId: number; bedId: number; day: string }) => void;
+  /** Pravé tlačidlo na voľnom dni lôžka (menu „Nová rezervácia sem…“); musí byť stabilná funkcia. */
+  onFreeCellMenu?: (click: { roomId: number; bedId: number; day: string }, x: number, y: number) => void;
   /** Ťahanie (len online a s oprávnením); musí byť stabilná hodnota (useMemo). */
   dnd?: DndConfig;
   /** Menu pásika pobytu (akcie stavu, presuny); musí byť stabilná funkcia. */
@@ -209,7 +211,7 @@ interface Props {
 /** Je lôžko v daný deň (noc `day`) voľné podľa lokálnych dát? Rozhoduje server, toto je len pomoc. */
 const isFree = (bars: BarVM[], day: string) => !bars.some((b) => b.from <= day && day < b.to);
 
-export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, selectedBarKey, onSelectBar, onFreeCell, dnd, onBarMenu, focusRoomId, initialScroll, onScrollPos }: Props) {
+export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, selectedBarKey, onSelectBar, onFreeCell, onFreeCellMenu, dnd, onBarMenu, focusRoomId, initialScroll, onScrollPos }: Props) {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const dayWidth = DAY_WIDTH[zoom];
@@ -354,6 +356,7 @@ export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, sele
                 selectedBarId={row.kind === 'bed' && selectedBarKey?.startsWith(`${row.bedId}:`) ? selectedBarKey.slice(String(row.bedId).length + 1) : undefined}
                 onSelectBar={onSelectBar}
                 onFreeCell={onFreeCell}
+                onFreeCellMenu={onFreeCellMenu}
                 dnd={dnd}
                 onBarMenu={onBarMenu}
                 businessDate={receptionId === undefined ? undefined : vm.businessDates[receptionId]}
@@ -378,6 +381,7 @@ interface RowProps {
   selectedBarId?: string;
   onSelectBar: (click: BarClick) => void;
   onFreeCell?: Props['onFreeCell'];
+  onFreeCellMenu?: Props['onFreeCellMenu'];
   dnd?: DndConfig;
   onBarMenu?: BarMenuHandler;
   businessDate?: string;
@@ -386,7 +390,7 @@ interface RowProps {
 }
 
 /** Riadok mriežky: `memo`, takže zmena v inom riadku (ťahanie, výber) ho neprekreslí. */
-const PlanRowView = memo(function PlanRowView({ row, top, days, dayWidth, width, gridLines, colors, selectedBarId, onSelectBar, onFreeCell, dnd, onBarMenu, businessDate, focused }: RowProps) {
+const PlanRowView = memo(function PlanRowView({ row, top, days, dayWidth, width, gridLines, colors, selectedBarId, onSelectBar, onFreeCell, onFreeCellMenu, dnd, onBarMenu, businessDate, focused }: RowProps) {
   const { t } = useTranslation();
   const isRoom = row.kind === 'room';
   const bedId = row.kind === 'bed' ? row.bedId : 0;
@@ -461,6 +465,19 @@ const PlanRowView = memo(function PlanRowView({ row, top, days, dayWidth, width,
                 const day = days[col];
                 if (day && isFree(row.bars, day)) {
                   onFreeCell({ roomId: row.roomId, bedId: row.bedId, day });
+                }
+              }
+            : undefined
+        }
+        onContextMenu={
+          row.kind === 'bed' && onFreeCellMenu
+            ? (e) => {
+                if (e.target !== e.currentTarget) return; // pravé tlačidlo na pásiku rieši pásik
+                const col = Math.floor((e.clientX - e.currentTarget.getBoundingClientRect().left) / dayWidth);
+                const day = days[col];
+                if (day && isFree(row.bars, day)) {
+                  e.preventDefault();
+                  onFreeCellMenu({ roomId: row.roomId, bedId: row.bedId, day }, e.clientX, e.clientY);
                 }
               }
             : undefined

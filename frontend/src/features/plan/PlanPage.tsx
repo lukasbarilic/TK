@@ -78,7 +78,24 @@ export interface FreeCellTarget {
 /** Skladá dialóg ubytovania z plánu (features sa medzi sebou neimportujú, dialóg dodáva `app/`). */
 export type RenderCheckIn = (target: FreeCellTarget, onClose: () => void) => ReactNode;
 
-export function PlanPage({ me, focus, renderCheckIn }: { me: Me | null | undefined; focus?: PlanFocus; renderCheckIn?: RenderCheckIn }) {
+/** Voľné lôžko a deň pre novú rezerváciu z plánu (formulár dodáva `app/`); `categoryId` a `extra` dopĺňa plán. */
+export interface NewReservationTarget extends FreeCellTarget {
+  categoryId?: number;
+  extra: boolean;
+}
+
+export function PlanPage({
+  me,
+  focus,
+  renderCheckIn,
+  onNewReservation,
+}: {
+  me: Me | null | undefined;
+  focus?: PlanFocus;
+  renderCheckIn?: RenderCheckIn;
+  /** „+ Nová rezervácia“ (bez cieľa) a „Nová rezervácia sem…“ (s lôžkom a dňom); bez nej sa ponuka nezobrazí. */
+  onNewReservation?: (target?: NewReservationTarget) => void;
+}) {
   const view = useQuery({ queryKey: queryKeys.preference(DEFAULT_VIEW_KEY), queryFn: () => loadPreference(DEFAULT_VIEW_KEY) });
   const colors = useQuery({ queryKey: queryKeys.preference('plan.colors'), queryFn: () => loadPreference('plan.colors') });
   const extra = useQuery({ queryKey: queryKeys.preference('plan.showExtraBeds'), queryFn: () => loadPreference('plan.showExtraBeds') });
@@ -88,6 +105,7 @@ export function PlanPage({ me, focus, renderCheckIn }: { me: Me | null | undefin
       me={me}
       focus={focus}
       renderCheckIn={renderCheckIn}
+      onNewReservation={onNewReservation}
       initial={parseDefaultView(view.data?.data?.value)}
       initialVersion={view.data?.data?.version}
       colorPref={colors.data?.data?.value}
@@ -100,13 +118,14 @@ interface ScreenProps {
   me: Me | null | undefined;
   focus?: PlanFocus;
   renderCheckIn?: RenderCheckIn;
+  onNewReservation?: (target?: NewReservationTarget) => void;
   initial: DefaultView;
   initialVersion?: number;
   colorPref: unknown;
   showExtraBeds: boolean;
 }
 
-function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPref, showExtraBeds }: ScreenProps) {
+function PlanScreen({ me, focus, renderCheckIn, onNewReservation, initial, initialVersion, colorPref, showExtraBeds }: ScreenProps) {
   const { t } = useTranslation();
   const { state, canWrite } = useConnection();
   // pamäť relácie: po návrate z karty sa obnoví rozsah, filtre, zoom a rolovanie (okrem odkazu `?roomId&date`)
@@ -239,6 +258,12 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
   const shift = (days: number) => patch({ daysBack: filters.daysBack - days, daysAhead: filters.daysAhead + days });
 
   const canCheckIn = renderCheckIn !== undefined && canWrite && hasPermissionCode(me, 'STAY_CREATE');
+  const canNewReservation = onNewReservation !== undefined && canWrite && hasPermissionCode(me, 'RESERVATION_EDIT');
+  const [freeMenu, setFreeMenu] = useState<{ cell: { roomId: number; bedId: number; day: string }; x: number; y: number } | null>(null);
+  const openFreeMenu = useCallback(
+    (cell: { roomId: number; bedId: number; day: string }, x: number, y: number) => setFreeMenu({ cell, x, y }),
+    [],
+  );
   const cellRoom = freeCell && vm?.rows.find((r) => r.kind === 'room' && r.roomId === freeCell.roomId);
   const cellBed = freeCell && vm?.rows.find((r) => r.kind === 'bed' && r.bedId === freeCell.bedId);
 
@@ -407,7 +432,12 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
     <Paper withBorder p="md" radius="lg" bg="white" data-testid="plan-page">
       <Group justify="space-between" mb="sm" align="flex-end">
         <Title order={2}>{t('plan.title')}</Title>
-        {plan.data && !plan.data.empty && <DataAge source={plan.data.source} syncedAt={plan.data.syncedAt} />}
+        <Group gap="md" align="center">
+          {plan.data && !plan.data.empty && <DataAge source={plan.data.source} syncedAt={plan.data.syncedAt} />}
+          {canNewReservation && (
+            <Button size="sm" onClick={() => onNewReservation()} data-testid="plan-new-reservation">{t('plan.newReservation')}</Button>
+          )}
+        </Group>
       </Group>
 
       <Group mb="md" gap="md" align="flex-end" wrap="wrap">
@@ -502,6 +532,7 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
               selectedBarKey={selected ? barKey(selected.bedId, selected.bar.id) : undefined}
               onSelectBar={select}
               onFreeCell={canCheckIn ? setFreeCell : undefined}
+              onFreeCellMenu={canNewReservation ? openFreeMenu : undefined}
               dnd={dnd}
               onBarMenu={openMenu}
               focusRoomId={focus?.roomId}
@@ -542,6 +573,30 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
       )}
       {menu && menuActions(menu.click).length > 0 && (
         <BarMenu x={menu.x} y={menu.y} actions={menuActions(menu.click)} onPick={pickMenu} onClose={() => setMenu(null)} />
+      )}
+      {freeMenu && (
+        <BarMenu
+          x={freeMenu.x}
+          y={freeMenu.y}
+          actions={['newReservation']}
+          onClose={() => setFreeMenu(null)}
+          onPick={() => {
+            const { cell } = freeMenu;
+            setFreeMenu(null);
+            const room = vm?.rows.find((r) => r.kind === 'room' && r.roomId === cell.roomId);
+            const bedRow = vm?.rows.find((r) => r.kind === 'bed' && r.bedId === cell.bedId);
+            if (room?.kind !== 'room' || bedRow?.kind !== 'bed') return;
+            const categoryId = stored?.plan.rooms?.find((r) => r.roomId === cell.roomId)?.category?.id;
+            onNewReservation?.({
+              ...cell,
+              receptionId,
+              roomLabel: `${room.building} ${room.label}`,
+              bedLabel: bedRow.bedLabel,
+              categoryId,
+              extra: bedRow.extra === true,
+            });
+          }}
+        />
       )}
       {moveFrom && moveFrom.bar.stayId !== undefined && (
         <MoveFromDialog
