@@ -98,11 +98,10 @@ class ReservationNoteIntegrationTest {
     long payer =
         jdbc.queryForList("select id from payer limit 1", Long.class).stream()
             .findFirst()
-            .orElseGet(
-                () ->
-                    id(
-                        "insert into payer (code, name, type) values ('NTP', 'Platca', 'SELF')"
-                            + " returning id"));
+            .orElseGet(() ->
+                id(
+                    "insert into payer (code, name, type) values ('NTP', 'Platca', 'SELF')"
+                        + " returning id"));
     long card =
         id(
             "insert into reservation (reservation_number, status, arrival_date, departure_date,"
@@ -165,8 +164,7 @@ class ReservationNoteIntegrationTest {
     return id("select version from reservation where id = ?", card);
   }
 
-  private MvcResult patchCard(RequestPostProcessor who, long card, String fields)
-      throws Exception {
+  private MvcResult patchCard(RequestPostProcessor who, long card, String fields) throws Exception {
     return mvc.perform(
             patch("/api/reservations/" + card)
                 .with(csrf())
@@ -176,8 +174,7 @@ class ReservationNoteIntegrationTest {
         .andReturn();
   }
 
-  private MvcResult addComment(RequestPostProcessor who, long card, String text)
-      throws Exception {
+  private MvcResult addComment(RequestPostProcessor who, long card, String text) throws Exception {
     return mvc.perform(
             post("/api/reservations/" + card + "/comments")
                 .with(csrf())
@@ -211,7 +208,8 @@ class ReservationNoteIntegrationTest {
   void noteIsSavedShownAndClearedWithBlank() throws Exception {
     Fx fx = fx();
 
-    MvcResult r = patchCard(receptionist(), fx.card(), "\"note\":\"Alergia na orechy\",\"noteInPlan\":true");
+    MvcResult r =
+        patchCard(receptionist(), fx.card(), "\"note\":\"Alergia na orechy\",\"noteInPlan\":true");
 
     assertThat(r.getResponse().getStatus()).isEqualTo(200);
     assertThat(JsonPath.<String>read(body(r), "$.note")).isEqualTo("Alergia na orechy");
@@ -263,11 +261,8 @@ class ReservationNoteIntegrationTest {
     long commentId = JsonPath.<Integer>read(body(created), "$.id").longValue();
     assertThat(JsonPath.<String>read(body(created), "$.text")).isEqualTo("Hosť príde neskoro");
     assertThat(JsonPath.<String>read(body(created), "$.createdAt")).isNotBlank();
-    assertThat(
-            id(
-                "select author_id from reservation_comment where id = ?", commentId))
-        .isEqualTo(
-            id("select id from user_account where username = 'nt.recepcna'"));
+    assertThat(id("select author_id from reservation_comment where id = ?", commentId))
+        .isEqualTo(id("select id from user_account where username = 'nt.recepcna'"));
 
     String list =
         body(
@@ -286,8 +281,7 @@ class ReservationNoteIntegrationTest {
             .andReturn();
     assertThat(edit.getResponse().getStatus()).isGreaterThanOrEqualTo(400);
 
-    assertThat(hide(receptionist(), fx.card(), commentId).getResponse().getStatus())
-        .isEqualTo(204);
+    assertThat(hide(receptionist(), fx.card(), commentId).getResponse().getStatus()).isEqualTo(204);
     assertThat(
             jdbc.queryForObject(
                 "select hidden_at is not null and hidden_by is not null"
@@ -302,8 +296,7 @@ class ReservationNoteIntegrationTest {
     assertThat(JsonPath.<List<?>>read(after, "$")).isEmpty();
     assertThat(JsonPath.<List<?>>read(getCard(fx.card()), "$.comments")).isEmpty();
     // opakované skrytie a cudzia karta
-    assertThat(hide(receptionist(), fx.card(), commentId).getResponse().getStatus())
-        .isEqualTo(404);
+    assertThat(hide(receptionist(), fx.card(), commentId).getResponse().getStatus()).isEqualTo(404);
     Fx other = fx();
     long mine = JsonPath.<Integer>read(body(addComment(receptionist(), other.card(), "x")), "$.id");
     assertThat(hide(receptionist(), fx.card(), mine).getResponse().getStatus()).isEqualTo(404);
@@ -364,7 +357,9 @@ class ReservationNoteIntegrationTest {
     assertThat(
             JsonPath.<List<?>>read(
                 body(
-                    mvc.perform(get("/api/reservations/" + fx.card() + "/comments").with(receptionist()))
+                    mvc.perform(
+                            get("/api/reservations/" + fx.card() + "/comments")
+                                .with(receptionist()))
                         .andReturn()),
                 "$"))
         .hasSize(22);
