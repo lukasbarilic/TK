@@ -254,7 +254,9 @@ public class AccommodationPlanService {
         s.status(),
         s.locked(),
         flags,
-        s.partyId());
+        s.partyId(),
+        s.hasNote(),
+        s.commentCount());
   }
 
   private static HeldBedBar heldBar(HeldBed h, List<PlanStayRow> stays) {

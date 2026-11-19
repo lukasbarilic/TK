@@ -39,6 +39,9 @@ public final class ReservationViews {
       boolean primaryGuest,
       boolean cancelled) {}
 
+  /** Komentár karty; zobrazuje sa len viditeľný (neskrytý). */
+  public record CommentView(long id, long authorId, Instant createdAt, String text) {}
+
   public record Detail(
       long id,
       String reservationNumber,
@@ -62,5 +65,8 @@ public final class ReservationViews {
       Instant checkedOutAt,
       Instant cancelledAt,
       String cancelReason,
+      String note,
+      boolean noteInPlan,
+      List<CommentView> comments,
       List<GuestView> guests) {}
 }
