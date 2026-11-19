@@ -29,11 +29,15 @@ const availableRooms = [
 
 let posts: { id: string; body: { bedId: number; from: string; to: string; confirm?: string[] } }[] = [];
 let availableQueries: URL[] = [];
+let reservationQueries: URL[] = [];
+let staysCalls = 0;
 let planWithStay = false;
 
 function mockServer(postResponse: (n: number, body: { confirm?: string[] }) => Response = () => HttpResponse.json(createdStay, { status: 201 })) {
   posts = [];
   availableQueries = [];
+  reservationQueries = [];
+  staysCalls = 0;
   planWithStay = false;
   server.use(
     http.get('/api/catalog/receptions', () => HttpResponse.json([{ id: 2, code: 'R2', name: 'Recepcia B', active: true }])),
@@ -50,19 +54,21 @@ function mockServer(postResponse: (n: number, body: { confirm?: string[] }) => R
       availableQueries.push(new URL(request.url));
       return HttpResponse.json(availableRooms);
     }),
-    http.get('/api/reservations/:id/stays', ({ params }) =>
-      HttpResponse.json(params.id === '913' ? [{ ...createdStay, id: 1, reservationId: 913 }] : []),
-    ),
+    http.get('/api/reservations/:id/stays', ({ params }) => {
+      staysCalls++;
+      return HttpResponse.json(params.id === '913' ? [{ ...createdStay, id: 1, reservationId: 913 }] : []);
+    }),
     http.get('/api/reservations/:id', () => HttpResponse.json(card)),
-    http.get('/api/reservations', () =>
-      HttpResponse.json({
+    // server filtruje „bez pobytu“ a deň pred stránkovaním – vráti len kartu 912 (913 má pobyt)
+    http.get('/api/reservations', ({ request }) => {
+      reservationQueries.push(new URL(request.url));
+      return HttpResponse.json({
         content: [
           { id: 912, reservationNumber: 'R-2026-0912', guestLastName: 'Testovská', guestFirstName: 'Anna', arrivalDate: '2026-11-22', departureDate: '2026-11-25', status: 'RESERVED' },
-          { id: 913, reservationNumber: 'R-2026-0913', guestLastName: 'Mala', guestFirstName: 'Eva', arrivalDate: '2026-11-22', departureDate: '2026-11-25', status: 'RESERVED' },
         ],
-        page: 0, size: 20, totalElements: 2,
-      }),
-    ),
+        page: 0, size: 20, totalElements: 1,
+      });
+    }),
     http.post('/api/reservations/:id/stays', async ({ request, params }) => {
       const body = (await request.json()) as { bedId: number; from: string; to: string; confirm?: string[] };
       posts.push({ id: String(params.id), body });
@@ -201,10 +207,17 @@ describe('Ubytovanie z plánu', () => {
 
     const dialog = await screen.findByTestId('checkin-dialog');
     expect(within(dialog).getByTestId('checkin-target')).toHaveTextContent('ALF 102, Lôžko 1, od 2026-11-22');
-    // karta 913 už pobyt má → ponúkne sa len 912
+    // server vracia len karty bez pobytu pokrývajúce deň → ponúkne sa len 912, jedno volanie, žiadne /stays
     const cards = await within(dialog).findAllByTestId('checkin-card');
     expect(cards).toHaveLength(1);
     expect(cards[0]).toHaveTextContent('R-2026-0912');
+    expect(reservationQueries).toHaveLength(1);
+    const sp = reservationQueries[0].searchParams;
+    expect(sp.get('status')).toBe('RESERVED');
+    expect(sp.get('withoutStay')).toBe('true');
+    expect(sp.get('from')).toBe('2026-11-22');
+    expect(sp.get('to')).toBe('2026-11-23');
+    expect(staysCalls).toBe(0);
     await userEvent.click(within(cards[0]).getByRole('button', { name: 'Vybrať' }));
 
     expect(within(dialog).getByTestId('checkin-nights')).toHaveTextContent('3 noci');
@@ -217,6 +230,19 @@ describe('Ubytovanie z plánu', () => {
       const added = screen.getAllByTestId('plan-bar').find((b) => b.getAttribute('data-bar-id') === 'stay:900');
       expect(added).toBeDefined();
     });
+  });
+
+  it('Enter v poli hľadania spustí hľadanie', async () => {
+    mockServer();
+    renderPlan();
+    await screen.findAllByTestId('plan-bar');
+    const row = document.querySelector('[data-bed-id="21"]') as HTMLElement;
+    fireEvent.click(within(row).getByTestId('plan-bed-cells'), { clientX: 5 * 36 + 5 });
+    const dialog = await screen.findByTestId('checkin-dialog');
+    await within(dialog).findAllByTestId('checkin-card');
+    await userEvent.type(within(dialog).getByRole('textbox'), 'Test{Enter}');
+    await waitFor(() => expect(reservationQueries).toHaveLength(2));
+    expect(reservationQueries[1].searchParams.get('q')).toBe('Test');
   });
 
   it('klik na obsadený deň dialóg neotvorí; bez spojenia sa dialóg neponúka', async () => {

@@ -94,14 +94,20 @@ public class ReservationService {
   @AuditedRead(operation = "RESERVATION_VIEW", scope = DataScope.NAME)
   @Transactional(readOnly = true)
   public AuditedReadResult<PageView<ListItem>> search(
-      String q, ReservationStatus status, LocalDate from, LocalDate to, int page, int size) {
+      String q,
+      ReservationStatus status,
+      LocalDate from,
+      LocalDate to,
+      boolean withoutStay,
+      int page,
+      int size) {
     if (page < 0 || size < 1 || size > MAX_PAGE_SIZE) {
       throw badRequest("Stránkovanie: page ≥ 0 a size 1–" + MAX_PAGE_SIZE + ".");
     }
     if (from != null && to != null && !from.isBefore(to)) {
       throw badRequest("Parameter 'from' musí byť pred 'to'.");
     }
-    Result result = queries.search(q, status, from, to, page, size);
+    Result result = queries.search(q, status, from, to, withoutStay, page, size);
     List<ListItem> items =
         result.rows().stream()
             .map(r ->

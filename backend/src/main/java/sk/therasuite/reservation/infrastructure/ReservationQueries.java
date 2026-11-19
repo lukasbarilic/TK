@@ -48,10 +48,17 @@ public class ReservationQueries {
 
   /**
    * Hľadá karty. Každé slovo z {@code q} musí byť obsiahnuté v mene niektorého hosťa alebo v čísle
-   * karty; diakritika a veľkosť písmen sa ignorujú.
+   * karty; diakritika a veľkosť písmen sa ignorujú. Pri {@code withoutStay} vráti len karty bez
+   * akéhokoľvek pobytu (filter sa uplatní pred stránkovaním).
    */
   public Result search(
-      String q, ReservationStatus status, LocalDate from, LocalDate to, int page, int size) {
+      String q,
+      ReservationStatus status,
+      LocalDate from,
+      LocalDate to,
+      boolean withoutStay,
+      int page,
+      int size) {
     StringBuilder where = new StringBuilder(" where true");
     List<Object> args = new ArrayList<>();
     if (q != null) {
@@ -83,6 +90,9 @@ public class ReservationQueries {
     if (from != null) {
       where.append(" and r.departure_date > ?");
       args.add(Date.valueOf(from));
+    }
+    if (withoutStay) {
+      where.append(" and not exists (select 1 from stay s where s.reservation_id = r.id)");
     }
     Long total = jdbc.queryForObject("select count(*) " + FROM + where, Long.class, args.toArray());
     List<Object> pageArgs = new ArrayList<>(args);

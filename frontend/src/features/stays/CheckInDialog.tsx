@@ -76,16 +76,23 @@ function CardPicker({ target, onPick }: { target: CheckInTarget; onPick: (c: Car
   const { t } = useTranslation();
   const [q, setQ] = useState('');
   const [term, setTerm] = useState('');
-  const cards = useQuery({ queryKey: ['stays', 'cards', term], queryFn: () => searchCardsWithoutStay(term) });
+  const cards = useQuery({ queryKey: ['stays', 'cards', term, target.day], queryFn: () => searchCardsWithoutStay(term, target.day) });
   return (
     <Stack gap="sm">
       <Text size="sm" data-testid="checkin-target">
         {t('stays.target', { place: `${target.roomLabel}, ${t('plan.bed', { n: target.bedLabel })}`, day: target.day })}
       </Text>
-      <Group align="flex-end">
-        <TextInput label={t('stays.searchCard')} value={q} onChange={(e) => setQ(e.currentTarget.value)} style={{ flex: 1 }} />
-        <Button onClick={() => setTerm(q)}>{t('reservations.search')}</Button>
-      </Group>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          setTerm(q);
+        }}
+      >
+        <Group align="flex-end">
+          <TextInput label={t('stays.searchCard')} value={q} onChange={(e) => setQ(e.currentTarget.value)} style={{ flex: 1 }} />
+          <Button type="submit">{t('reservations.search')}</Button>
+        </Group>
+      </form>
       {cards.isPending && <Loader size="sm" />}
       {cards.isError && <Alert color="red">{errorText(t, cards.error)}</Alert>}
       {cards.data?.length === 0 && <Text size="sm" c="dimmed">{t('stays.noCards')}</Text>}
