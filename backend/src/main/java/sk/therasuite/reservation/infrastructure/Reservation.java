@@ -45,6 +45,7 @@ public class Reservation extends BaseEntity {
   private String cancelReason;
   private String note;
   private boolean noteInPlan;
+  private Long attendingDoctorId;
 
   protected Reservation() {}
 
@@ -65,6 +66,14 @@ public class Reservation extends BaseEntity {
     this.adults = adults;
     this.children = children;
     this.exclusiveRoomUse = exclusiveRoomUse;
+  }
+
+  public Long getAttendingDoctorId() {
+    return attendingDoctorId;
+  }
+
+  public void setAttendingDoctorId(Long attendingDoctorId) {
+    this.attendingDoctorId = attendingDoctorId;
   }
 
   public String getReservationNumber() {

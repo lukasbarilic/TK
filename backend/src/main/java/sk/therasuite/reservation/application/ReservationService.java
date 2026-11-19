@@ -46,6 +46,7 @@ public class ReservationService {
 
   static final int MAX_PAGE_SIZE = 100;
   public static final int MAX_NOTE_LENGTH = 2000;
+
   /** Počet komentárov v detaile karty (ďalšie sú dostupné cez endpoint komentárov). */
   public static final int DETAIL_COMMENTS = 20;
 
@@ -67,7 +68,41 @@ public class ReservationService {
       int adults,
       int children,
       boolean exclusiveRoomUse,
-      List<GuestInput> guests) {}
+      List<GuestInput> guests,
+      Long attendingDoctorId,
+      boolean earlyCheckIn,
+      boolean lateCheckOut,
+      boolean doNotMove,
+      String note,
+      boolean noteInPlan) {
+
+    /** Založenie bez lekára, príznakov a poznámky. */
+    public CreateCommand(
+        LocalDate arrivalDate,
+        LocalDate departureDate,
+        Long bookedCategoryId,
+        Long payerId,
+        int adults,
+        int children,
+        boolean exclusiveRoomUse,
+        List<GuestInput> guests) {
+      this(
+          arrivalDate,
+          departureDate,
+          bookedCategoryId,
+          payerId,
+          adults,
+          children,
+          exclusiveRoomUse,
+          guests,
+          null,
+          false,
+          false,
+          false,
+          null,
+          false);
+    }
+  }
 
   /** Neuvedené (null) polia sa nemenia; {@code version} je verzia, z ktorej klient vychádzal. */
   public record UpdateCommand(
@@ -187,6 +222,10 @@ public class ReservationService {
       throw badRequest("Karta musí mať aspoň jedného hosťa.");
     }
     checkReferences(cmd.bookedCategoryId(), cmd.payerId());
+    String note = normalizeNote(cmd.note());
+    if (cmd.attendingDoctorId() != null && !queries.doctorExists(cmd.attendingDoctorId())) {
+      throw badRequest("Lekár neexistuje alebo nemá rolu lekára.");
+    }
 
     List<Client> resolved = new ArrayList<>();
     Set<Long> seen = new HashSet<>();
@@ -198,17 +237,23 @@ public class ReservationService {
       resolved.add(client);
     }
 
-    Reservation reservation =
-        reservations.saveAndFlush(
-            new Reservation(
-                queries.nextReservationNumber(),
-                cmd.arrivalDate(),
-                cmd.departureDate(),
-                cmd.bookedCategoryId(),
-                cmd.payerId(),
-                cmd.adults(),
-                cmd.children(),
-                cmd.exclusiveRoomUse()));
+    Reservation card =
+        new Reservation(
+            queries.nextReservationNumber(),
+            cmd.arrivalDate(),
+            cmd.departureDate(),
+            cmd.bookedCategoryId(),
+            cmd.payerId(),
+            cmd.adults(),
+            cmd.children(),
+            cmd.exclusiveRoomUse());
+    card.setAttendingDoctorId(cmd.attendingDoctorId());
+    card.setEarlyCheckIn(cmd.earlyCheckIn());
+    card.setLateCheckOut(cmd.lateCheckOut());
+    card.setDoNotMove(cmd.doNotMove());
+    card.setNote(note);
+    card.setNoteInPlan(cmd.noteInPlan());
+    Reservation reservation = reservations.saveAndFlush(card);
     for (int i = 0; i < resolved.size(); i++) {
       Client client = resolved.get(i);
       if (client.getId() == null) {
@@ -256,10 +301,7 @@ public class ReservationService {
     }
     boolean planNoteChanged = false;
     if (cmd.note() != null) {
-      String note = cmd.note().isBlank() ? null : cmd.note().strip();
-      if (note != null && note.length() > MAX_NOTE_LENGTH) {
-        throw badRequest("Poznámka môže mať najviac " + MAX_NOTE_LENGTH + " znakov.");
-      }
+      String note = normalizeNote(cmd.note());
       planNoteChanged = !Objects.equals(note, r.getNote());
       r.setNote(note);
     }
@@ -272,6 +314,14 @@ public class ReservationService {
       stays.publishPlanChanged(stays.snapshot(id));
     }
     return detail(saved);
+  }
+
+  private static String normalizeNote(String raw) {
+    String note = raw == null || raw.isBlank() ? null : raw.strip();
+    if (note != null && note.length() > MAX_NOTE_LENGTH) {
+      throw badRequest("Poznámka môže mať najviac " + MAX_NOTE_LENGTH + " znakov.");
+    }
+    return note;
   }
 
   private Client resolveClient(GuestInput g) {
@@ -344,7 +394,8 @@ public class ReservationService {
             .stream()
             .collect(Collectors.toMap(Client::getId, Function.identity()));
     Map<Long, List<CommentView>> commentsByCard =
-        queries.lastComments(found.stream().map(Reservation::getId).toList(), DETAIL_COMMENTS)
+        queries
+            .lastComments(found.stream().map(Reservation::getId).toList(), DETAIL_COMMENTS)
             .stream()
             .collect(
                 Collectors.groupingBy(

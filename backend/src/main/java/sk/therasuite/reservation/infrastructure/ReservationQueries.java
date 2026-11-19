@@ -141,6 +141,64 @@ public class ReservationQueries {
     return exists("room_category", id);
   }
 
+  /** Aktívny používateľ s rolou lekára. */
+  public boolean doctorExists(long userId) {
+    return Boolean.TRUE.equals(
+        jdbc.queryForObject(
+            """
+            select exists (select 1 from user_account u
+              join user_role ur on ur.user_id = u.id join role r on r.id = ur.role_id
+              where u.id = ? and u.status = 'ACTIVE' and r.code = 'DOCTOR')
+            """,
+            Boolean.class,
+            userId));
+  }
+
+  /** Klient pri vyhľadávaní: bez kontaktov, len rok narodenia a koniec posledného pobytu. */
+  public record ClientRow(
+      long id, String firstName, String lastName, Integer birthYear, LocalDate lastStayDate) {}
+
+  /**
+   * Hľadá klientov podľa mena a priezviska (každé slovo z {@code q}, bez diakritiky a veľkosti
+   * písmen). Posledný pobyt = najneskorší odchod z karty, ktorá sa realizovala (nie zrušená ani
+   * neprišiel).
+   */
+  public List<ClientRow> searchClients(String q, int limit) {
+    StringBuilder where = new StringBuilder(" where true");
+    List<Object> args = new ArrayList<>();
+    if (q != null) {
+      for (String token : q.trim().split("\\s+")) {
+        if (!token.isEmpty()) {
+          where.append(
+              " and f_unaccent(lower(c.last_name || ' ' || c.first_name)) like f_unaccent(lower(?))");
+          args.add("%" + escapeLike(token) + "%");
+        }
+      }
+    }
+    args.add(limit);
+    return jdbc.query(
+        """
+        select c.id, c.first_name, c.last_name, extract(year from c.birth_date)::int,
+               (select max(r.departure_date) from reservation_guest g
+                  join reservation r on r.id = g.reservation_id
+                 where g.client_id = c.id and not g.cancelled
+                   and r.status in ('CHECKED_IN', 'CHECKED_OUT'))
+        from client c
+        """
+            + where
+            + " order by c.last_name, c.first_name, c.id limit ?",
+        (rs, i) -> {
+          Date last = rs.getDate(5);
+          return new ClientRow(
+              rs.getLong(1),
+              rs.getString(2),
+              rs.getString(3),
+              (Integer) rs.getObject(4),
+              last == null ? null : last.toLocalDate());
+        },
+        args.toArray());
+  }
+
   public boolean payerExists(long id) {
     return exists("payer", id);
   }
@@ -179,7 +237,10 @@ public class ReservationQueries {
         reservationId);
   }
 
-  /** Posledných {@code limit} viditeľných komentárov každej z kariet jedným dotazom, od najstaršieho. */
+  /**
+   * Posledných {@code limit} viditeľných komentárov každej z kariet jedným dotazom, od
+   * najstaršieho.
+   */
   public List<CommentRow> lastComments(Collection<Long> reservationIds, int limit) {
     if (reservationIds.isEmpty()) {
       return List.of();

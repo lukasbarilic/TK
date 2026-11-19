@@ -28,11 +28,13 @@ import sk.therasuite.accommodation.infrastructure.Stay;
 import sk.therasuite.accommodation.infrastructure.StayRepository;
 import sk.therasuite.audit.application.AuditService;
 import sk.therasuite.businessday.application.BusinessDateProvider;
+import sk.therasuite.catalog.domain.BedType;
 import sk.therasuite.iam.application.PermissionChecker;
 import sk.therasuite.iam.domain.Permissions;
 import sk.therasuite.notification.application.LiveEvent;
 import sk.therasuite.reservation.application.ReservationService;
 import sk.therasuite.reservation.application.ReservationService.UpdateCommand;
+import sk.therasuite.reservation.application.ReservationViews;
 import sk.therasuite.shared.AuditedOperation;
 import sk.therasuite.shared.AuditedRead;
 import sk.therasuite.shared.AuditedReadResult;
@@ -162,6 +164,42 @@ public class StayService {
             period.to(),
             AuditService.currentEventId()));
     return view(queries.stay(saved.getId()).orElseThrow());
+  }
+
+  /** Karta + lôžko na celé obdobie karty (UC1 s novou kartou). */
+  public record CreateWithReservationCommand(
+      ReservationService.CreateCommand reservation,
+      long bedId,
+      boolean extraBed,
+      List<String> confirm) {}
+
+  /** Výsledok založenia karty s pobytom. */
+  public record ReservationWithStay(ReservationViews.Detail reservation, StayView stay) {}
+
+  /**
+   * Založí kartu a pridelí lôžko na celé jej obdobie v jednej transakcii; pri chybe pridelenia
+   * (obsadené lôžko, nepotvrdené upozornenie, limit nocí…) sa nezaloží ani karta.
+   */
+  @AuditedOperation(operation = "RESERVATION_CREATE_WITH_STAY", useCase = "UC1")
+  @Transactional
+  public ReservationWithStay createWithReservation(CreateWithReservationCommand cmd) {
+    BedRow bed =
+        queries
+            .bed(cmd.bedId())
+            .orElseThrow(() -> badRequest("Lôžko " + cmd.bedId() + " neexistuje."));
+    if (cmd.extraBed()
+        && queries.bedsOfRoom(bed.roomId()).stream()
+            .noneMatch(b -> b.id() == bed.bedId() && b.type() == BedType.EXTRA)) {
+      throw badRequest("Lôžko " + cmd.bedId() + " nie je prístelka.");
+    }
+    ReservationViews.Detail card = reservations.create(cmd.reservation());
+    // Vnútorné volanie beží v už otvorenej auditovanej transakcii.
+    StayView stay =
+        create(
+            card.id(),
+            new CreateCommand(
+                cmd.bedId(), card.arrivalDate(), card.departureDate(), false, cmd.confirm()));
+    return new ReservationWithStay(card, stay);
   }
 
   /** Zruší budúci pobyt: začiatok nesmie byť pred obchodným dňom recepcie izby. */

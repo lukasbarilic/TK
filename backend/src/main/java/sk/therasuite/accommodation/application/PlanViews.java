@@ -13,8 +13,9 @@ public final class PlanViews {
 
   /**
    * Pásik pobytu. {@code from}/{@code to} sú orezané na zobrazené obdobie, {@code stayFrom}/{@code
-   * stayTo} sú skutočné dátumy pobytu. {@code label} je skrátené meno „Priezvisko M.“. {@code hasNote} platí len pre poznámku
-   * označenú na zobrazenie v pláne, {@code commentCount} je počet viditeľných komentárov karty.
+   * stayTo} sú skutočné dátumy pobytu. {@code label} je skrátené meno „Priezvisko M.“. {@code
+   * hasNote} platí len pre poznámku označenú na zobrazenie v pláne, {@code commentCount} je počet
+   * viditeľných komentárov karty.
    */
   public record StayBar(
       String type,

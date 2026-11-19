@@ -22,11 +22,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import sk.therasuite.iam.application.PermissionChecker;
 import sk.therasuite.iam.domain.Permissions;
+import sk.therasuite.reservation.application.ReservationCommentService;
 import sk.therasuite.reservation.application.ReservationService;
 import sk.therasuite.reservation.application.ReservationService.CreateCommand;
 import sk.therasuite.reservation.application.ReservationService.GuestInput;
 import sk.therasuite.reservation.application.ReservationService.UpdateCommand;
-import sk.therasuite.reservation.application.ReservationCommentService;
 import sk.therasuite.reservation.application.ReservationStatusService;
 import sk.therasuite.reservation.application.ReservationViews.CommentView;
 import sk.therasuite.reservation.application.ReservationViews.Detail;
@@ -59,7 +59,13 @@ public class ReservationController {
       @NotNull @Min(1) Integer adults,
       @Min(0) Integer children,
       Boolean exclusiveRoomUse,
-      @NotEmpty @Valid List<GuestRequest> guests) {}
+      @NotEmpty @Valid List<GuestRequest> guests,
+      Long attendingDoctorId,
+      Boolean earlyCheckIn,
+      Boolean lateCheckOut,
+      Boolean doNotMove,
+      @Size(max = 2000) String note,
+      Boolean noteInPlan) {}
 
   /** Neuvedené (null) polia sa nemenia. */
   public record UpdateRequest(
@@ -133,26 +139,39 @@ public class ReservationController {
   @ResponseStatus(HttpStatus.CREATED)
   public Detail create(@Valid @RequestBody CreateRequest body) {
     permissions.require(Permissions.RESERVATION_EDIT);
-    return service.create(
-        new CreateCommand(
-            body.arrivalDate(),
-            body.departureDate(),
-            body.bookedCategoryId(),
-            body.payerId(),
-            body.adults(),
-            body.children() == null ? 0 : body.children(),
-            Boolean.TRUE.equals(body.exclusiveRoomUse()),
-            body.guests().stream()
-                .map(g ->
-                    new GuestInput(
-                        g.clientId(),
-                        g.firstName(),
-                        g.lastName(),
-                        g.birthDate(),
-                        g.nationality(),
-                        g.email(),
-                        g.phone()))
-                .toList()));
+    if (body.attendingDoctorId() != null) {
+      permissions.require(Permissions.DOCTOR_ASSIGN);
+    }
+    return service.create(toCommand(body));
+  }
+
+  /** Príkaz na založenie karty z tela požiadavky (použije ho aj {@code with-stay}). */
+  public static CreateCommand toCommand(CreateRequest body) {
+    return new CreateCommand(
+        body.arrivalDate(),
+        body.departureDate(),
+        body.bookedCategoryId(),
+        body.payerId(),
+        body.adults(),
+        body.children() == null ? 0 : body.children(),
+        Boolean.TRUE.equals(body.exclusiveRoomUse()),
+        body.guests().stream()
+            .map(g ->
+                new GuestInput(
+                    g.clientId(),
+                    g.firstName(),
+                    g.lastName(),
+                    g.birthDate(),
+                    g.nationality(),
+                    g.email(),
+                    g.phone()))
+            .toList(),
+        body.attendingDoctorId(),
+        Boolean.TRUE.equals(body.earlyCheckIn()),
+        Boolean.TRUE.equals(body.lateCheckOut()),
+        Boolean.TRUE.equals(body.doNotMove()),
+        body.note(),
+        Boolean.TRUE.equals(body.noteInPlan()));
   }
 
   @PatchMapping("/{id}")
