@@ -20,6 +20,9 @@ const WEEKDAYS = ['ne', 'po', 'ut', 'st', 'št', 'pi', 'so'];
 const weekday = (day: string) => new Date(`${day}T00:00:00Z`).getUTCDay();
 const isWeekend = (day: string) => [0, 6].includes(weekday(day));
 
+/** Ikony pásika: príchod dnes, odchod dnes, poznámka. */
+const ICON_GLYPH = { arrival: '⇥', departure: '↦', note: '✎' } as const;
+
 const HATCH = 'repeating-linear-gradient(135deg, rgba(74,93,117,.22) 0 3px, transparent 3px 7px)';
 
 export interface BarClick {
@@ -40,8 +43,10 @@ export interface DndConfig {
   drag: ActiveDrag | null;
   /** Lôžka už zabraté pobytmi z odkladiska. */
   occupied: Occupied[];
-  onBarMenu: (click: BarClick, x: number, y: number) => void;
 }
+
+/** Otvorenie menu pásika na súradniciach (pravé tlačidlo myši alebo kláves Menu). */
+export type BarMenuHandler = (click: BarClick, x: number, y: number) => void;
 
 interface BarViewProps {
   bar: BarVM;
@@ -52,10 +57,14 @@ interface BarViewProps {
   selected: boolean;
   onSelect: (click: BarClick) => void;
   dnd?: DndConfig;
+  onMenu?: BarMenuHandler;
+  /** Obchodný deň recepcie (ikony príchod/odchod dnes). */
+  businessDate?: string;
 }
 
 /** Pásik od polovice dňa príchodu po polovicu dňa odchodu (orezaný na okno plánu). */
-const BarView = memo(function BarView({ bar, dayWidth, colors, roomId, bedId, selected, onSelect, dnd }: BarViewProps) {
+const BarView = memo(function BarView({ bar, dayWidth, colors, roomId, bedId, selected, onSelect, dnd, onMenu, businessDate }: BarViewProps) {
+  const { t } = useTranslation();
   const touch = dnd !== undefined && canTouch(bar, dnd.perms);
   const { setNodeRef, listeners, attributes, isDragging } = useDraggable({
     id: `bar:${bedId}:${bar.id}`,
@@ -65,6 +74,14 @@ const BarView = memo(function BarView({ bar, dayWidth, colors, roomId, bedId, se
   const left = (bar.startCol + (bar.clippedStart ? 0 : 0.5)) * dayWidth;
   const right = (bar.endCol + (bar.clippedEnd ? 1 : 0.5)) * dayWidth;
   const held = bar.type === 'HELD_BED';
+  const stay = bar.type === 'STAY';
+  const dashed = held || (stay && colorKeyOf(bar) === 'RESERVED');
+  const icons = [
+    stay && bar.status === 'RESERVED' && businessDate !== undefined && bar.from === businessDate ? 'arrival' : null,
+    stay && bar.status === 'CHECKED_IN' && businessDate !== undefined && bar.to === businessDate ? 'departure' : null,
+    stay && bar.hasNote ? 'note' : null,
+  ].filter((x): x is 'arrival' | 'departure' | 'note' => x !== null);
+  const openMenu = (x: number, y: number) => onMenu?.({ bar, roomId, bedId }, x, y);
   const right4 = Math.max(left + 4, right);
   const button = (
     <button
@@ -78,13 +95,26 @@ const BarView = memo(function BarView({ bar, dayWidth, colors, roomId, bedId, se
       data-start-col={bar.startCol}
       data-end-col={bar.endCol}
       aria-pressed={selected}
+      data-bar-status={bar.status}
+      data-color-key={colorKeyOf(bar)}
       aria-label={[bar.label ?? bar.reason ?? bar.type, bar.from, bar.to].join(' ')}
       onClick={() => onSelect({ bar, roomId, bedId })}
       onContextMenu={
-        touch
+        onMenu && stay
           ? (e) => {
               e.preventDefault();
-              dnd.onBarMenu({ bar, roomId, bedId }, e.clientX, e.clientY);
+              openMenu(e.clientX, e.clientY);
+            }
+          : undefined
+      }
+      onKeyDown={
+        onMenu && stay
+          ? (e) => {
+              if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) {
+                e.preventDefault();
+                const r = e.currentTarget.getBoundingClientRect();
+                openMenu(r.left, r.bottom);
+              }
             }
           : undefined
       }
@@ -108,12 +138,17 @@ const BarView = memo(function BarView({ bar, dayWidth, colors, roomId, bedId, se
         cursor: touch ? 'grab' : 'pointer',
         color: colors.text,
         background: held ? `${HATCH}, ${colors.fill}` : colors.fill,
-        border: `${selected ? 2 : 1}px ${held ? 'dashed' : 'solid'} ${selected ? '#13243A' : colors.border}`,
+        border: `${selected ? 2 : 1}px ${dashed ? 'dashed' : 'solid'} ${selected ? '#13243A' : colors.border}`,
         borderRadius: `${bar.clippedStart ? 0 : 6}px ${bar.clippedEnd ? 0 : 6}px ${bar.clippedEnd ? 0 : 6}px ${bar.clippedStart ? 0 : 6}px`,
       }}
     >
       {bar.type === 'STAY' ? bar.label : bar.type === 'ROOM_BLOCK' ? bar.reason : null}
       {bar.locked ? ' 🔒' : ''}
+      {icons.map((i) => (
+        <span key={i} data-testid={`bar-icon-${i}`} title={t(`plan.icons.${i}`)} aria-label={t(`plan.icons.${i}`)} style={{ marginLeft: 4, fontWeight: 700 }}>
+          {ICON_GLYPH[i]}
+        </span>
+      ))}
     </button>
   );
   if (!touch || bar.clippedEnd) return button;
@@ -162,6 +197,8 @@ interface Props {
   onFreeCell?: (click: { roomId: number; bedId: number; day: string }) => void;
   /** Ťahanie (len online a s oprávnením); musí byť stabilná hodnota (useMemo). */
   dnd?: DndConfig;
+  /** Menu pásika pobytu (akcie stavu, presuny); musí byť stabilná funkcia. */
+  onBarMenu?: BarMenuHandler;
   /** Izba z odkazu `?roomId`: mriežka na ňu raz odroluje a zvýrazní ju. */
   focusRoomId?: number;
   /** Pozícia rolovania obnovená z pamäte relácie (po návrate z karty). */
@@ -172,7 +209,7 @@ interface Props {
 /** Je lôžko v daný deň (noc `day`) voľné podľa lokálnych dát? Rozhoduje server, toto je len pomoc. */
 const isFree = (bars: BarVM[], day: string) => !bars.some((b) => b.from <= day && day < b.to);
 
-export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, selectedBarKey, onSelectBar, onFreeCell, dnd, focusRoomId, initialScroll, onScrollPos }: Props) {
+export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, selectedBarKey, onSelectBar, onFreeCell, dnd, onBarMenu, focusRoomId, initialScroll, onScrollPos }: Props) {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const dayWidth = DAY_WIDTH[zoom];
@@ -318,6 +355,8 @@ export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, sele
                 onSelectBar={onSelectBar}
                 onFreeCell={onFreeCell}
                 dnd={dnd}
+                onBarMenu={onBarMenu}
+                businessDate={receptionId === undefined ? undefined : vm.businessDates[receptionId]}
                 focused={row.kind === 'room' && row.roomId === focusRoomId}
               />
             );
@@ -340,12 +379,14 @@ interface RowProps {
   onSelectBar: (click: BarClick) => void;
   onFreeCell?: Props['onFreeCell'];
   dnd?: DndConfig;
+  onBarMenu?: BarMenuHandler;
+  businessDate?: string;
   /** Izba z odkazu `?roomId` (zvýraznený názov). */
   focused?: boolean;
 }
 
 /** Riadok mriežky: `memo`, takže zmena v inom riadku (ťahanie, výber) ho neprekreslí. */
-const PlanRowView = memo(function PlanRowView({ row, top, days, dayWidth, width, gridLines, colors, selectedBarId, onSelectBar, onFreeCell, dnd, focused }: RowProps) {
+const PlanRowView = memo(function PlanRowView({ row, top, days, dayWidth, width, gridLines, colors, selectedBarId, onSelectBar, onFreeCell, dnd, onBarMenu, businessDate, focused }: RowProps) {
   const { t } = useTranslation();
   const isRoom = row.kind === 'room';
   const bedId = row.kind === 'bed' ? row.bedId : 0;
@@ -445,6 +486,8 @@ const PlanRowView = memo(function PlanRowView({ row, top, days, dayWidth, width,
               selected={selectedBarId === bar.id}
               onSelect={onSelectBar}
               dnd={dnd}
+              onMenu={onBarMenu}
+              businessDate={businessDate}
             />
           ))}
       </div>

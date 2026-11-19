@@ -35,6 +35,7 @@ export async function refreshAfterStay(
 ): Promise<void> {
   if (o.auditEventId !== undefined) markEventHandled(o.auditEventId);
   void qc.invalidateQueries({ queryKey: ['reservations'] });
+  void qc.invalidateQueries({ queryKey: ['movements'] });
   if (o.receptionId === undefined || o.roomId === undefined) {
     await qc.invalidateQueries({ queryKey: queryKeys.plan });
     return;

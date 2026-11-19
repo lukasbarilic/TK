@@ -10,6 +10,9 @@ import { hasPermissionCode, receptionsInScope } from '../../shared/offline/scope
 import { ApiError } from '../../shared/api/errors';
 import { ConfirmWarningsDialog } from '../../shared/ui/ConfirmWarningsDialog';
 import { addDays } from '../../shared/time';
+import { statusActions, useStatusActions } from '../../shared/status';
+import { dayCounts } from './dayCounts';
+import { PlanLegend } from './PlanLegend';
 import { BarMenu, type MenuAction } from './BarMenu';
 import { MoveFromDialog } from './MoveFromDialog';
 import {
@@ -26,6 +29,7 @@ import {
   type MoveCmd,
   type MovePerms,
 } from './moves';
+import type { StatusAction } from '../../shared/status';
 import { cancelStay, moveBatch, moveStay, resizeStay, swapStays } from './movesApi';
 import { ParkingPanel } from './ParkingPanel';
 import { useMoveActions } from './useMoveActions';
@@ -253,6 +257,7 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
     [canWrite, me, businessDate0],
   );
   const moves = useMoveActions(receptionId);
+  const status = useStatusActions();
   const [parked, dispatchParking] = useReducer(parkingReducer, []);
   const [drag, setDrag] = useState<ActiveDrag | null>(null);
   const [menu, setMenu] = useState<{ click: BarClick; x: number; y: number } | null>(null);
@@ -278,8 +283,8 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
 
   const openMenu = useCallback((click: BarClick, x: number, y: number) => setMenu({ click, x, y }), []);
   const dnd = useMemo<DndConfig | undefined>(
-    () => (perms.move ? { perms, drag, occupied: occupiedByParking(parked, drag?.stayId), onBarMenu: openMenu } : undefined),
-    [perms, drag, parked, openMenu],
+    () => (perms.move ? { perms, drag, occupied: occupiedByParking(parked, drag?.stayId) } : undefined),
+    [perms, drag, parked],
   );
 
   useEffect(() => {
@@ -361,11 +366,22 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
     const click = menu?.click;
     setMenu(null);
     if (!click) return;
+    if (a.startsWith('status:')) {
+      if (click.bar.reservationId !== undefined) status.request(a.slice(7) as StatusAction, click.bar.reservationId);
+      return;
+    }
     if (a === 'moveFrom') setMoveFrom(click);
     if (a === 'swap') setSwapFirst(click);
     if (a === 'cancel') setCancelTarget(click);
   };
-  const menuActions = (c: BarClick): MenuAction[] => ['moveFrom', 'swap', ...(c.bar.status === 'RESERVED' ? (['cancel'] as const) : [])];
+  /** Akcie menu: najprv stav karty (hlavná akcia dňa prvá), potom zmeny ubytovania. */
+  const menuActions = (c: BarClick): MenuAction[] => [
+    ...(canWrite && c.bar.type === 'STAY' && c.bar.reservationId !== undefined
+      ? statusActions(c.bar.status, me).map((a): MenuAction => `status:${a}`)
+      : []),
+    ...(perms.move && canTouch(c.bar, perms) ? (['moveFrom', 'swap', ...(c.bar.status === 'RESERVED' ? ['cancel'] : [])] as MenuAction[]) : []),
+  ];
+  const counts = useMemo(() => dayCounts(stored?.plan, businessDate), [stored, businessDate]);
 
   const select = useCallback(
     (c: BarClick) => {
@@ -445,6 +461,14 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
         </Group>
       </Group>
 
+      {businessDate && stored && (
+        <Group gap="lg" mb="md" data-testid="plan-counts">
+          <Text size="sm">{t('plan.counts.arriving')}: <b data-testid="count-arriving">{counts.arriving}</b></Text>
+          <Text size="sm">{t('plan.counts.departing')}: <b data-testid="count-departing">{counts.departing}</b></Text>
+          <Text size="sm">{t('plan.counts.inHouse')}: <b data-testid="count-inhouse">{counts.inHouse}</b></Text>
+        </Group>
+      )}
+      {status.node}
       {state !== 'online' && state !== 'checking' && (
         <Alert color="orange" mb="md" data-testid="plan-readonly">{t('plan.readOnly')}</Alert>
       )}
@@ -479,10 +503,12 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
               onSelectBar={select}
               onFreeCell={canCheckIn ? setFreeCell : undefined}
               dnd={dnd}
+              onBarMenu={openMenu}
               focusRoomId={focus?.roomId}
               initialScroll={restored && { top: restored.scrollTop, left: restored.scrollLeft }}
               onScrollPos={onScrollPos}
             />
+            <PlanLegend colors={palette} />
             {vm.rows.length === 0 && <Text c="dimmed" mt="sm" data-testid="plan-no-rooms">{t('plan.noRooms')}</Text>}
           </div>
           {selected && selectedRoom && selectedRoom.kind === 'room' && selectedBed && selectedBed.kind === 'bed' && (
@@ -514,7 +540,9 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
         </DragOverlay>
         </DndContext>
       )}
-      {menu && <BarMenu x={menu.x} y={menu.y} actions={menuActions(menu.click)} onPick={pickMenu} onClose={() => setMenu(null)} />}
+      {menu && menuActions(menu.click).length > 0 && (
+        <BarMenu x={menu.x} y={menu.y} actions={menuActions(menu.click)} onPick={pickMenu} onClose={() => setMenu(null)} />
+      )}
       {moveFrom && moveFrom.bar.stayId !== undefined && (
         <MoveFromDialog
           beds={[...bedLabels].filter(([id]) => id !== moveFrom.bedId).map(([id, v]) => ({ value: String(id), label: v.label }))}

@@ -33,7 +33,7 @@ describe('PlanGrid – výkon', () => {
 
   it('200 izieb: so zapnutým ťahaním sa vykreslí len viditeľný výsek a pásiky sú ťahateľné', () => {
     const vm = buildPlanVM(generatePlan(200, 31), { receptionId: 2, buildingIds: [], from: '2026-11-17', to: '2026-12-17', freeOnly: false, fullyFree: false });
-    const dnd = { perms: { move: true, moveLocked: false, backdate: true }, drag: null, occupied: [], onBarMenu: () => {} };
+    const dnd = { perms: { move: true, moveLocked: false, backdate: true }, drag: null, occupied: [] };
     const t0 = performance.now();
     renderWithProviders(
       <PlanGrid vm={vm} zoom="normal" colors={resolveColors(null)} dataFrom="2026-11-17" dataTo="2026-12-17" receptionId={2} onSelectBar={() => {}} dnd={dnd} />,

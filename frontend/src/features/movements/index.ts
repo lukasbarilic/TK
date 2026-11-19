@@ -1,1 +1,1 @@
-export { MovementsPage } from './MovementsPage';
+export { MovementsPage, type AssignCard, type RenderAssignBed } from './MovementsPage';

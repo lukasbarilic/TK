@@ -21,6 +21,11 @@ describe('parseProblemDetail', () => {
     });
   });
 
+  it('upozornenia vo formáte servera { code, message } sa čítajú podľa kódu', () => {
+    const p = parseProblemDetail({ confirmable: true, warnings: [{ code: 'EARLY_DEPARTURE', message: 'x' }, { message: 'bez kódu' }, 'A'] });
+    expect(p.warnings).toEqual(['EARLY_DEPARTURE', 'A']);
+  });
+
   it('ignoruje neplatné polia a netelesá vstupy', () => {
     expect(parseProblemDetail(null)).toEqual({});
     expect(parseProblemDetail('chyba')).toEqual({});
