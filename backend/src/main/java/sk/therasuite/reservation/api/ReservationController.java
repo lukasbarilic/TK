@@ -3,6 +3,7 @@ package sk.therasuite.reservation.api;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -25,12 +26,16 @@ import sk.therasuite.reservation.application.ReservationService;
 import sk.therasuite.reservation.application.ReservationService.CreateCommand;
 import sk.therasuite.reservation.application.ReservationService.GuestInput;
 import sk.therasuite.reservation.application.ReservationService.UpdateCommand;
+import sk.therasuite.reservation.application.ReservationStatusService;
 import sk.therasuite.reservation.application.ReservationViews.Detail;
 import sk.therasuite.reservation.application.ReservationViews.ListItem;
 import sk.therasuite.reservation.application.ReservationViews.PageView;
 import sk.therasuite.reservation.domain.ReservationStatus;
 
-/** Rezervačné karty: čítanie vyžaduje RESERVATION_VIEW, zápis RESERVATION_EDIT. */
+/**
+ * Rezervačné karty: čítanie vyžaduje RESERVATION_VIEW, zápis RESERVATION_EDIT, zmeny stavu
+ * RESERVATION_STATUS (opravy RESERVATION_STATUS_FIX).
+ */
 @RestController
 @RequestMapping("/api/reservations")
 public class ReservationController {
@@ -66,11 +71,23 @@ public class ReservationController {
       Boolean lateCheckOut,
       Boolean exclusiveRoomUse) {}
 
+  /** Telo operácie so stavom karty; {@code version} je verzia, z ktorej klient vychádzal. */
+  public record StatusRequest(@NotNull Long version) {}
+
+  public record CheckOutRequest(@NotNull Long version, List<String> confirm) {}
+
+  public record CancelRequest(@NotNull Long version, @NotBlank @Size(max = 500) String reason) {}
+
   private final ReservationService service;
+  private final ReservationStatusService statuses;
   private final PermissionChecker permissions;
 
-  public ReservationController(ReservationService service, PermissionChecker permissions) {
+  public ReservationController(
+      ReservationService service,
+      ReservationStatusService statuses,
+      PermissionChecker permissions) {
     this.service = service;
+    this.statuses = statuses;
     this.permissions = permissions;
   }
 
@@ -142,5 +159,41 @@ public class ReservationController {
             body.earlyCheckIn(),
             body.lateCheckOut(),
             body.exclusiveRoomUse()));
+  }
+
+  @PostMapping("/{id}/check-in")
+  public Detail checkIn(@PathVariable long id, @Valid @RequestBody StatusRequest body) {
+    permissions.require(Permissions.RESERVATION_STATUS);
+    return statuses.checkIn(id, body.version());
+  }
+
+  @PostMapping("/{id}/check-out")
+  public Detail checkOut(@PathVariable long id, @Valid @RequestBody CheckOutRequest body) {
+    permissions.require(Permissions.RESERVATION_STATUS);
+    return statuses.checkOut(id, body.version(), body.confirm());
+  }
+
+  @PostMapping("/{id}/cancel")
+  public Detail cancel(@PathVariable long id, @Valid @RequestBody CancelRequest body) {
+    permissions.require(Permissions.RESERVATION_STATUS);
+    return statuses.cancel(id, body.version(), body.reason());
+  }
+
+  @PostMapping("/{id}/no-show")
+  public Detail noShow(@PathVariable long id, @Valid @RequestBody StatusRequest body) {
+    permissions.require(Permissions.RESERVATION_STATUS);
+    return statuses.noShow(id, body.version());
+  }
+
+  @PostMapping("/{id}/undo-check-in")
+  public Detail undoCheckIn(@PathVariable long id, @Valid @RequestBody StatusRequest body) {
+    permissions.require(Permissions.RESERVATION_STATUS_FIX);
+    return statuses.undoCheckIn(id, body.version());
+  }
+
+  @PostMapping("/{id}/revert-no-show")
+  public Detail revertNoShow(@PathVariable long id, @Valid @RequestBody StatusRequest body) {
+    permissions.require(Permissions.RESERVATION_STATUS_FIX);
+    return statuses.revertNoShow(id, body.version());
   }
 }
