@@ -1,6 +1,6 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { observeElementRect, useVirtualizer, type Rect } from '@tanstack/react-virtual';
-import { memo, useEffect, useMemo, useRef, type CSSProperties } from 'react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { colorKeyOf, type BarColors, type ColorKey } from './colors';
 import { canTouch, isRangeFree, type MovePerms, type Occupied } from './moves';
@@ -164,12 +164,15 @@ interface Props {
   dnd?: DndConfig;
   /** Izba z odkazu `?roomId`: mriežka na ňu raz odroluje a zvýrazní ju. */
   focusRoomId?: number;
+  /** Pozícia rolovania obnovená z pamäte relácie (po návrate z karty). */
+  initialScroll?: { top: number; left: number };
+  onScrollPos?: (top: number, left: number) => void;
 }
 
 /** Je lôžko v daný deň (noc `day`) voľné podľa lokálnych dát? Rozhoduje server, toto je len pomoc. */
 const isFree = (bars: BarVM[], day: string) => !bars.some((b) => b.from <= day && day < b.to);
 
-export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, selectedBarKey, onSelectBar, onFreeCell, dnd, focusRoomId }: Props) {
+export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, selectedBarKey, onSelectBar, onFreeCell, dnd, focusRoomId, initialScroll, onScrollPos }: Props) {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const dayWidth = DAY_WIDTH[zoom];
@@ -185,6 +188,16 @@ export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, sele
     observeElementRect: (instance, cb) =>
       observeElementRect(instance, (r: Rect) => cb(r.height > 0 ? r : { width: r.width, height: FALLBACK_VIEWPORT_HEIGHT })),
   });
+
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (el && initialScroll) {
+      el.scrollTop = initialScroll.top;
+      el.scrollLeft = initialScroll.left;
+    }
+    // len pri pripojení
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Odkaz na izbu: riadok môže byť mimo vykresleného výseku (virtualizácia), preto roluje virtualizér, nie DOM.
   const scrolledTo = useRef<number | undefined>(undefined);
@@ -225,6 +238,7 @@ export function PlanGrid({ vm, zoom, colors, dataFrom, dataTo, receptionId, sele
   return (
     <div
       ref={scrollRef}
+      onScroll={onScrollPos && ((e) => onScrollPos(e.currentTarget.scrollTop, e.currentTarget.scrollLeft))}
       data-testid="plan-grid"
       role="grid"
       aria-label={t('plan.title')}

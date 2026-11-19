@@ -285,7 +285,8 @@
     "doNotMove": "Nepresúvať",
     "save": "Uložiť",
     "saved": "Karta bola uložená.",
-    "conflict": "Kartu medzitým zmenil niekto iný. Údaje sa obnovili – skontrolujte ich a uložte znova."
+    "conflict": "Kartu medzitým zmenil niekto iný. Údaje sa obnovili – skontrolujte ich a uložte znova.",
+    "crumbList": "Rezervačné karty"
   },
   "confirm": {
     "title": "Potvrďte upozornenia",
@@ -398,5 +399,9 @@
     "update": "Aktualizovať",
     "installing": "Inštalujem aktualizáciu",
     "failed": "Aktualizáciu sa nepodarilo nainštalovať. Skúste to znova."
+  },
+  "shared": {
+    "back": "Späť",
+    "breadcrumbs": "Drobčeková navigácia"
   }
 }

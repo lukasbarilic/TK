@@ -47,6 +47,7 @@ import { StayPanel } from './StayPanel';
 import { fillDays } from './fillDays';
 import { focusOffset } from './focus';
 import { DAY_WIDTH, ZOOMS, type BarVM, type DefaultView, type PlanFilters } from './types';
+import { loadPlanSession, savePlanSession, type PlanSession } from './planSession';
 import { planDataKey, usePlanLive } from './usePlanLive';
 
 type Me = components['schemas']['MeView'];
@@ -104,7 +105,10 @@ interface ScreenProps {
 function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPref, showExtraBeds }: ScreenProps) {
   const { t } = useTranslation();
   const { state, canWrite } = useConnection();
-  const [filters, setFilters] = useState<DefaultView>(initial);
+  // pamäť relácie: po návrate z karty sa obnoví rozsah, filtre, zoom a rolovanie (okrem odkazu `?roomId&date`)
+  const [restored] = useState(() => (focus?.roomId !== undefined || focus?.date ? undefined : loadPlanSession()));
+  const session = useRef<PlanSession>(restored ?? { filters: initial, offset: 0, scrollTop: 0, scrollLeft: 0 });
+  const [filters, setFilters] = useState<DefaultView>(restored?.filters ?? initial);
   const [selected, setSelected] = useState<BarClick | null>(null);
   const [freeCell, setFreeCell] = useState<{ roomId: number; bedId: number; day: string } | null>(null);
 
@@ -130,7 +134,7 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
   // odkaz z karty (`?date`): zobrazený rozsah sa posunie na požadovaný dátum; uložený pohľad sa nemení
   const focusDate = focus?.date;
   const focused = useRef(false);
-  const [offset, setOffset] = useState(0);
+  const [offset, setOffset] = useState(restored?.offset ?? 0);
   useEffect(() => {
     if (!focusDate || !businessDate || focused.current) return;
     focused.current = true;
@@ -201,7 +205,7 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
 
   // --- uloženie posledného pohľadu do plan.defaultView (offline len lokálne) ---
   const version = useRef<number | undefined>(initialVersion);
-  const lastSaved = useRef(JSON.stringify(initial));
+  const lastSaved = useRef(JSON.stringify(restored?.filters ?? initial));
   const canWriteRef = useRef(canWrite);
   useEffect(() => {
     canWriteRef.current = canWrite;
@@ -219,6 +223,13 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
     }, SAVE_DELAY_MS);
     return () => clearTimeout(timer);
   }, [filters]);
+
+  useEffect(() => {
+    session.current = savePlanSession({ filters, offset }, session.current);
+  }, [filters, offset]);
+  const onScrollPos = useCallback((scrollTop: number, scrollLeft: number) => {
+    session.current = savePlanSession({ scrollTop, scrollLeft }, session.current);
+  }, []);
 
   const patch = useCallback((p: Partial<DefaultView>) => setFilters((f) => ({ ...f, ...p })), []);
   const shift = (days: number) => patch({ daysBack: filters.daysBack - days, daysAhead: filters.daysAhead + days });
@@ -469,6 +480,8 @@ function PlanScreen({ me, focus, renderCheckIn, initial, initialVersion, colorPr
               onFreeCell={canCheckIn ? setFreeCell : undefined}
               dnd={dnd}
               focusRoomId={focus?.roomId}
+              initialScroll={restored && { top: restored.scrollTop, left: restored.scrollLeft }}
+              onScrollPos={onScrollPos}
             />
             {vm.rows.length === 0 && <Text c="dimmed" mt="sm" data-testid="plan-no-rooms">{t('plan.noRooms')}</Text>}
           </div>
