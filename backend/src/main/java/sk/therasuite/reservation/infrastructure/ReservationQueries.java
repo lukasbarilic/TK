@@ -1,9 +1,12 @@
 package sk.therasuite.reservation.infrastructure;
 
 import java.sql.Date;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import sk.therasuite.reservation.domain.ReservationStatus;
@@ -39,6 +42,10 @@ public class ReservationQueries {
         where g.reservation_id = r.id and g.primary_guest
         order by g.id limit 1) pg on true
       """;
+
+  /** Viditeľný komentár karty. */
+  public record CommentRow(
+      long id, long reservationId, long authorId, Instant createdAt, String text) {}
 
   private final JdbcTemplate jdbc;
 
@@ -127,6 +134,73 @@ public class ReservationQueries {
   public boolean payerExists(long id) {
     return exists("payer", id);
   }
+
+  public CommentRow insertComment(long reservationId, long authorId, String text) {
+    return jdbc.queryForObject(
+        "insert into reservation_comment (reservation_id, author_id, text) values (?, ?, ?)"
+            + " returning id, reservation_id, author_id, created_at, text",
+        COMMENT_MAPPER,
+        reservationId,
+        authorId,
+        text);
+  }
+
+  /** Skryje komentár karty; prázdny výsledok, ak neexistuje alebo je už skrytý. */
+  public Optional<CommentRow> hideComment(long reservationId, long commentId, long userId) {
+    return jdbc
+        .query(
+            "update reservation_comment set hidden_at = now(), hidden_by = ?"
+                + " where id = ? and reservation_id = ? and hidden_at is null"
+                + " returning id, reservation_id, author_id, created_at, text",
+            COMMENT_MAPPER,
+            userId,
+            commentId,
+            reservationId)
+        .stream()
+        .findFirst();
+  }
+
+  /** Všetky viditeľné komentáre karty od najstaršieho. */
+  public List<CommentRow> comments(long reservationId) {
+    return jdbc.query(
+        "select id, reservation_id, author_id, created_at, text from reservation_comment"
+            + " where reservation_id = ? and hidden_at is null order by id",
+        COMMENT_MAPPER,
+        reservationId);
+  }
+
+  /** Posledných {@code limit} viditeľných komentárov každej z kariet jedným dotazom, od najstaršieho. */
+  public List<CommentRow> lastComments(Collection<Long> reservationIds, int limit) {
+    if (reservationIds.isEmpty()) {
+      return List.of();
+    }
+    return jdbc.query(
+        con -> {
+          var ps =
+              con.prepareStatement(
+                  """
+                  select id, reservation_id, author_id, created_at, text from (
+                      select c.*, row_number() over (
+                          partition by c.reservation_id order by c.id desc) rn
+                      from reservation_comment c
+                      where c.reservation_id = any (?) and c.hidden_at is null) x
+                  where rn <= ? order by reservation_id, id
+                  """);
+          ps.setArray(1, con.createArrayOf("bigint", reservationIds.toArray()));
+          ps.setInt(2, limit);
+          return ps;
+        },
+        COMMENT_MAPPER);
+  }
+
+  private static final org.springframework.jdbc.core.RowMapper<CommentRow> COMMENT_MAPPER =
+      (rs, i) ->
+          new CommentRow(
+              rs.getLong(1),
+              rs.getLong(2),
+              rs.getLong(3),
+              rs.getTimestamp(4).toInstant(),
+              rs.getString(5));
 
   private boolean exists(String table, long id) {
     return Boolean.TRUE.equals(

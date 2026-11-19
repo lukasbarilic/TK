@@ -43,6 +43,8 @@ public class Reservation extends BaseEntity {
   private Instant checkedOutAt;
   private Instant cancelledAt;
   private String cancelReason;
+  private String note;
+  private boolean noteInPlan;
 
   protected Reservation() {}
 
@@ -175,6 +177,22 @@ public class Reservation extends BaseEntity {
 
   public String getCancelReason() {
     return cancelReason;
+  }
+
+  public String getNote() {
+    return note;
+  }
+
+  public void setNote(String note) {
+    this.note = note;
+  }
+
+  public boolean isNoteInPlan() {
+    return noteInPlan;
+  }
+
+  public void setNoteInPlan(boolean noteInPlan) {
+    this.noteInPlan = noteInPlan;
   }
 
   public void checkIn(Instant now) {

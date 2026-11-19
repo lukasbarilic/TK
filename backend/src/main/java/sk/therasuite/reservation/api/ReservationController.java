@@ -26,7 +26,9 @@ import sk.therasuite.reservation.application.ReservationService;
 import sk.therasuite.reservation.application.ReservationService.CreateCommand;
 import sk.therasuite.reservation.application.ReservationService.GuestInput;
 import sk.therasuite.reservation.application.ReservationService.UpdateCommand;
+import sk.therasuite.reservation.application.ReservationCommentService;
 import sk.therasuite.reservation.application.ReservationStatusService;
+import sk.therasuite.reservation.application.ReservationViews.CommentView;
 import sk.therasuite.reservation.application.ReservationViews.Detail;
 import sk.therasuite.reservation.application.ReservationViews.ListItem;
 import sk.therasuite.reservation.application.ReservationViews.PageView;
@@ -69,7 +71,11 @@ public class ReservationController {
       Boolean doNotMove,
       Boolean earlyCheckIn,
       Boolean lateCheckOut,
-      Boolean exclusiveRoomUse) {}
+      Boolean exclusiveRoomUse,
+      @Size(max = 2000) String note,
+      Boolean noteInPlan) {}
+
+  public record CommentRequest(@NotBlank @Size(max = 2000) String text) {}
 
   /** Telo operácie so stavom karty; {@code version} je verzia, z ktorej klient vychádzal. */
   public record StatusRequest(@NotNull Long version) {}
@@ -80,14 +86,17 @@ public class ReservationController {
 
   private final ReservationService service;
   private final ReservationStatusService statuses;
+  private final ReservationCommentService comments;
   private final PermissionChecker permissions;
 
   public ReservationController(
       ReservationService service,
       ReservationStatusService statuses,
+      ReservationCommentService comments,
       PermissionChecker permissions) {
     this.service = service;
     this.statuses = statuses;
+    this.comments = comments;
     this.permissions = permissions;
   }
 
@@ -158,7 +167,29 @@ public class ReservationController {
             body.doNotMove(),
             body.earlyCheckIn(),
             body.lateCheckOut(),
-            body.exclusiveRoomUse()));
+            body.exclusiveRoomUse(),
+            body.note(),
+            body.noteInPlan()));
+  }
+
+  @GetMapping("/{id}/comments")
+  public List<CommentView> comments(@PathVariable long id) {
+    permissions.require(Permissions.RESERVATION_VIEW);
+    return comments.list(id).value();
+  }
+
+  @PostMapping("/{id}/comments")
+  @ResponseStatus(HttpStatus.CREATED)
+  public CommentView addComment(@PathVariable long id, @Valid @RequestBody CommentRequest body) {
+    permissions.require(Permissions.RESERVATION_EDIT);
+    return comments.add(id, body.text());
+  }
+
+  @PostMapping("/{id}/comments/{commentId}/hide")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void hideComment(@PathVariable long id, @PathVariable long commentId) {
+    permissions.require(Permissions.RESERVATION_EDIT);
+    comments.hide(id, commentId);
   }
 
   @PostMapping("/{id}/check-in")
