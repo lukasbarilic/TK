@@ -23,7 +23,15 @@ export function ReportArchive({ receptionId, receptionName, onBack }: { receptio
   return (
     <Stack data-testid="report-archive">
       <Group justify="space-between" className="report-noprint">
-        <Title order={3}>{t('businessDay.archiveTitle')}</Title>
+        <Stack gap={0}>
+          <Title order={3}>{t('businessDay.archiveTitle')}</Title>
+          {/* prezeraný deň na obrazovke; v tlači ho ukáže hlavička reportu */}
+          {date !== null && (
+            <Text fw={600} size="lg" data-testid="archive-day">
+              {t('businessDay.archiveDay', { date: fmtDay(date, i18n.language) })}
+            </Text>
+          )}
+        </Stack>
         <Group>
           {date !== null && (
             <Button variant="default" disabled={!report} onClick={print}>{t('businessDay.printReport')}</Button>
