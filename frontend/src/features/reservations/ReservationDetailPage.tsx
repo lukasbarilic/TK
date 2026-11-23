@@ -148,6 +148,7 @@ function DetailBody({ d }: { d: ReservationDetail }) {
       <Group gap="sm">
         <Text fw={700} data-testid="reservation-number">{d.reservationNumber}</Text>
         {d.status && <Badge variant="light">{t(`plan.status.${d.status}`, d.status)}</Badge>}
+        {d.exclusiveRoomUse && <Badge variant="light" color="orange" data-testid="exclusive-badge">{t('reservations.exclusiveRoomUse')}</Badge>}
       </Group>
       <Text size="sm" data-testid="reservation-dates">{d.arrivalDate} – {d.departureDate}</Text>
     </Stack>
@@ -161,11 +162,12 @@ function EditForm({ d }: { d: ReservationDetail }) {
   const [arrival, setArrival] = useState(d.arrivalDate ?? '');
   const [departure, setDeparture] = useState(d.departureDate ?? '');
   const [doNotMove, setDoNotMove] = useState(d.doNotMove === true);
+  const [exclusiveRoomUse, setExclusiveRoomUse] = useState(d.exclusiveRoomUse === true);
   const [conflict, setConflict] = useState(false);
 
   const save = useMutation({
     mutationFn: () =>
-      updateReservation(d.id as number, { version: d.version as number, arrivalDate: arrival, departureDate: departure, doNotMove }),
+      updateReservation(d.id as number, { version: d.version as number, arrivalDate: arrival, departureDate: departure, doNotMove, exclusiveRoomUse }),
     onSuccess: async (saved) => {
       setConflict(false);
       await putLocal(DS.reservation, String(d.id), saved);
@@ -187,6 +189,11 @@ function EditForm({ d }: { d: ReservationDetail }) {
         <TextInput type="date" label={t('reservations.arrival')} value={arrival} onChange={(e) => setArrival(e.currentTarget.value)} />
         <TextInput type="date" label={t('reservations.departure')} value={departure} onChange={(e) => setDeparture(e.currentTarget.value)} />
         <Checkbox label={t('reservations.doNotMove')} checked={doNotMove} onChange={(e) => setDoNotMove(e.currentTarget.checked)} />
+        <Checkbox
+          label={t('reservations.exclusiveRoomUse')}
+          checked={exclusiveRoomUse}
+          onChange={(e) => setExclusiveRoomUse(e.currentTarget.checked)}
+        />
         <WriteAction>
           <Button onClick={() => save.mutate()} loading={save.isPending}>{t('reservations.save')}</Button>
         </WriteAction>

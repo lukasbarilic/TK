@@ -74,6 +74,9 @@ export function StayPanel({ bar, roomLabel, bedLabel, canOpenCard = false, onClo
               <Text size="sm">
                 {card.data.data.arrivalDate} – {card.data.data.departureDate}
               </Text>
+              {card.data.data.exclusiveRoomUse && (
+                <Badge variant="light" color="orange" w="fit-content" data-testid="panel-exclusive">{t('plan.panel.exclusive')}</Badge>
+              )}
               {(card.data.data.guests ?? [])
                 .filter((g) => !g.cancelled)
                 .map((g) => (

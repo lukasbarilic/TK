@@ -67,6 +67,18 @@ describe('StayPanel – odkaz na kartu', () => {
     expect(JSON.parse(screen.getByTestId('origin').textContent as string)).toEqual({ label: 'Plán ubytovania', to: '/plan' });
   });
 
+  it('karta s výhradným užívaním izby má v paneli štítok', async () => {
+    server.use(http.get('/api/reservations/:id', () => HttpResponse.json({ ...sampleCard, exclusiveRoomUse: true })));
+    renderPanel(true);
+    expect(await screen.findByTestId('panel-exclusive')).toHaveTextContent('Výhradné užívanie izby');
+  });
+
+  it('bez výhradného užívania izby štítok nie je', async () => {
+    renderPanel(true);
+    await screen.findByRole('link', { name: /R-2026-0912/ });
+    expect(screen.queryByTestId('panel-exclusive')).toBeNull();
+  });
+
   it('bez oprávnenia RESERVATION_VIEW je číslo obyčajný text', async () => {
     renderPanel(false);
     expect(await screen.findByText('R-2026-0912')).toBeInTheDocument();

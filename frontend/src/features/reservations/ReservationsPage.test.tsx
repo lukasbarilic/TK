@@ -146,6 +146,34 @@ describe('Detail karty', () => {
     expect(await screen.findByText('Karta bola uložená.')).toBeInTheDocument();
   });
 
+  it('výhradné užívanie izby: zobrazí sa na karte a dá sa zmeniť (PATCH)', async () => {
+    mockOnline();
+    let body: unknown;
+    server.use(
+      http.patch('/api/reservations/912', async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json({ ...card, version: 4, exclusiveRoomUse: true });
+      }),
+    );
+    renderDetail();
+    const user = userEvent.setup();
+    const box = await screen.findByRole('checkbox', { name: 'Výhradné užívanie izby' });
+    expect(box).not.toBeChecked();
+    expect(screen.queryByTestId('exclusive-badge')).toBeNull();
+    await user.click(box);
+    await user.click(screen.getByRole('button', { name: 'Uložiť' }));
+    await waitFor(() => expect(body).toMatchObject({ version: 3, exclusiveRoomUse: true }));
+    expect(await screen.findByText('Karta bola uložená.')).toBeInTheDocument();
+  });
+
+  it('karta s výhradným užívaním izby má štítok a zaškrtnuté políčko', async () => {
+    mockOnline();
+    server.use(http.get('/api/reservations/912', () => HttpResponse.json({ ...card, exclusiveRoomUse: true })));
+    renderDetail();
+    expect(await screen.findByTestId('exclusive-badge')).toHaveTextContent('Výhradné užívanie izby');
+    expect(screen.getByRole('checkbox', { name: 'Výhradné užívanie izby' })).toBeChecked();
+  });
+
   it('konflikt verzie (409) ukáže upozornenie', async () => {
     mockOnline();
     server.use(http.patch('/api/reservations/912', () => HttpResponse.json({ status: 409, code: 'VERSION_CONFLICT' }, { status: 409 })));
