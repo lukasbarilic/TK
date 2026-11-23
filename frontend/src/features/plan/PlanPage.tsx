@@ -547,6 +547,7 @@ function PlanScreen({ me, focus, renderCheckIn, onNewReservation, initial, initi
               bar={selected.bar}
               roomLabel={`${selectedRoom.building} ${selectedRoom.label}`}
               bedLabel={selectedBed.bedLabel}
+              canOpenCard={receptionsInScope(me, 'RESERVATION_VIEW', [selectedRoom.receptionId ?? receptionId ?? -1]).length > 0}
               onClose={() => setSelected(null)}
             />
           )}

@@ -1,6 +1,8 @@
 import { Badge, Button, Group, Loader, Paper, Stack, Text, Title } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { originState } from '../../shared/navigation/origin';
 import { queryKeys } from '../../shared/api/queryKeys';
 import { DataAge } from '../../shared/offline';
 import { loadCard } from './planApi';
@@ -10,11 +12,13 @@ interface Props {
   bar: BarVM;
   roomLabel: string;
   bedLabel: string;
+  /** Má používateľ `RESERVATION_VIEW` pre recepciu karty? Inak je číslo len text. */
+  canOpenCard?: boolean;
   onClose: () => void;
 }
 
 /** Bočný panel: pobyt (z pásika) a rezervačná karta (online zo servera, offline z trezora). */
-export function StayPanel({ bar, roomLabel, bedLabel, onClose }: Props) {
+export function StayPanel({ bar, roomLabel, bedLabel, canOpenCard = false, onClose }: Props) {
   const { t } = useTranslation();
   const reservationId = bar.reservationId;
   const card = useQuery({
@@ -52,7 +56,21 @@ export function StayPanel({ bar, roomLabel, bedLabel, onClose }: Props) {
           {card.data?.empty && <Text size="sm" c="dimmed">{t('offline.notStored')}</Text>}
           {card.data && !card.data.empty && (
             <>
-              <Text size="sm">{card.data.data.reservationNumber}</Text>
+              {canOpenCard ? (
+                <Text size="sm">
+                  <Link
+                    to={`/reservations/${reservationId}`}
+                    state={originState(t('menu.plan'), '/plan')}
+                    aria-label={t('plan.panel.openCard', { number: card.data.data.reservationNumber })}
+                    data-testid="panel-card-link"
+                    style={{ textDecoration: 'underline' }}
+                  >
+                    {card.data.data.reservationNumber}
+                  </Link>
+                </Text>
+              ) : (
+                <Text size="sm">{card.data.data.reservationNumber}</Text>
+              )}
               <Text size="sm">
                 {card.data.data.arrivalDate} – {card.data.data.departureDate}
               </Text>

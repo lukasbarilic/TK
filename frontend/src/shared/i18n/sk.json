@@ -62,6 +62,7 @@
       "close": "Zavrieť",
       "place": "Izba {{room}}, lôžko {{bed}}",
       "card": "Rezervačná karta",
+      "openCard": "Otvoriť detail rezervačnej karty {{number}}",
       "cardError": "Kartu sa nepodarilo načítať.",
       "primary": "hlavný hosť",
       "note": "Poznámka",
