@@ -296,6 +296,9 @@ public class ReservationService {
     if (cmd.lateCheckOut() != null) {
       r.setLateCheckOut(cmd.lateCheckOut());
     }
+    // výhradné užívanie mení držané lôžka v pláne, preto treba plán obnoviť aj ostatným
+    boolean exclusiveChanged =
+        cmd.exclusiveRoomUse() != null && cmd.exclusiveRoomUse() != r.isExclusiveRoomUse();
     if (cmd.exclusiveRoomUse() != null) {
       r.setExclusiveRoomUse(cmd.exclusiveRoomUse());
     }
@@ -310,7 +313,7 @@ public class ReservationService {
       r.setNoteInPlan(cmd.noteInPlan());
     }
     Reservation saved = reservations.saveAndFlush(r);
-    if (planNoteChanged) {
+    if (planNoteChanged || exclusiveChanged) {
       stays.publishPlanChanged(stays.snapshot(id));
     }
     return detail(saved);

@@ -438,6 +438,25 @@ class ReservationNoteIntegrationTest {
   }
 
   @Test
+  void exclusiveRoomUseChangeSendsPlanChangedOnlyWhenChanged() throws Exception {
+    Fx fx = fx();
+    Recorder recorder = new Recorder();
+    connections.register(fx.watcherUser(), recorder);
+    try {
+      patchCard(receptionist(), fx.card(), "\"exclusiveRoomUse\":true");
+      assertThat(JsonPath.<Boolean>read(getCard(fx.card()), "$.exclusiveRoomUse")).isTrue();
+      assertThat(recorder.events).hasSize(1);
+      assertThat(recorder.events).allMatch(e -> e instanceof LiveEvent.PlanChanged);
+
+      // rovnaká hodnota plán nemení
+      patchCard(receptionist(), fx.card(), "\"exclusiveRoomUse\":true");
+      assertThat(recorder.events).hasSize(1);
+    } finally {
+      connections.unregister(recorder);
+    }
+  }
+
+  @Test
   void readingCommentsIsAuditedAsContactRead() throws Exception {
     Fx fx = fx();
     addComment(receptionist(), fx.card(), "Čítanie");
