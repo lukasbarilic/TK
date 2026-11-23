@@ -418,7 +418,7 @@ interface BarVM {
 
 ### 9.4 Filtre a nastavenia
 
-Recepcia (predvolená z `MeView.defaultReceptionId`), budovy, rozsah dní (predvolene obchodný deň −1 až +13), `freeOnly`, `fullyFree`, zoom. Posledné filtre sa ukladajú do `plan.defaultView` (B06), offline len lokálne.
+Recepcia (predvolená z `MeView.defaultReceptionId`), budovy, rozsah dní (predvolene obchodný deň −1 až +13), `freeOnly`, `fullyFree`, `occupiedOnly` (len izby s pobytom v rozsahu; vylučuje sa s `fullyFree`, s `freeOnly` dáva obsadené izby s voľným riadnym lôžkom), zoom. Posledné filtre sa ukladajú do `plan.defaultView` (B06), offline len lokálne.
 
 ---
 

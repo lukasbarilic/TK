@@ -87,6 +87,7 @@ function matchesFilter(room: RoomDto, bars: BarVM[], f: PlanFilters): boolean {
   const stays = live.filter((b) => b.type === 'STAY');
   const blocked = live.some((b) => b.type === 'ROOM_BLOCK');
   if (f.fullyFree && (stays.length > 0 || blocked)) return false;
+  if (f.occupiedOnly && stays.length === 0) return false;
   if (f.freeOnly) {
     if (blocked) return false;
     const taken = new Set(live.filter((b) => b.type !== 'ROOM_BLOCK').map((b) => b.bedId));
@@ -97,7 +98,7 @@ function matchesFilter(room: RoomDto, bars: BarVM[], f: PlanFilters): boolean {
 
 /**
  * Model pre zobrazenie plánu (DLD kap. 9.1). Čistá funkcia: orezáva pásiky na okno `filters.from..to`,
- * rozkladá blokáciu izby na všetky lôžka, uplatňuje filtre budov, `freeOnly` a `fullyFree`.
+ * rozkladá blokáciu izby na všetky lôžka, uplatňuje filtre budov, `freeOnly`, `fullyFree` a `occupiedOnly`.
  * Preferencie: `showExtraBeds === false` skryje prístelky bez pásikov.
  */
 export function buildPlanVM(plan: Plan | undefined, filters: PlanFilters, prefs: PlanPreferences = {}): PlanVM {

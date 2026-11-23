@@ -142,6 +142,16 @@ describe('buildPlanVM', () => {
     it('fullyFree: izba bez pobytu a bez blokácie', () => {
       expect(ids({ fullyFree: true })).toEqual([3, 5]);
     });
+    it('occupiedOnly: izba s aspoň jedným pobytom; blokácia sa nepočíta', () => {
+      expect(ids({ occupiedOnly: true })).toEqual([1, 2]);
+    });
+    it('occupiedOnly + freeOnly: obsadená izba, kde je ešte voľné riadne lôžko', () => {
+      expect(ids({ occupiedOnly: true, freeOnly: true })).toEqual([2]);
+    });
+    it('occupiedOnly: pobyt mimo zobrazeného rozsahu sa nepočíta', () => {
+      const r = [room(1, { bars: [stay(1, 11, '2026-11-10', '2026-11-17')] })];
+      expect(buildPlanVM(plan(r), { ...filters, occupiedOnly: true }).rows).toEqual([]);
+    });
     it('pobyt mimo zobrazeného rozsahu izbu neobsadzuje', () => {
       const r = [room(1, { bars: [stay(1, 11, '2026-11-10', '2026-11-17'), stay(2, 12, '2026-11-10', '2026-11-17')] })];
       const vm = buildPlanVM(plan(r), { ...filters, freeOnly: true });

@@ -31,6 +31,7 @@
     "buildings": "Budovy",
     "freeOnly": "Len voľné izby",
     "fullyFree": "Len celkom prázdne izby",
+    "occupiedOnly": "Len obsadené izby",
     "zoom": {
       "label": "Priblíženie",
       "narrow": "Úzke",

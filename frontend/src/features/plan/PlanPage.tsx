@@ -211,12 +211,13 @@ function PlanScreen({ me, focus, renderCheckIn, onNewReservation, initial, initi
     to: view.to,
     freeOnly: filters.freeOnly,
     fullyFree: filters.fullyFree,
+    occupiedOnly: filters.occupiedOnly,
   };
   const stored = plan.data && !plan.data.empty ? plan.data.data : undefined;
   const vm = useMemo(
     () => (planFilters && stored ? buildPlanVM(stored.plan, planFilters, { showExtraBeds }) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [stored, view?.from, view?.to, receptionId, filters.buildingIds, filters.freeOnly, filters.fullyFree, showExtraBeds],
+    [stored, view?.from, view?.to, receptionId, filters.buildingIds, filters.freeOnly, filters.fullyFree, filters.occupiedOnly, showExtraBeds],
   );
   const palette = useMemo(() => resolveColors(colorPref), [colorPref]);
 
@@ -475,7 +476,17 @@ function PlanScreen({ me, focus, renderCheckIn, onNewReservation, initial, initi
           </Group>
         )}
         <Switch label={t('plan.freeOnly')} checked={filters.freeOnly} onChange={(e) => patch({ freeOnly: e.currentTarget.checked })} />
-        <Switch label={t('plan.fullyFree')} checked={filters.fullyFree} onChange={(e) => patch({ fullyFree: e.currentTarget.checked })} />
+        {/* „celkom prázdne“ a „obsadené“ sa vylučujú; „voľné“ s „obsadenými“ = izby, kam sa ešte zmestí ďalší hosť */}
+        <Switch
+          label={t('plan.fullyFree')}
+          checked={filters.fullyFree}
+          onChange={(e) => patch(e.currentTarget.checked ? { fullyFree: true, occupiedOnly: false } : { fullyFree: false })}
+        />
+        <Switch
+          label={t('plan.occupiedOnly')}
+          checked={filters.occupiedOnly}
+          onChange={(e) => patch(e.currentTarget.checked ? { occupiedOnly: true, fullyFree: false } : { occupiedOnly: false })}
+        />
         <Group gap={4} role="group" aria-label={t('plan.zoom.label')}>
           {ZOOMS.map((z) => (
             <Button
