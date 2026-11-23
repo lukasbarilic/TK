@@ -45,6 +45,15 @@ export const loadGuestList = (date: string) =>
     return res.status === 304 ? { status: 304 } : { status: 200, data: res.data as unknown as GuestLocations, etag: res.headers.etag };
   }, undefined, guestListJournal);
 
+type ReceptionView = components['schemas']['ReceptionView'];
+
+/** Recepcie z číselníka (len s `PLAN_VIEW`); rovnaký záznam trezora ako plán. */
+export const loadReceptions = () =>
+  offlineQuery<ReceptionView[]>(DS.catalog, 'receptions', async (etag) => {
+    const res = await apiCall('get', '/api/catalog/receptions', { headers: etag ? { 'If-None-Match': etag } : {} });
+    return res.status === 304 ? { status: 304 } : { status: 200, data: res.data, etag: res.headers.etag };
+  });
+
 type BuildingView = components['schemas']['BuildingView'];
 
 /** Budovy z číselníka (offline z trezora). */

@@ -70,6 +70,38 @@ describe('Zoznam hostí', () => {
     expect(screen.getByTestId('guest-row')).toHaveTextContent('201 / 1');
   });
 
+  it('bez predvolenej recepcie (null) vezme deň z prvej recepcie v rozsahu, nie z /receptions/null', async () => {
+    mockServer();
+    const dayRequests: string[] = [];
+    server.use(
+      http.get('/api/catalog/receptions', () => HttpResponse.json([{ id: 4, code: 'R4', name: 'Recepcia D', active: true }])),
+      http.get('/api/receptions/:id/business-day', ({ params }) => {
+        dayRequests.push(String(params.id));
+        return HttpResponse.json({ receptionId: 4, businessDate: '2026-11-18' });
+      }),
+    );
+    const manager = { ...withPerms('PLAN_VIEW', 'GUEST_LOCATION_VIEW', 'GUEST_LOCATION_VIEW_ALL'), defaultReceptionId: null } as unknown as Me;
+    renderPage(manager);
+    expect(await screen.findAllByTestId('guest-row')).toHaveLength(3);
+    expect(dayRequests).toEqual(['4']);
+    expect(screen.queryByText('Nastala neočakávaná chyba.')).toBeNull();
+  });
+
+  it('lekár bez predvolenej recepcie a bez PLAN_VIEW: žiadna chyba, výzva na výber dňa', async () => {
+    mockServer();
+    const dayRequests: string[] = [];
+    server.use(
+      http.get('/api/receptions/:id/business-day', ({ params }) => {
+        dayRequests.push(String(params.id));
+        return HttpResponse.json({ status: 400 }, { status: 400 });
+      }),
+    );
+    renderPage({ ...DOCTOR, defaultReceptionId: null } as unknown as Me);
+    expect(await screen.findByText('Vyberte deň.')).toBeInTheDocument();
+    expect(dayRequests).toEqual([]);
+    expect(screen.queryByText('Nastala neočakávaná chyba.')).toBeNull();
+  });
+
   it('lekár bez VIEW_ALL nemá výber lekára; s VIEW_ALL ho má a filtruje', async () => {
     mockServer();
     const { unmount } = renderPage(DOCTOR);

@@ -6,9 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { isNetError } from '../../shared/api/errors';
 import type { components } from '../../shared/api/schema';
 import { DataAge, useConnection } from '../../shared/offline';
-import { hasPermissionCode } from '../../shared/offline/scope';
+import { hasPermissionCode, receptionsInScope } from '../../shared/offline/scope';
 import {
-  buildGuestCsv, downloadGuestCsv, filterGuests, journalOfflineExport, loadBuildings, loadBusinessDay, loadGuestList, saveCsv,
+  buildGuestCsv, downloadGuestCsv, filterGuests, journalOfflineExport, loadBuildings, loadBusinessDay, loadGuestList, loadReceptions, saveCsv,
 } from './guestListApi';
 
 type Me = components['schemas']['MeView'];
@@ -36,7 +36,21 @@ export function GuestListPage({ me }: { me: Me | null | undefined }) {
   const [printedAt, setPrintedAt] = useState('');
   const [message, setMessage] = useState<{ color: string; text: string } | null>(null);
 
-  const reception = me?.defaultReceptionId;
+  // Obchodný deň: z predvolenej recepcie, inak z prvej recepcie v rozsahu (napr. vedúca recepcie).
+  // API vracia `defaultReceptionId: null`, nie chýbajúce pole – null nesmie ísť do URL.
+  const defaultReception = me?.defaultReceptionId ?? undefined;
+  const receptions = useQuery({
+    queryKey: ['guest-list', 'receptions', state],
+    queryFn: loadReceptions,
+    enabled: defaultReception === undefined && hasPermissionCode(me, 'PLAN_VIEW'),
+  });
+  const reception =
+    defaultReception ??
+    receptionsInScope(
+      me,
+      'PLAN_VIEW',
+      (receptions.data?.data ?? []).filter((r) => r.id != null && r.active !== false).map((r) => r.id as number),
+    )[0];
   const businessDay = useQuery({
     queryKey: ['guest-list', 'day', reception, state],
     queryFn: () => loadBusinessDay(reception as number),
