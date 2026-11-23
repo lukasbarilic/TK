@@ -66,6 +66,8 @@ export interface PlanFilters {
   freeOnly: boolean;
   /** Izba bez blokácie a bez akéhokoľvek pobytu v rozsahu. */
   fullyFree: boolean;
+  /** Izba s aspoň jedným pobytom v rozsahu (blokácia sa nepočíta). */
+  occupiedOnly?: boolean;
 }
 
 export interface PlanPreferences {
@@ -81,6 +83,7 @@ export interface DefaultView {
   daysAhead: number;
   freeOnly: boolean;
   fullyFree: boolean;
+  occupiedOnly: boolean;
   zoom: Zoom;
 }
 
@@ -90,5 +93,6 @@ export const DEFAULT_VIEW: DefaultView = {
   daysAhead: 13,
   freeOnly: false,
   fullyFree: false,
+  occupiedOnly: false,
   zoom: 'normal',
 };

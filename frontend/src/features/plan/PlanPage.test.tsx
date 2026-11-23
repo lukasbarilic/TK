@@ -110,6 +110,27 @@ describe('PlanPage – online', () => {
     await waitFor(() => expect(roomRows()).toEqual(['2']));
   });
 
+  it('filter occupiedOnly zobrazí len obsadené izby a vylučuje sa s „celkom prázdne“', async () => {
+    mockServer();
+    renderInRouter(<PlanPage me={receptionist} />);
+    await screen.findAllByTestId('plan-bar');
+    const occupied = screen.getByRole('switch', { name: 'Len obsadené izby' });
+    const fullyFree = screen.getByRole('switch', { name: 'Len celkom prázdne izby' });
+
+    await userEvent.click(occupied);
+    // 101 má pobyt; 102 je prázdna, 201 má len blokáciu
+    await waitFor(() => expect(roomRows()).toEqual(['1']));
+
+    await userEvent.click(fullyFree);
+    expect(occupied).not.toBeChecked();
+    await waitFor(() => expect(roomRows()).toEqual(['2']));
+
+    await userEvent.click(occupied);
+    expect(fullyFree).not.toBeChecked();
+    await waitFor(() => expect(roomRows()).toEqual(['1']));
+    await waitFor(() => expect(preferenceWrites.at(-1)?.body.value).toMatchObject({ occupiedOnly: true, fullyFree: false }), { timeout: 2000 });
+  });
+
   it('filter budov', async () => {
     mockServer();
     renderInRouter(<PlanPage me={receptionist} />);

@@ -134,6 +134,7 @@ export function parseDefaultView(raw: unknown): DefaultView {
     daysAhead: Math.min(60, Math.max(0, int(raw.daysAhead, DEFAULT_VIEW.daysAhead))),
     freeOnly: raw.freeOnly === true,
     fullyFree: raw.fullyFree === true,
+    occupiedOnly: raw.occupiedOnly === true,
     zoom: raw.zoom === 'narrow' || raw.zoom === 'wide' ? raw.zoom : 'normal',
   };
 }
