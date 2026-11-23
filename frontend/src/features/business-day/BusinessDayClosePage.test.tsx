@@ -135,6 +135,10 @@ describe('BusinessDayClosePage', () => {
     expect(await screen.findByTestId('archive-readonly')).toBeInTheDocument();
     expect(screen.getByTestId('tile-arrivals')).toHaveTextContent('4 / 5');
     expect(screen.getByTestId('report-print-head')).toHaveTextContent('17. 11. 2026');
+    // prezeraný deň je viditeľný aj na obrazovke (tlačová hlavička je mimo tlače skrytá)
+    expect(screen.getByTestId('archive-day')).toHaveTextContent('Obchodný deň: ');
+    expect(screen.getByTestId('archive-day')).toHaveTextContent('17. 11. 2026');
+    expect(screen.getByTestId('report-print-area')).not.toContainElement(screen.getByTestId('archive-day'));
     expect(screen.queryByRole('button', { name: 'Uzavrieť deň' })).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Tlačiť report' }));
     expect(window.print).toHaveBeenCalledOnce();

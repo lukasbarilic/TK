@@ -272,6 +272,7 @@
     "archiveEmpty": "Zatiaľ nie je uzavretý žiadny deň.",
     "archiveOpen": "Zobraziť report",
     "archiveReadonly": "Uložený report uzavretého dňa – len na čítanie.",
+    "archiveDay": "Obchodný deň: {{date}}",
     "backToClose": "Späť na uzávierku",
     "checksTitle": "Kontrola pred uzavretím",
     "noShowTitle": "Neprišli",
