@@ -11,6 +11,11 @@ import { server } from '../../shared/test/server';
 import { PlanPage } from './PlanPage';
 import { BUSINESS_DATE, sampleCard, samplePlan, stayBar, WINDOW } from './testData';
 import type { Plan } from './types';
+import type { ReactElement } from 'react';
+import { MemoryRouter } from 'react-router-dom';
+
+/** Plán používa odkazy (Link), preto potrebuje router. */
+const renderInRouter = (ui: ReactElement) => renderWithProviders(<MemoryRouter>{ui}</MemoryRouter>);
 
 let planRequests: URL[] = [];
 let preferenceWrites: { key: string; body: { value: { zoom?: string } } }[] = [];
@@ -58,7 +63,7 @@ afterEach(async () => {
 describe('PlanPage – online', () => {
   it('pásiky ležia na správnych stĺpcoch; víkendy, čiara obchodného dňa', async () => {
     mockServer();
-    renderWithProviders(<PlanPage me={receptionist} />);
+    renderInRouter(<PlanPage me={receptionist} />);
     await screen.findAllByTestId('plan-bar');
 
     // okno 17. 11. – 1. 12. (obchodný deň −1 až +13): 19. 11. = stĺpec 2, 22. 11. = stĺpec 5
@@ -85,14 +90,14 @@ describe('PlanPage – online', () => {
 
   it('prístelka je v zozname lôžok izby', async () => {
     mockServer();
-    renderWithProviders(<PlanPage me={receptionist} />);
+    renderInRouter(<PlanPage me={receptionist} />);
     await screen.findAllByTestId('plan-bar');
     expect(screen.getByText('Prístelka 3')).toBeInTheDocument();
   });
 
   it('filter freeOnly skryje obsadené a blokované izby', async () => {
     mockServer();
-    renderWithProviders(<PlanPage me={receptionist} />);
+    renderInRouter(<PlanPage me={receptionist} />);
     await screen.findAllByTestId('plan-bar');
     expect(roomRows()).toEqual(['1', '2', '3']);
 
@@ -107,7 +112,7 @@ describe('PlanPage – online', () => {
 
   it('filter budov', async () => {
     mockServer();
-    renderWithProviders(<PlanPage me={receptionist} />);
+    renderInRouter(<PlanPage me={receptionist} />);
     await screen.findAllByTestId('plan-bar');
     await userEvent.click(screen.getByRole('button', { name: 'VIL' }));
     await waitFor(() => expect(roomRows()).toEqual(['3']));
@@ -115,7 +120,7 @@ describe('PlanPage – online', () => {
 
   it('klik na pásik otvorí bočný panel s pobytom a kartou', async () => {
     mockServer();
-    renderWithProviders(<PlanPage me={receptionist} />);
+    renderInRouter(<PlanPage me={receptionist} />);
     await screen.findAllByTestId('plan-bar');
     await userEvent.click(bar('stay:812', 11) as HTMLElement);
     const panel = await screen.findByTestId('stay-panel');
@@ -136,7 +141,7 @@ describe('PlanPage – online', () => {
       return p;
     });
     server.use(http.get('/api/reservations/:id', () => HttpResponse.json({ ...sampleCard, note: 'Fiktívna poznámka', noteInPlan: true, comments: [] })));
-    renderWithProviders(<PlanPage me={receptionist} />);
+    renderInRouter(<PlanPage me={receptionist} />);
     await screen.findAllByTestId('plan-bar');
     expect(within(bar('stay:812', 11) as HTMLElement).getByTestId('bar-icon-note')).toBeInTheDocument();
     await userEvent.click(bar('stay:812', 11) as HTMLElement);
@@ -147,7 +152,7 @@ describe('PlanPage – online', () => {
 
   it('zmena pohľadu sa uloží do plan.defaultView', async () => {
     mockServer();
-    renderWithProviders(<PlanPage me={receptionist} />);
+    renderInRouter(<PlanPage me={receptionist} />);
     await screen.findAllByTestId('plan-bar');
     expect(preferenceWrites).toEqual([]);
     await userEvent.click(screen.getByText('Široké'));
@@ -160,7 +165,7 @@ describe('PlanPage – online', () => {
 
   it('odkaz z karty na vzdialený dátum posunie rozsah, ale neuloží ho do plan.defaultView', async () => {
     mockServer();
-    renderWithProviders(<PlanPage me={receptionist} focus={{ date: '2027-01-27' }} />);
+    renderInRouter(<PlanPage me={receptionist} focus={{ date: '2027-01-27' }} />);
     await waitFor(() => expect(screen.getByTestId('plan-range')).toHaveTextContent('2027-01-26 – 2027-02-09'));
     // načíta sa len posunutý rozsah, nie spolu s oknom okolo obchodného dňa
     await waitFor(() =>
@@ -183,7 +188,7 @@ describe('PlanPage – online', () => {
         HttpResponse.json({ key: 'plan.colors', version: 1, value: { CHECKED_IN: '#00AA00' } }),
       ),
     );
-    renderWithProviders(<PlanPage me={receptionist} />);
+    renderInRouter(<PlanPage me={receptionist} />);
     await screen.findByTestId('plan-grid');
     expect(screen.getByRole('switch', { name: 'Len voľné izby' })).toBeChecked();
     expect(roomRows()).toEqual(['2']);
@@ -199,7 +204,7 @@ describe('PlanPage – online', () => {
     it('plan-changed obnoví len dotknuté izby a vlastná zmena sa nespracuje dvakrát', async () => {
       let current = samplePlan();
       mockServer(() => current);
-      renderWithProviders(<PlanPage me={receptionist} />);
+      renderInRouter(<PlanPage me={receptionist} />);
       await screen.findAllByTestId('plan-bar');
       expect(planRequests).toHaveLength(1);
       expect(bar('block:5', 31)).toBeDefined();
@@ -227,7 +232,7 @@ describe('PlanPage – online', () => {
 
     it('udalosť inej recepcie alebo mimo okna sa ignoruje', async () => {
       mockServer();
-      renderWithProviders(<PlanPage me={receptionist} />);
+      renderInRouter(<PlanPage me={receptionist} />);
       await screen.findAllByTestId('plan-bar');
       event({ auditEventId: 1, receptionId: 1 });
       event({ auditEventId: 2, from: '2027-03-01', to: '2027-03-05' });
@@ -238,7 +243,7 @@ describe('PlanPage – online', () => {
     it('business-day-changed obnoví celý plán', async () => {
       let current = samplePlan();
       mockServer(() => current);
-      renderWithProviders(<PlanPage me={receptionist} />);
+      renderInRouter(<PlanPage me={receptionist} />);
       await screen.findAllByTestId('plan-bar');
       current = samplePlan();
       current.rooms![2].bars = [];
@@ -273,7 +278,7 @@ describe('PlanPage – online', () => {
         disconnect() {}
       };
       mockServer();
-      renderWithProviders(<PlanPage me={receptionist} />);
+      renderInRouter(<PlanPage me={receptionist} />);
       // zoom Stredné (36 px): (1300 − 200 − 20) / 36 = 30 dní namiesto 15 z nastavení
       await waitFor(() => expect(screen.getAllByTestId('plan-day')).toHaveLength(30));
       expect(screen.getByTestId('plan-range')).toHaveTextContent('2026-11-17 – 2026-12-16');
@@ -295,7 +300,7 @@ describe('PlanPage – offline', () => {
   it('zobrazí plán z trezora s vekom dát a režimom len na čítanie; karta z trezora', async () => {
     await seed();
     connection.reset('offline');
-    renderWithProviders(<PlanPage me={receptionist} />); // žiadny HTTP handler: server sa nesmie volať
+    renderInRouter(<PlanPage me={receptionist} />); // žiadny HTTP handler: server sa nesmie volať
     await screen.findAllByTestId('plan-bar');
     expect(bar('stay:812', 11)).toHaveAttribute('data-start-col', '2');
     expect(screen.getByTestId('data-age')).toHaveTextContent(/Údaje z/);
@@ -310,7 +315,7 @@ describe('PlanPage – offline', () => {
   it('dni mimo lokálnych dát sú šrafované s textom „Údaje nie sú k dispozícii“', async () => {
     await seed({ from: '2026-11-17', to: '2026-11-25' });
     connection.reset('offline');
-    renderWithProviders(<PlanPage me={receptionist} />);
+    renderInRouter(<PlanPage me={receptionist} />);
     await screen.findAllByTestId('plan-bar');
     const hatched = screen.getByTestId('plan-no-data');
     expect(hatched).toHaveTextContent('Údaje nie sú k dispozícii');
@@ -322,14 +327,14 @@ describe('PlanPage – offline', () => {
     await platform.vault.put(DS.catalog, 'receptions', [{ id: 2, name: 'Recepcia B', active: true }], { syncedAt: '2026-11-17T21:47:00.000Z' });
     await platform.vault.put(DS.businessDay, '2', { receptionId: 2, businessDate: BUSINESS_DATE }, { syncedAt: '2026-11-17T21:47:00.000Z' });
     connection.reset('offline');
-    renderWithProviders(<PlanPage me={receptionist} />);
+    renderInRouter(<PlanPage me={receptionist} />);
     expect(await screen.findByTestId('plan-empty')).toHaveTextContent('Tieto údaje nie sú na tomto počítači uložené');
   });
 
   it('zmena pohľadu offline sa uloží len lokálne', async () => {
     await seed();
     connection.reset('offline');
-    renderWithProviders(<PlanPage me={receptionist} />);
+    renderInRouter(<PlanPage me={receptionist} />);
     await screen.findAllByTestId('plan-bar');
     await userEvent.click(screen.getByText('Široké'));
     await waitFor(async () => expect((await platform.vault.get<{ value: { zoom: string } }>(DS.preferences, 'plan.defaultView'))?.value.value.zoom).toBe('wide'), { timeout: 2000 });

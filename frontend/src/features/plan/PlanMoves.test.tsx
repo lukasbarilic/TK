@@ -10,6 +10,11 @@ import { server } from '../../shared/test/server';
 import { PlanPage } from './PlanPage';
 import { BUSINESS_DATE, samplePlan, stayBar } from './testData';
 import type { Plan } from './types';
+import type { ReactElement } from 'react';
+import { MemoryRouter } from 'react-router-dom';
+
+/** Plán používa odkazy (Link), preto potrebuje router. */
+const renderInRouter = (ui: ReactElement) => renderWithProviders(<MemoryRouter>{ui}</MemoryRouter>);
 
 const mover: typeof receptionist = { ...receptionist, permissions: [...(receptionist.permissions ?? []), { code: 'STAY_MOVE', scopes: [{ receptionId: 2 }] }] };
 
@@ -84,7 +89,7 @@ afterEach(async () => {
 describe('PlanPage – zmeny ubytovania', () => {
   it('ťahanie pásika na iné lôžko presunie celý pobyt a obnoví dotknuté izby', async () => {
     mockServer([http.post('/api/stays/:id/move', async (ctx) => { calls.push({ method: 'POST', url: new URL(ctx.request.url).pathname, body: await ctx.request.json() }); return HttpResponse.json({ rooms: [] }, { headers: { 'X-Audit-Event-Id': '77' } }); })]);
-    renderWithProviders(<PlanPage me={mover} />);
+    renderInRouter(<PlanPage me={mover} />);
     await screen.findAllByTestId('plan-bar');
     const before = planRequests.length;
     dragTo(bar('stay:813'), bedCells(22));
@@ -98,7 +103,7 @@ describe('PlanPage – zmeny ubytovania', () => {
 
   it('Alt + ťahanie presunie pobyt od dňa pod kurzorom', async () => {
     mockServer([http.post('/api/stays/:id/move', async (ctx) => { calls.push({ method: 'POST', url: ctx.request.url, body: await ctx.request.json() }); return HttpResponse.json({ rooms: [] }); })]);
-    renderWithProviders(<PlanPage me={mover} />);
+    renderInRouter(<PlanPage me={mover} />);
     await screen.findAllByTestId('plan-bar');
     // stĺpec 4 (36 px/deň): x = 100 + 4 × 36 + 10 → 21. 11.
     dragTo(bar('stay:812'), bedCells(12), { alt: true, dx: 4 * 36 + 10 });
@@ -108,7 +113,7 @@ describe('PlanPage – zmeny ubytovania', () => {
 
   it('ťahanie pravého okraja zmení koniec pobytu (PATCH s verziou)', async () => {
     mockServer([http.patch('/api/stays/:id', async (ctx) => { calls.push({ method: 'PATCH', url: ctx.request.url, body: await ctx.request.json() }); return HttpResponse.json({ rooms: [] }); })]);
-    renderWithProviders(<PlanPage me={mover} />);
+    renderInRouter(<PlanPage me={mover} />);
     await screen.findAllByTestId('plan-bar');
     const handle = screen.getAllByTestId('resize-handle').find((h) => h.getAttribute('data-bar-id') === 'stay:813') as HTMLElement;
     fireEvent.pointerDown(handle, { pointerId: 1, button: 0, isPrimary: true, clientX: 200, clientY: 10 });
@@ -121,7 +126,7 @@ describe('PlanPage – zmeny ubytovania', () => {
 
   it('presun z kontextového menu „Presťahovať od…“', async () => {
     mockServer([http.post('/api/stays/:id/move', async (ctx) => { calls.push({ method: 'POST', url: ctx.request.url, body: await ctx.request.json() }); return HttpResponse.json({ rooms: [] }); })]);
-    renderWithProviders(<PlanPage me={mover} />);
+    renderInRouter(<PlanPage me={mover} />);
     await screen.findAllByTestId('plan-bar');
     fireEvent.contextMenu(bar('stay:812'));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Presťahovať od…' }));
@@ -135,7 +140,7 @@ describe('PlanPage – zmeny ubytovania', () => {
 
   it('výmena: kontextové menu „Vymeniť s…“ a klik na druhý pásik', async () => {
     mockServer();
-    renderWithProviders(<PlanPage me={mover} />);
+    renderInRouter(<PlanPage me={mover} />);
     await screen.findAllByTestId('plan-bar');
     fireEvent.contextMenu(bar('stay:813'));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Vymeniť s…' }));
@@ -148,7 +153,7 @@ describe('PlanPage – zmeny ubytovania', () => {
 
   it('zrušenie budúceho ubytovania po potvrdení; prebiehajúci pobyt túto akciu nemá', async () => {
     mockServer();
-    renderWithProviders(<PlanPage me={mover} />);
+    renderInRouter(<PlanPage me={mover} />);
     await screen.findAllByTestId('plan-bar');
     fireEvent.contextMenu(bar('stay:812'));
     expect(screen.queryByRole('menuitem', { name: 'Zrušiť ubytovanie' })).toBeNull();
@@ -162,7 +167,7 @@ describe('PlanPage – zmeny ubytovania', () => {
 
   it('počas ťahania vyznačí, či je cieľ podľa lokálnych dát voľný', async () => {
     mockServer();
-    renderWithProviders(<PlanPage me={mover} />);
+    renderInRouter(<PlanPage me={mover} />);
     await screen.findAllByTestId('plan-bar');
     const start = (target: HTMLElement) => {
       setRect(target, 100, 100, 540, 30);
@@ -179,7 +184,7 @@ describe('PlanPage – zmeny ubytovania', () => {
 
   it('pobyt na lôžku 22 (obsadené iným pobytom) vs. voľné lôžko 12: hint podľa lokálnych dát', async () => {
     mockServer();
-    renderWithProviders(<PlanPage me={mover} />);
+    renderInRouter(<PlanPage me={mover} />);
     await screen.findAllByTestId('plan-bar');
     setRect(bedCells(31), 100, 100, 540, 30);
     fireEvent.pointerDown(bar('stay:813'), { pointerId: 1, button: 0, isPrimary: true, clientX: 10, clientY: 10 });
@@ -191,7 +196,7 @@ describe('PlanPage – zmeny ubytovania', () => {
 
   describe('odkladisko a dávka', () => {
     async function parkTwo() {
-      renderWithProviders(<PlanPage me={mover} />);
+      renderInRouter(<PlanPage me={mover} />);
       await screen.findAllByTestId('plan-bar');
       dragTo(bar('stay:813'), screen.getByTestId('parking'));
       await waitFor(() => expect(screen.getAllByTestId('parked-item')).toHaveLength(1));
@@ -252,7 +257,7 @@ describe('PlanPage – zmeny ubytovania', () => {
           return n++ === 0 ? problem(409, 'CONFIRMATION_REQUIRED', { confirmable: true, warnings: ['RELEASES_HELD_BED'] }) : HttpResponse.json({ rooms: [] });
         }),
       ]);
-      renderWithProviders(<PlanPage me={mover} />);
+      renderInRouter(<PlanPage me={mover} />);
       await screen.findAllByTestId('plan-bar');
       dragTo(bar('stay:813'), bedCells(22));
       expect(await screen.findByTestId('confirm-warnings')).toHaveTextContent('Ubytovaním sa uvoľní lôžko držané pre iný pobyt.');
@@ -264,7 +269,7 @@ describe('PlanPage – zmeny ubytovania', () => {
 
     it('409 konflikt verzie: upozornenie, obnovenie izieb, požiadavka sa nezopakuje', async () => {
       mockServer([http.post('/api/stays/:id/move', async ({ request }) => { calls.push({ method: 'POST', url: request.url, body: await request.json() }); return problem(409, 'STALE_DATA'); })]);
-      renderWithProviders(<PlanPage me={mover} />);
+      renderInRouter(<PlanPage me={mover} />);
       await screen.findAllByTestId('plan-bar');
       const before = planRequests.length;
       dragTo(bar('stay:813'), bedCells(22));
@@ -275,7 +280,7 @@ describe('PlanPage – zmeny ubytovania', () => {
 
     it('409 obsadené lôžko: upozornenie s textom chyby', async () => {
       mockServer([http.post('/api/stays/:id/move', () => problem(409, 'BED_OCCUPIED'))]);
-      renderWithProviders(<PlanPage me={mover} />);
+      renderInRouter(<PlanPage me={mover} />);
       await screen.findAllByTestId('plan-bar');
       dragTo(bar('stay:813'), bedCells(22));
       expect(await screen.findByTestId('plan-notice')).toHaveTextContent('Lôžko je v tomto termíne už obsadené.');
@@ -285,7 +290,7 @@ describe('PlanPage – zmeny ubytovania', () => {
   describe('oprávnenia a offline', () => {
     it('bez STAY_MOVE sa pásiky nedajú ťahať, nie je menu ani odkladisko', async () => {
       mockServer();
-      renderWithProviders(<PlanPage me={receptionist} />);
+      renderInRouter(<PlanPage me={receptionist} />);
       await screen.findAllByTestId('plan-bar');
       expect(screen.queryByTestId('parking')).toBeNull();
       expect(screen.queryAllByTestId('resize-handle')).toHaveLength(0);
@@ -300,14 +305,14 @@ describe('PlanPage – zmeny ubytovania', () => {
         return p;
       };
       mockServer([http.get('/api/accommodation-plan', () => HttpResponse.json(locked()))]);
-      const { unmount } = renderWithProviders(<PlanPage me={mover} />);
+      const { unmount } = renderInRouter(<PlanPage me={mover} />);
       await screen.findAllByTestId('plan-bar');
       fireEvent.contextMenu(bar('stay:813'));
       expect(screen.queryByTestId('bar-menu')).toBeNull();
       unmount();
 
       mockServer([http.get('/api/accommodation-plan', () => HttpResponse.json(locked()))]);
-      renderWithProviders(<PlanPage me={{ ...mover, permissions: [...(mover.permissions ?? []), { code: 'STAY_MOVE_LOCKED' }] }} />);
+      renderInRouter(<PlanPage me={{ ...mover, permissions: [...(mover.permissions ?? []), { code: 'STAY_MOVE_LOCKED' }] }} />);
       await screen.findAllByTestId('plan-bar');
       fireEvent.contextMenu(bar('stay:813'));
       expect(await screen.findByTestId('bar-menu')).toBeInTheDocument();
@@ -320,7 +325,7 @@ describe('PlanPage – zmeny ubytovania', () => {
         return p;
       };
       mockServer([http.get('/api/accommodation-plan', () => HttpResponse.json(past()))]);
-      renderWithProviders(<PlanPage me={mover} />);
+      renderInRouter(<PlanPage me={mover} />);
       await screen.findAllByTestId('plan-bar');
       dragTo(bar('stay:815'), bedCells(22));
       expect(await screen.findByTestId('plan-notice')).toHaveTextContent('Tento presun nie je povolený.');
@@ -330,10 +335,10 @@ describe('PlanPage – zmeny ubytovania', () => {
     it('offline sa ťahanie ani menu neponúka', async () => {
       mockServer();
       connection.reset('offline');
-      renderWithProviders(<PlanPage me={mover} />);
+      renderInRouter(<PlanPage me={mover} />);
       // bez uložených dát v trezore nie je čo ukázať; pri online → offline prechode ostane plán len na čítanie
       connection.reset('online');
-      renderWithProviders(<PlanPage me={mover} />);
+      renderInRouter(<PlanPage me={mover} />);
       await screen.findAllByTestId('plan-bar');
       act(() => connection.reset('offline'));
       await waitFor(() => expect(screen.queryAllByTestId('resize-handle')).toHaveLength(0));
