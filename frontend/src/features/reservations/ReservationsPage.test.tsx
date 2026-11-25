@@ -108,6 +108,46 @@ describe('Detail karty', () => {
     expect(link).toHaveAttribute('href', '/plan?roomId=7&date=2026-11-19');
   });
 
+  it('hlavička: meno hlavného hosťa, „+N“ a číslo karty; bočný panel s termínom, nocami, ubytovaním a stavom', async () => {
+    server.use(
+      http.get('/api/reservations/912', () =>
+        HttpResponse.json({
+          ...card,
+          status: 'CHECKED_IN',
+          guests: [
+            { id: 2, firstName: 'Ján', lastName: 'Druhý', primaryGuest: false },
+            { id: 1, firstName: 'Žofia', lastName: 'Ľudová', primaryGuest: true },
+          ],
+        }),
+      ),
+      http.get('/api/reservations/912/stays', () =>
+        HttpResponse.json([{ id: 5, reservationId: 912, buildingName: 'A', roomNumber: '101', roomId: 7, bedNumber: 1, dateFrom: '2026-11-19', dateTo: '2026-11-22' }]),
+      ),
+    );
+    renderDetail();
+    await screen.findByTestId('reservation-title');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Ľudová Žofia +1');
+    expect(screen.getByTestId('reservation-number')).toHaveTextContent('R-2026-0912');
+    const panel = screen.getByTestId('reservation-side-panel');
+    expect(within(panel).getByText('Hlavný hosť')).toBeInTheDocument();
+    expect(within(panel).getAllByTestId('guest-row')).toHaveLength(2);
+    expect(within(panel).getByTestId('reservation-dates')).toHaveTextContent('2026-11-19 – 2026-11-22');
+    expect(within(panel).getByTestId('reservation-nights')).toHaveTextContent('3 noci');
+    expect(await within(panel).findByTestId('stay-row')).toHaveTextContent('A 101');
+    expect(within(panel).getAllByTestId('status-step').find((el) => el.getAttribute('aria-current') === 'step')).toHaveTextContent('2. Prítomný');
+  });
+
+  it('karta bez hostí: číslo karty ako nadpis a „Bez hostí“ v paneli', async () => {
+    server.use(
+      http.get('/api/reservations/912', () => HttpResponse.json({ ...card, guests: [] })),
+      http.get('/api/reservations/912/stays', () => HttpResponse.json([])),
+    );
+    renderDetail();
+    await screen.findByTestId('reservation-number');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('R-2026-0912');
+    expect(screen.getByText('Bez hostí')).toBeInTheDocument();
+  });
+
   it('bez RESERVATION_VIEW sa kontakty nezobrazia', async () => {
     mockOnline();
     renderDetail(false);
