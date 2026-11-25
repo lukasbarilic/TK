@@ -1,10 +1,11 @@
-import { Alert, Badge, Button, Checkbox, Group, Loader, Modal, Paper, Stack, Table, Text, Textarea, TextInput } from '@mantine/core';
+import { Alert, Button, Checkbox, Grid, Group, Loader, Modal, Paper, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { readOrigin } from '../../shared/navigation/origin';
-import { PageHeader } from '../../shared/ui/PageHeader';
+import { ReservationHeader } from './ReservationHeader';
+import { ReservationSidePanel } from './ReservationSidePanel';
 import { ApiError } from '../../shared/api/errors';
 import { DataAge, WriteAction } from '../../shared/offline';
 import { putLocal } from '../../shared/offline';
@@ -12,9 +13,9 @@ import { DS } from '../../shared/offline/datasets';
 import { hasPermissionCode } from '../../shared/offline/scope';
 import type { components } from '../../shared/api/schema';
 import { StatusButtons, useStatusActions } from '../../shared/status';
-import { addComment, hideComment, loadReservation, loadStays, updateReservation, type ReservationComment, type ReservationDetail } from './reservationsApi';
+import { addComment, hideComment, loadReservation, updateReservation, type ReservationComment, type ReservationDetail } from './reservationsApi';
 
-/** Detail karty: hostia, kontakty (len s `RESERVATION_VIEW`, rieši rodič), pobyty s odkazom na plán, úprava online. */
+/** Detail karty: hlavička s hlavným hosťom a akciami, bočný panel (hostia, termín, ubytovanie, priebeh), poznámka, úprava online a komentáre. */
 export function ReservationDetailPage({
   id,
   canSeeContacts,
@@ -30,78 +31,42 @@ export function ReservationDetailPage({
 }) {
   const { t } = useTranslation();
   const card = useQuery({ queryKey: ['reservations', 'detail', id], queryFn: () => loadReservation(id) });
-  const stays = useQuery({ queryKey: ['reservations', 'stays', id], queryFn: () => loadStays(id), retry: false });
-  const [checkingIn, setCheckingIn] = useState(false);
   const status = useStatusActions();
   const origin = readOrigin(useLocation().state);
 
+  const d = card.data && !card.data.empty ? card.data.data : undefined;
+  const canEdit = hasPermissionCode(me, 'RESERVATION_EDIT');
+
   return (
     <Paper withBorder p="md" radius="lg" bg="white" data-testid="reservation-detail">
-      <PageHeader
-        title={t('reservations.detail')}
+      <ReservationHeader
+        d={d}
         fallback="/reservations"
         crumbs={[
           origin ?? { label: t('menu.reservations'), to: '/reservations' },
-          { label: card.data && !card.data.empty ? (card.data.data.reservationNumber ?? t('reservations.detail')) : t('reservations.detail') },
+          { label: d?.reservationNumber ?? t('reservations.detail') },
         ]}
-      />
+      >
+        {d && <StatusButtons primaryLast status={d.status} me={me} busy={status.busy} onAction={(a) => status.request(a, id)} />}
+      </ReservationHeader>
+      {status.node}
       {card.isPending && <Loader size="sm" />}
       {card.isError && <Alert color="red">{t('errors.generic')}</Alert>}
       {card.data?.empty && <Text c="dimmed" data-testid="reservation-not-stored">{t('offline.notStored')}</Text>}
-      {card.data && !card.data.empty && (
-        <Stack gap="md">
-          <DetailBody d={card.data.data} />
-          <StatusProgress d={card.data.data} />
-          {status.node}
-          <StatusButtons status={card.data.data.status} me={me} busy={status.busy} onAction={(a) => status.request(a, id)} />
-          <DataAge source={card.data.source} syncedAt={card.data.syncedAt} />
-          <NotePanel d={card.data.data} canEdit={hasPermissionCode(me, 'RESERVATION_EDIT')} />
-          <CommentsPanel d={card.data.data} canEdit={hasPermissionCode(me, 'RESERVATION_EDIT')} />
-          <Stack gap={4}>
-            <Text fw={600}>{t('reservations.guests')}</Text>
-            {(card.data.data.guests ?? []).filter((g) => !g.cancelled).map((g) => (
-              <Group key={g.id} gap="md" data-testid="guest-row">
-                <Text size="sm">
-                  {g.lastName} {g.firstName}
-                  {g.primaryGuest ? ` (${t('plan.panel.primary')})` : ''}
-                </Text>
-                {canSeeContacts && (g.email || g.phone) && (
-                  <Text size="sm" c="dimmed" data-testid="guest-contact">{[g.email, g.phone].filter(Boolean).join(', ')}</Text>
-                )}
-              </Group>
-            ))}
-          </Stack>
-          <Stack gap={4}>
-            <Group justify="space-between">
-              <Text fw={600}>{t('reservations.stays')}</Text>
-              {renderCheckIn && (card.data.data.status === 'RESERVED' || card.data.data.status === 'CHECKED_IN') && (
-                <WriteAction>
-                  <Button size="compact-md" onClick={() => setCheckingIn(true)}>{t('stays.open')}</Button>
-                </WriteAction>
-              )}
-            </Group>
-            {checkingIn && renderCheckIn?.(card.data.data, () => setCheckingIn(false))}
-            {stays.isPending && <Loader size="xs" />}
-            {stays.isError && <Text size="sm" c="dimmed" data-testid="stays-unavailable">{t('offline.onlineOnly')}</Text>}
-            {stays.data && stays.data.length === 0 && <Text size="sm" c="dimmed">{t('reservations.noStays')}</Text>}
-            {stays.data && stays.data.length > 0 && (
-              <Table>
-                <Table.Tbody>
-                  {stays.data.map((s) => (
-                    <Table.Tr key={s.id} data-testid="stay-row">
-                      <Table.Td>{s.buildingName} {s.roomNumber}, {t('plan.bed', { n: s.bedNumber })}</Table.Td>
-                      <Table.Td>{s.dateFrom} – {s.dateTo}</Table.Td>
-                      <Table.Td>
-                        <Link to={`/plan?roomId=${s.roomId}&date=${s.dateFrom}`}>{t('reservations.showInPlan')}</Link>
-                      </Table.Td>
-                    </Table.Tr>
-                  ))}
-                </Table.Tbody>
-              </Table>
-            )}
-          </Stack>
-          <EditForm key={card.data.data.version} d={card.data.data} />
-        </Stack>
+      {card.data && !card.data.empty && d && (
+        <Grid gap="lg">
+          <Grid.Col span={{ base: 12, md: 4 }}>
+            <ReservationSidePanel d={d} canSeeContacts={canSeeContacts} renderCheckIn={renderCheckIn} />
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, md: 8 }}>
+            <Stack gap="md">
+              <DataAge source={card.data.source} syncedAt={card.data.syncedAt} />
+              <NotePanel d={d} canEdit={canEdit} />
+              <EditForm key={d.version} d={d} />
+              <CommentsPanel d={d} canEdit={canEdit} />
+            </Stack>
+          </Grid.Col>
+        </Grid>
       )}
     </Paper>
   );
@@ -109,51 +74,6 @@ export function ReservationDetailPage({
 
 const fmtTime = (iso: string | undefined, lang: string) =>
   iso ? new Date(iso).toLocaleString(lang, { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : undefined;
-
-/** Priebeh v troch krokoch (Rezervovaná → Prítomný → Odhlásený) s časmi; storno a neprišiel sú samostatné konce. */
-function StatusProgress({ d }: { d: ReservationDetail }) {
-  const { t, i18n } = useTranslation();
-  const rank = { RESERVED: 0, NO_SHOW: 0, CANCELLED: 0, CHECKED_IN: 1, CHECKED_OUT: 2 }[d.status ?? 'RESERVED'];
-  const steps = [
-    { key: 'RESERVED', time: undefined },
-    { key: 'CHECKED_IN', time: fmtTime(d.checkedInAt, i18n.language) },
-    { key: 'CHECKED_OUT', time: fmtTime(d.checkedOutAt, i18n.language) },
-  ];
-  return (
-    <Stack gap={4}>
-      <Group gap="lg" data-testid="status-steps">
-        {steps.map((s, i) => (
-          <Stack key={s.key} gap={0} data-testid="status-step" data-done={i <= rank && d.status !== 'CANCELLED' && d.status !== 'NO_SHOW'}>
-            <Text size="sm" fw={i === rank ? 700 : 400} c={i <= rank && d.status !== 'CANCELLED' ? undefined : 'dimmed'}>
-              {i + 1}. {t(`status.steps.${s.key}`)}
-            </Text>
-            {s.time && <Text size="xs" c="dimmed">{s.time}</Text>}
-          </Stack>
-        ))}
-      </Group>
-      {d.status === 'CANCELLED' && (
-        <Text size="sm" data-testid="status-cancelled">
-          {t('status.cancelled', { time: fmtTime(d.cancelledAt, i18n.language) ?? '' })}
-          {d.cancelReason ? ` ${t('status.cancelReason', { reason: d.cancelReason })}` : ''}
-        </Text>
-      )}
-    </Stack>
-  );
-}
-
-function DetailBody({ d }: { d: ReservationDetail }) {
-  const { t } = useTranslation();
-  return (
-    <Stack gap={2}>
-      <Group gap="sm">
-        <Text fw={700} data-testid="reservation-number">{d.reservationNumber}</Text>
-        {d.status && <Badge variant="light">{t(`plan.status.${d.status}`, d.status)}</Badge>}
-        {d.exclusiveRoomUse && <Badge variant="light" color="orange" data-testid="exclusive-badge">{t('reservations.exclusiveRoomUse')}</Badge>}
-      </Group>
-      <Text size="sm" data-testid="reservation-dates">{d.arrivalDate} – {d.departureDate}</Text>
-    </Stack>
-  );
-}
 
 /** Úprava termínu a príznakov; `version` ide v tele (optimistic locking), konflikt = výzva na obnovenie. */
 function EditForm({ d }: { d: ReservationDetail }) {

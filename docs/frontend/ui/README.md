@@ -43,3 +43,7 @@ Súbory v tomto priečinku sú zdrojová kópia plátna k 18. 11. 2026 (formát 
 | `UzavierkaReport.dc.html` | Uzávierka: report dňa, obsadenosť, výhľad 14 dní | F22 |
 
 Farby stavov: Rezervovaná `#CFE3F7` s čiarkovaným okrajom `#3F79B8`, Prítomný `#1E5FA8`, Odhlásený `#D5DCE4`, Neprišiel `#FFF1E0` s okrajom `#D2691E`, Stornovaná `#F7E7DE`. Poznámka ku karte: panel `#FFF8E8`, okraj `#EBCB8B`.
+
+## v3 – detail karty, Variant B (TK-54)
+
+Detail karty (`/reservations/:id`) má hlavičku v jednom riadku (Späť, meno hlavného hosťa + „+N“, číslo, stav, akcie; hlavná akcia vpravo, Storno ako riziková) a ľavý bočný panel „Hostia / Termín / Ubytovanie / Priebeh“; vpravo Poznámka, Úprava karty, Komentáre. Na úzkej šírke ide panel nad obsah. Zdrojom pravdy je plátno (Variant B); súbory `Karta*.dc.html` zatiaľ zodpovedajú starému rozloženiu a treba ich obnoviť z plátna.
