@@ -1,12 +1,14 @@
-import { Alert, Avatar, Button, Group, Loader, Paper, Stack, Text, Title } from '@mantine/core';
+import { Alert, Avatar, Badge, Button, Group, Loader, Paper, Stack, Text, Title } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { WriteAction } from '../../shared/offline';
 import { diffDays } from '../../shared/time';
+import { GuestEditModal } from './GuestEditModal';
+import { ReservationEditModal } from './ReservationEditModal';
 import { activeGuests, primaryOf } from './ReservationHeader';
-import { loadStays, type ReservationDetail } from './reservationsApi';
+import { loadStays, type ReservationDetail, type ReservationGuest } from './reservationsApi';
 
 // Sekundárny text s kontrastom ≥ 4,5:1 na bielom pozadí (Mantine „dimmed“ je svetlejší).
 const MUTED = '#4A5D75';
@@ -20,10 +22,13 @@ const nightsOf = (from?: string, to?: string): number | undefined => {
   return Number.isNaN(n) ? undefined : n;
 };
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Section({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
   return (
     <Stack gap={6} component="section" aria-label={title}>
-      <Title order={2} size="sm" c={MUTED} tt="uppercase">{title}</Title>
+      <Group justify="space-between" wrap="nowrap">
+        <Title order={2} size="sm" c={MUTED} tt="uppercase">{title}</Title>
+        {action}
+      </Group>
       {children}
     </Stack>
   );
@@ -33,15 +38,20 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 export function ReservationSidePanel({
   d,
   canSeeContacts,
+  canEdit = false,
   renderCheckIn,
 }: {
   d: ReservationDetail;
   canSeeContacts: boolean;
+  /** `RESERVATION_EDIT`: úprava termínu a príznakov karty, s kontaktmi aj oprava údajov hosťa. */
+  canEdit?: boolean;
   renderCheckIn?: (card: ReservationDetail, onClose: () => void) => ReactNode;
 }) {
   const { t, i18n } = useTranslation();
   const stays = useQuery({ queryKey: ['reservations', 'stays', d.id], queryFn: () => loadStays(d.id as number), retry: false });
   const [checkingIn, setCheckingIn] = useState(false);
+  const [editingClientId, setEditingClientId] = useState<number | null>(null);
+  const [editingCard, setEditingCard] = useState(false);
   const guests = activeGuests(d);
   const main = primaryOf(d);
   const others = guests.filter((g) => g !== main);
@@ -66,8 +76,23 @@ export function ReservationSidePanel({
           <Text size="xs" c={MUTED} data-testid="guest-contact">{[g.email, g.phone].filter(Boolean).join(', ')}</Text>
         )}
       </Stack>
+      {canEdit && canSeeContacts && g.clientId !== undefined && (
+        <WriteAction>
+          <Button
+            size="compact-xs"
+            variant="subtle"
+            ml="auto"
+            aria-label={t('reservations.guestEdit.openFor', { name: `${g.lastName ?? ''} ${g.firstName ?? ''}`.trim() })}
+            onClick={() => setEditingClientId(g.clientId as number)}
+          >
+            {t('reservations.guestEdit.open')}
+          </Button>
+        </WriteAction>
+      )}
     </Group>
   );
+  // hosť sa hľadá v aktuálnych dátach karty, aby dialóg po obnovení dostal novú `clientVersion`
+  const editing: ReservationGuest | undefined = guests.find((g) => g.clientId === editingClientId);
 
   return (
     <Paper withBorder p="md" radius="md" bg="gray.0" data-testid="reservation-side-panel" component="aside" aria-label={t('reservations.sidePanel')}>
@@ -76,11 +101,29 @@ export function ReservationSidePanel({
           {guests.length === 0 && <Text size="sm" c={MUTED}>{t('reservations.noGuests')}</Text>}
           {main && guestRow(main, true)}
           {others.map((g) => guestRow(g, false))}
+          {editing && <GuestEditModal guest={editing} onClose={() => setEditingClientId(null)} />}
         </Section>
 
-        <Section title={t('reservations.term')}>
+        <Section
+          title={t('reservations.term')}
+          action={
+            canEdit && (
+              <WriteAction>
+                <Button size="compact-xs" variant="subtle" aria-label={t('reservations.editOpenLabel')} onClick={() => setEditingCard(true)}>
+                  {t('reservations.editOpen')}
+                </Button>
+              </WriteAction>
+            )
+          }
+        >
           <Text size="sm" data-testid="reservation-dates">{d.arrivalDate} – {d.departureDate}</Text>
           {nights !== undefined && <Text size="xs" c={MUTED} data-testid="reservation-nights">{t('stays.nights', { count: nights })}</Text>}
+          {d.doNotMove && (
+            <Group gap={4}>
+              <Badge variant="light" color="gray" size="sm" data-testid="do-not-move-badge">{t('reservations.doNotMove')}</Badge>
+            </Group>
+          )}
+          {editingCard && <ReservationEditModal d={d} onClose={() => setEditingCard(false)} />}
         </Section>
 
         <Section title={t('reservations.accommodation')}>

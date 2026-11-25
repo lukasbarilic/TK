@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "TheraSuite (local)",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "therasuite",
+      "Username": "therasuite",
+      "SSLMode": 
+"prefer"
+    }
+  }
+}

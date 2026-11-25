@@ -9,4 +9,6 @@ public interface ReservationGuestRepository extends JpaRepository<ReservationGue
   List<ReservationGuest> findByReservationIdOrderById(Long reservationId);
 
   List<ReservationGuest> findByReservationIdInOrderById(Collection<Long> reservationIds);
+
+  List<ReservationGuest> findByClientId(Long clientId);
 }

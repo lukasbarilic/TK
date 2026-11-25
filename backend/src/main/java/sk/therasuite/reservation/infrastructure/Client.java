@@ -33,6 +33,22 @@ public class Client extends BaseEntity {
     this.phone = phone;
   }
 
+  /** Oprava osobných a kontaktných údajov (hodnoty už musia byť normalizované službou). */
+  public void update(
+      String firstName,
+      String lastName,
+      LocalDate birthDate,
+      String nationality,
+      String email,
+      String phone) {
+    this.firstName = firstName;
+    this.lastName = lastName;
+    this.birthDate = birthDate;
+    this.nationality = nationality;
+    this.email = email;
+    this.phone = phone;
+  }
+
   public String getFirstName() {
     return firstName;
   }

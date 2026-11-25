@@ -449,6 +449,7 @@ public class ReservationService {
               return new GuestView(
                   g.getId(),
                   c.getId(),
+                  c.getVersion(),
                   c.getFirstName(),
                   c.getLastName(),
                   c.getBirthDate(),

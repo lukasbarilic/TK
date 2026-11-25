@@ -30,6 +30,7 @@ public final class ReservationViews {
   public record GuestView(
       long id,
       long clientId,
+      long clientVersion,
       String firstName,
       String lastName,
       LocalDate birthDate,

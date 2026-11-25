@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-vault-rewrap"
+description = "Enables the vault_rewrap command without any pre-configured scope."
+commands.allow = ["vault_rewrap"]
+
+[[permission]]
+identifier = "deny-vault-rewrap"
+description = "Denies the vault_rewrap command without any pre-configured scope."
+commands.deny = ["vault_rewrap"]

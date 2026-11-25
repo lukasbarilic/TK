@@ -1,4 +1,4 @@
-import { Alert, Button, Checkbox, Grid, Group, Loader, Modal, Paper, Stack, Text, Textarea, TextInput } from '@mantine/core';
+import { Alert, Button, Checkbox, Grid, Group, Loader, Modal, Paper, Stack, Text, Textarea } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -56,13 +56,12 @@ export function ReservationDetailPage({
       {card.data && !card.data.empty && d && (
         <Grid gap="lg">
           <Grid.Col span={{ base: 12, md: 4 }}>
-            <ReservationSidePanel d={d} canSeeContacts={canSeeContacts} renderCheckIn={renderCheckIn} />
+            <ReservationSidePanel d={d} canSeeContacts={canSeeContacts} canEdit={canEdit} renderCheckIn={renderCheckIn} />
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 8 }}>
             <Stack gap="md">
               <DataAge source={card.data.source} syncedAt={card.data.syncedAt} />
               <NotePanel d={d} canEdit={canEdit} />
-              <EditForm key={d.version} d={d} />
               <CommentsPanel d={d} canEdit={canEdit} />
             </Stack>
           </Grid.Col>
@@ -74,56 +73,6 @@ export function ReservationDetailPage({
 
 const fmtTime = (iso: string | undefined, lang: string) =>
   iso ? new Date(iso).toLocaleString(lang, { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : undefined;
-
-/** Úprava termínu a príznakov; `version` ide v tele (optimistic locking), konflikt = výzva na obnovenie. */
-function EditForm({ d }: { d: ReservationDetail }) {
-  const { t } = useTranslation();
-  const client = useQueryClient();
-  const [arrival, setArrival] = useState(d.arrivalDate ?? '');
-  const [departure, setDeparture] = useState(d.departureDate ?? '');
-  const [doNotMove, setDoNotMove] = useState(d.doNotMove === true);
-  const [exclusiveRoomUse, setExclusiveRoomUse] = useState(d.exclusiveRoomUse === true);
-  const [conflict, setConflict] = useState(false);
-
-  const save = useMutation({
-    mutationFn: () =>
-      updateReservation(d.id as number, { version: d.version as number, arrivalDate: arrival, departureDate: departure, doNotMove, exclusiveRoomUse }),
-    onSuccess: async (saved) => {
-      setConflict(false);
-      await putLocal(DS.reservation, String(d.id), saved);
-      await client.invalidateQueries({ queryKey: ['reservations'] });
-      await client.invalidateQueries({ queryKey: ['plan'] });
-    },
-    onError: (e) => {
-      if (e instanceof ApiError && e.status === 409) {
-        setConflict(true);
-        void client.invalidateQueries({ queryKey: ['reservations', 'detail', d.id] });
-      }
-    },
-  });
-
-  return (
-    <Stack gap="xs" data-testid="reservation-edit">
-      <Text fw={600}>{t('reservations.edit')}</Text>
-      <Group align="flex-end">
-        <TextInput type="date" label={t('reservations.arrival')} value={arrival} onChange={(e) => setArrival(e.currentTarget.value)} />
-        <TextInput type="date" label={t('reservations.departure')} value={departure} onChange={(e) => setDeparture(e.currentTarget.value)} />
-        <Checkbox label={t('reservations.doNotMove')} checked={doNotMove} onChange={(e) => setDoNotMove(e.currentTarget.checked)} />
-        <Checkbox
-          label={t('reservations.exclusiveRoomUse')}
-          checked={exclusiveRoomUse}
-          onChange={(e) => setExclusiveRoomUse(e.currentTarget.checked)}
-        />
-        <WriteAction>
-          <Button onClick={() => save.mutate()} loading={save.isPending}>{t('reservations.save')}</Button>
-        </WriteAction>
-      </Group>
-      {conflict && <Alert color="orange" data-testid="version-conflict">{t('reservations.conflict')}</Alert>}
-      {save.isError && !conflict && <Alert color="red">{t('errors.generic')}</Alert>}
-      {save.isSuccess && <Text size="sm" c="green">{t('reservations.saved')}</Text>}
-    </Stack>
-  );
-}
 
 /** Žltý panel poznámky karty; úprava len s `RESERVATION_EDIT` a len online (`version` ide v tele PATCH). */
 function NotePanel({ d, canEdit }: { d: ReservationDetail; canEdit: boolean }) {

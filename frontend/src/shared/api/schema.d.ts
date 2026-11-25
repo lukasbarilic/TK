@@ -228,6 +228,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clients/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateClient"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reservations/{id}/comments": {
         parameters: {
             query?: never;
@@ -1218,6 +1234,8 @@ export interface components {
             id?: number;
             /** Format: int64 */
             clientId?: number;
+            /** Format: int64 */
+            clientVersion?: number;
             firstName?: string;
             lastName?: string;
             /** Format: date */
@@ -1440,6 +1458,30 @@ export interface components {
             /** Format: int64 */
             version: number;
             confirm?: string[];
+        };
+        ClientUpdateRequest: {
+            /** Format: int64 */
+            version: number;
+            firstName: string;
+            lastName: string;
+            /** Format: date */
+            birthDate?: string;
+            nationality?: string;
+            email?: string;
+            phone?: string;
+        };
+        ClientView: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int64 */
+            version?: number;
+            firstName?: string;
+            lastName?: string;
+            /** Format: date */
+            birthDate?: string;
+            nationality?: string;
+            email?: string;
+            phone?: string;
         };
         UpdateRequest: {
             /** Format: int64 */
@@ -2174,6 +2216,32 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ReservationWithStay"];
+                };
+            };
+        };
+    };
+    updateClient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClientUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ClientView"];
                 };
             };
         };

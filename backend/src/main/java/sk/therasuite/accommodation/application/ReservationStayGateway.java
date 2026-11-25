@@ -2,6 +2,7 @@ package sk.therasuite.accommodation.application;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -111,6 +112,20 @@ public class ReservationStayGateway {
       }
     }
     stays.flush();
+  }
+
+  /**
+   * Pošle {@code plan-changed} pre izby pobytov viacerých kariet naraz (napr. po oprave údajov
+   * klienta, ktorý je na viacerých kartách). Karty bez pobytov sa preskočia.
+   */
+  public void publishPlanChangedForReservations(Collection<Long> reservationIds) {
+    List<StayRef> refs = new ArrayList<>();
+    for (long reservationId : reservationIds) {
+      refs.addAll(queries.stayRefsOfReservation(reservationId));
+    }
+    if (!refs.isEmpty()) {
+      publishPlanChanged(new Snapshot(refs, 0, 0));
+    }
   }
 
   /**

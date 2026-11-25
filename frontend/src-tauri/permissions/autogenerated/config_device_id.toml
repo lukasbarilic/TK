@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-config-device-id"
+description = "Enables the config_device_id command without any pre-configured scope."
+commands.allow = ["config_device_id"]
+
+[[permission]]
+identifier = "deny-config-device-id"
+description = "Denies the config_device_id command without any pre-configured scope."
+commands.deny = ["config_device_id"]
