@@ -133,6 +133,16 @@ class DemoDataIntegrationTest {
   }
 
   @Test
+  void demoPricingListIsLoaded() {
+    assertThat(jdbc.queryForObject("select count(*) from price_list where status = 'ACTIVE'", Integer.class))
+        .isEqualTo(1);
+    assertThat(jdbc.queryForObject("select count(*) from price_season", Integer.class)).isEqualTo(2);
+    // sadzba pre každú kategóriu a sezónu + balíková sadzba
+    assertThat(jdbc.queryForObject("select count(*) from price_rate", Integer.class)).isEqualTo(17);
+    assertThat(jdbc.queryForObject("select count(*) from package_item", Integer.class)).isEqualTo(2);
+  }
+
+  @Test
   void loaderDoesNothingWhenCentreIsNotEmpty() {
     loader.run(args);
 
